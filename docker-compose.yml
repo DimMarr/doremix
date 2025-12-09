@@ -1,0 +1,50 @@
+services:
+  nginx:
+    image: nginx:1.29.3
+    container_name: web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./build/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./src/web:/etc/nginx/html:ro
+    networks:
+      - frontend-network
+
+  db:
+    image: postgres:17.1
+    container_name: database
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend-network
+
+  python_api:
+    build:
+      context: .
+      dockerfile: build/python/Dockerfile
+    container_name: backend_python
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+    networks:
+      - frontend-network
+      - backend-network
+
+networks:
+  frontend-network:
+    driver: bridge
+  backend-network:
+    driver: bridge
+    internal: true
+
+volumes:
+  postgres_data:
