@@ -1,0 +1,106 @@
+-- ============================================================
+-- FICHIER 1 : STRUCTURE DE LA BASE (DDL)
+-- ============================================================
+
+-- 1. NETTOYAGE (Ordre inverse des dépendances)
+DROP TRIGGER IF EXISTS update_playlist_updated_at ON PLAYLIST;
+DROP FUNCTION IF EXISTS update_updated_at_column;
+DROP TABLE IF EXISTS USER_PLAYLIST CASCADE;
+DROP TABLE IF EXISTS TRACK_PLAYLIST CASCADE;
+DROP TABLE IF EXISTS TRACK_ARTIST CASCADE;
+DROP TABLE IF EXISTS PLAYLIST CASCADE;
+DROP TABLE IF EXISTS TRACK CASCADE;
+DROP TABLE IF EXISTS ARTIST CASCADE;
+DROP TABLE IF EXISTS GENRE CASCADE;
+DROP TABLE IF EXISTS "USER" CASCADE;
+DROP TYPE IF EXISTS user_role;
+DROP TYPE IF EXISTS playlist_visibility;
+
+-- 2. CRÉATION DES ENUMS
+CREATE TYPE user_role AS ENUM ('USER', 'ADMIN');
+CREATE TYPE playlist_visibility AS ENUM ('PUBLIC', 'PRIVATE');
+
+-- 3. CRÉATION DES TABLES MAÎTRES
+CREATE TABLE GENRE (
+    idGenre SERIAL PRIMARY KEY,
+    label VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE ARTIST (
+    idArtist SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE "USER" (
+    idUser SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL,
+    role user_role DEFAULT 'USER',
+    disabled BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE TRACK (
+    idTrack SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    youtubeLink VARCHAR(2048),
+    listeningCount INTEGER DEFAULT 0,
+    durationSeconds INTEGER,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 4. CRÉATION DES TABLES DÉPENDANTES
+CREATE TABLE PLAYLIST (
+    idPlaylist SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    idGenre INTEGER NOT NULL,
+    idOwner INTEGER NOT NULL,
+    vote INTEGER DEFAULT 0,
+    visibility playlist_visibility DEFAULT 'PUBLIC',
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_playlist_genre FOREIGN KEY (idGenre) REFERENCES GENRE(idGenre),
+    CONSTRAINT fk_playlist_owner FOREIGN KEY (idOwner) REFERENCES "USER"(idUser) ON DELETE CASCADE
+);
+
+-- 5. CRÉATION DES TABLES DE LIAISON
+CREATE TABLE TRACK_ARTIST (
+    idTrack INTEGER NOT NULL,
+    idArtist INTEGER NOT NULL,
+    position INTEGER,
+    PRIMARY KEY (idTrack, idArtist),
+    CONSTRAINT fk_trackartist_track FOREIGN KEY (idTrack) REFERENCES TRACK(idTrack) ON DELETE CASCADE,
+    CONSTRAINT fk_trackartist_artist FOREIGN KEY (idArtist) REFERENCES ARTIST(idArtist) ON DELETE CASCADE
+);
+
+CREATE TABLE TRACK_PLAYLIST (
+    idTrack INTEGER NOT NULL,
+    idPlaylist INTEGER NOT NULL,
+    position INTEGER,
+    PRIMARY KEY (idTrack, idPlaylist),
+    CONSTRAINT fk_trackplaylist_track FOREIGN KEY (idTrack) REFERENCES TRACK(idTrack) ON DELETE CASCADE,
+    CONSTRAINT fk_trackplaylist_playlist FOREIGN KEY (idPlaylist) REFERENCES PLAYLIST(idPlaylist) ON DELETE CASCADE
+);
+
+CREATE TABLE USER_PLAYLIST (
+    idUser INTEGER NOT NULL,
+    idPlaylist INTEGER NOT NULL,
+    editor BOOLEAN DEFAULT FALSE,
+    PRIMARY KEY (idUser, idPlaylist),
+    CONSTRAINT fk_userplaylist_user FOREIGN KEY (idUser) REFERENCES "USER"(idUser) ON DELETE CASCADE,
+    CONSTRAINT fk_userplaylist_playlist FOREIGN KEY (idPlaylist) REFERENCES PLAYLIST(idPlaylist) ON DELETE CASCADE
+);
+
+-- 6. AUTOMATISATION (Trigger)
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updatedAt = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_playlist_updated_at
+    BEFORE UPDATE ON PLAYLIST
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_updated_at_column();

@@ -37,7 +37,7 @@ erDiagram
         enum visibility
     }
     GENRE {
-        int idGenre FK
+        int idGenre PK
         string label
     }
     TRACK_PLAYLIST {
