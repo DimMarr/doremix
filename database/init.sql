@@ -1,8 +1,3 @@
--- ============================================================
--- FICHIER 1 : STRUCTURE DE LA BASE (DDL)
--- ============================================================
-
--- 1. NETTOYAGE (Ordre inverse des dépendances)
 DROP TRIGGER IF EXISTS update_playlist_updated_at ON PLAYLIST;
 DROP FUNCTION IF EXISTS update_updated_at_column;
 DROP TABLE IF EXISTS USER_PLAYLIST CASCADE;
@@ -16,11 +11,9 @@ DROP TABLE IF EXISTS "USER" CASCADE;
 DROP TYPE IF EXISTS user_role;
 DROP TYPE IF EXISTS playlist_visibility;
 
--- 2. CRÉATION DES ENUMS
-CREATE TYPE user_role AS ENUM ('USER', 'ADMIN');
-CREATE TYPE playlist_visibility AS ENUM ('PUBLIC', 'PRIVATE');
+CREATE TYPE user_role AS ENUM ('USER', 'MODERATOR', 'ADMIN');
+CREATE TYPE playlist_visibility AS ENUM ('PUBLIC', 'PRIVATE', 'OPEN', 'SHARED');
 
--- 3. CRÉATION DES TABLES MAÎTRES
 CREATE TABLE GENRE (
     idGenre SERIAL PRIMARY KEY,
     label VARCHAR(255) NOT NULL
@@ -49,7 +42,6 @@ CREATE TABLE TRACK (
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 4. CRÉATION DES TABLES DÉPENDANTES
 CREATE TABLE PLAYLIST (
     idPlaylist SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -63,7 +55,6 @@ CREATE TABLE PLAYLIST (
     CONSTRAINT fk_playlist_owner FOREIGN KEY (idOwner) REFERENCES "USER"(idUser) ON DELETE CASCADE
 );
 
--- 5. CRÉATION DES TABLES DE LIAISON
 CREATE TABLE TRACK_ARTIST (
     idTrack INTEGER NOT NULL,
     idArtist INTEGER NOT NULL,
@@ -91,7 +82,6 @@ CREATE TABLE USER_PLAYLIST (
     CONSTRAINT fk_userplaylist_playlist FOREIGN KEY (idPlaylist) REFERENCES PLAYLIST(idPlaylist) ON DELETE CASCADE
 );
 
--- 6. AUTOMATISATION (Trigger)
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
