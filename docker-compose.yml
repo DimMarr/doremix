@@ -4,8 +4,8 @@ services:
     container_name: web
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
+      - "4433:443"
     volumes:
       - ./build/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./src/web:/etc/nginx/html:ro
@@ -22,8 +22,15 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - backend-network
+      - ./build/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./build/database/insert.sql:/docker-entrypoint-initdb.d/02-insert.sql
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+    #   interval: 5s
+    #   timeout: 5s
+    #   retries: 5
+    # networks:
+    #   - backend-network
 
   python_api:
     build:

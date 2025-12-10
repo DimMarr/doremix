@@ -1,4 +1,4 @@
-TRUNCATE USER_PLAYLIST, TRACK_PLAYLIST, TRACK_ARTIST, PLAYLIST, TRACK, ARTIST, GENRE, "USER" RESTART IDENTITY CASCADE;
+TRUNCATE USER_PLAYLIST, TRACK_PLAYLIST, TRACK_ARTIST, PLAYLIST, TRACK, ARTIST, GENRE, USERS RESTART IDENTITY CASCADE;
 
 BEGIN;
 
@@ -11,7 +11,7 @@ INSERT INTO ARTIST (name) VALUES
 ('Miles Davis'), ('Metallica'), ('Mozart'), ('Adele'), 
 ('The Weeknd'), ('Kendrick Lamar'), ('Rihanna'), ('Hans Zimmer');
 
-INSERT INTO "USER" (username, email, password, role, disabled) VALUES 
+INSERT INTO USERS (username, email, password, role, disabled) VALUES 
 ('AdminSys', 'admin@platform.com', 'admin123', 'ADMIN', FALSE),
 ('ModSarah', 'sarah@modo.com', 'secureMod', 'MODERATOR', FALSE),
 ('AliceMusic', 'alice@gmail.com', 'passA', 'USER', FALSE),
