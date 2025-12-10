@@ -1,4 +1,3 @@
-import psycopg2
 from fastapi import FastAPI
 from connect_db import connect_db
 
