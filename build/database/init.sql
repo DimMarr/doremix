@@ -45,7 +45,7 @@ CREATE TABLE TRACK (
 CREATE TABLE PLAYLIST (
     idPlaylist SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    idGenre INTEGER NOT NULL,
+    idGenre INTEGER NOT NULL DEFAULT 1,
     idOwner INTEGER NOT NULL,
     vote INTEGER DEFAULT 0,
     visibility playlist_visibility DEFAULT 'PUBLIC',
@@ -58,7 +58,6 @@ CREATE TABLE PLAYLIST (
 CREATE TABLE TRACK_ARTIST (
     idTrack INTEGER NOT NULL,
     idArtist INTEGER NOT NULL,
-    position INTEGER,
     PRIMARY KEY (idTrack, idArtist),
     CONSTRAINT fk_trackartist_track FOREIGN KEY (idTrack) REFERENCES TRACK(idTrack) ON DELETE CASCADE,
     CONSTRAINT fk_trackartist_artist FOREIGN KEY (idArtist) REFERENCES ARTIST(idArtist) ON DELETE CASCADE
@@ -67,7 +66,6 @@ CREATE TABLE TRACK_ARTIST (
 CREATE TABLE TRACK_PLAYLIST (
     idTrack INTEGER NOT NULL,
     idPlaylist INTEGER NOT NULL,
-    position INTEGER,
     PRIMARY KEY (idTrack, idPlaylist),
     CONSTRAINT fk_trackplaylist_track FOREIGN KEY (idTrack) REFERENCES TRACK(idTrack) ON DELETE CASCADE,
     CONSTRAINT fk_trackplaylist_playlist FOREIGN KEY (idPlaylist) REFERENCES PLAYLIST(idPlaylist) ON DELETE CASCADE
