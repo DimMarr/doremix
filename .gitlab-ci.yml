@@ -1,0 +1,20 @@
+stages:
+  - deploy
+
+deploy_beta:
+  stage: deploy
+  image: alpine:latest
+  only:
+    - beta
+  before_script:
+    - apk add --no-cache openssh-client rsync bash
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY_BETA" | base64 -d | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H "$SSH_HOST_BETA" >> ~/.ssh/known_hosts
+  script:
+    - echo "📂 Début du déploiement..."
+    - ssh $SSH_USER_BETA@$SSH_HOST_BETA "mkdir -p $DEPLOY_PATH"
+    - rsync -avz --delete --exclude='.git/' --exclude='.gitlab-ci.yml' . $SSH_USER_BETA@$SSH_HOST_BETA:$DEPLOY_PATH
+    - ssh $SSH_USER_BETA@$SSH_HOST_BETA "cd $DEPLOY_PATH && docker compose up -d --build --remove-orphans"
