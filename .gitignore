@@ -1,1 +1,9 @@
 .env
+node_modules/
+setup.sh
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
