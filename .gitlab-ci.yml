@@ -1,6 +1,9 @@
 stages:
   - deploy
 
+variables:
+  DEPLOY_PATH: "/home/$SSH_USER_BETA/doremix"
+
 deploy_beta:
   stage: deploy
   image: alpine:latest
