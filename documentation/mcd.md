@@ -45,13 +45,13 @@ erDiagram
         int idPlaylist FK
         int position
     }
-    USER {
+    USERS {
         int idUser PK
         string email
         string password
         string username
         enum role
-        boolean disabled
+        boolean banned
     }
     USER_PLAYLIST {
         int idUser FK

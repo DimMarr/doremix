@@ -30,7 +30,7 @@ CREATE TABLE USERS (
     password VARCHAR(255) NOT NULL,
     username VARCHAR(255) NOT NULL,
     role user_role DEFAULT 'USER',
-    disabled BOOLEAN DEFAULT FALSE
+    banned BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE TRACK (

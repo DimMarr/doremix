@@ -11,7 +11,7 @@ INSERT INTO ARTIST (name) VALUES
 ('Miles Davis'), ('Metallica'), ('Mozart'), ('Adele'), 
 ('The Weeknd'), ('Kendrick Lamar'), ('Rihanna'), ('Hans Zimmer');
 
-INSERT INTO USERS (username, email, password, role, disabled) VALUES 
+INSERT INTO USERS (username, email, password, role, banned) VALUES 
 ('AdminSys', 'admin@platform.com', 'admin123', 'ADMIN', FALSE),
 ('ModSarah', 'sarah@modo.com', 'secureMod', 'MODERATOR', FALSE),
 ('AliceMusic', 'alice@gmail.com', 'passA', 'USER', FALSE),
