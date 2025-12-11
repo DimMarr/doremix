@@ -24,7 +24,6 @@ erDiagram
     TRACK_ARTIST {
         int idTrack FK
         int idArtist FK
-        int position
     }
     PLAYLIST {
         int idPlaylist PK
@@ -43,7 +42,6 @@ erDiagram
     TRACK_PLAYLIST {
         int idTrack FK
         int idPlaylist FK
-        int position
     }
     USERS {
         int idUser PK
