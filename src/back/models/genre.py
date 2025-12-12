@@ -4,5 +4,5 @@ from database import Base
 class Genre(Base):
     __tablename__ = "genre"
     
-    idGenre = Column(Integer, primary_key=True, index=True)
-    label = Column(String(255), nullable=False)
+    idGenre = Column("idgenre", Integer, primary_key=True, index=True)
+    label = Column("label", String(255), nullable=False)

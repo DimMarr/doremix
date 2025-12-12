@@ -4,6 +4,6 @@ from database import Base
 class UserPlaylist(Base):
     __tablename__ = "user_playlist"
     
-    idUser = Column(Integer, ForeignKey("users.idUser", ondelete="CASCADE"), primary_key=True)
-    idPlaylist = Column(Integer, ForeignKey("playlist.idPlaylist", ondelete="CASCADE"), primary_key=True)
-    editor = Column(Boolean, default=False)
+    idUser = Column("iduser", Integer, ForeignKey("users.iduser", ondelete="CASCADE"), primary_key=True)
+    idPlaylist = Column("idplaylist", Integer, ForeignKey("playlist.idplaylist", ondelete="CASCADE"), primary_key=True)
+    editor = Column("editor", Boolean, default=False)

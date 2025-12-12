@@ -4,5 +4,5 @@ from database import Base
 class TrackPlaylist(Base):
     __tablename__ = "track_playlist"
     
-    idTrack = Column(Integer, ForeignKey("track.idTrack", ondelete="CASCADE"), primary_key=True)
-    idPlaylist = Column(Integer, ForeignKey("playlist.idPlaylist", ondelete="CASCADE"), primary_key=True)
+    idTrack = Column("idtrack", Integer, ForeignKey("track.idtrack", ondelete="CASCADE"), primary_key=True)
+    idPlaylist = Column("idplaylist", Integer, ForeignKey("playlist.idplaylist", ondelete="CASCADE"), primary_key=True)

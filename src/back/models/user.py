@@ -10,9 +10,9 @@ class UserRole(enum.Enum):
 class User(Base):
     __tablename__ = "users"
     
-    idUser = Column(Integer, primary_key=True, index=True)
-    email = Column(String(255), unique=True, nullable=False)
-    password = Column(String(255), nullable=False)
-    username = Column(String(255), nullable=False)
-    role = Column(Enum(UserRole), default=UserRole.USER)
-    banned = Column(Boolean, default=False)
+    idUser = Column("iduser", Integer, primary_key=True, index=True)
+    email = Column("email", String(255), unique=True, nullable=False)
+    password = Column("password", String(255), nullable=False)
+    username = Column("username", String(255), nullable=False)
+    role = Column("role", Enum(UserRole), default=UserRole.USER)
+    banned = Column("banned", Boolean, default=False)
