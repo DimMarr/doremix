@@ -1,7 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from database import engine, Base
+
+# Import routes
+from routes import user_routes
+
+from models import (
+    Genre, Artist, User, Track, Playlist,
+    TrackArtist, TrackPlaylist, UserPlaylist
+)
 
 app = FastAPI()
+
+# Create all tables
+Base.metadata.create_all(bind=engine)
 
 # CORS configuration
 app.add_middleware(
@@ -12,10 +24,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from models import (
-    Genre, Artist, User, Track, Playlist,
-    TrackArtist, TrackPlaylist, UserPlaylist
-)
+# Include routers
+app.include_router(user_routes.router)
 
 
 @app.get('/')
