@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v4.6.0  # Mise à jour vers une version plus récente
     hooks:
     -   id: trailing-whitespace
         verbose: true
@@ -12,12 +12,27 @@ repos:
         verbose: true
     -   id: check-yaml
         verbose: true
+
 -   repo: https://github.com/astral-sh/ruff-pre-commit
-    # Ruff version.
     rev: v0.6.6
     hooks:
-    # Run the linter.
     -   id: ruff
+        verbose: true
         args: [ --fix ]
-    # Run the formatter.
     -   id: ruff-format
+        verbose: true
+
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.2
+    hooks:
+    -   id: mypy
+        verbose: true
+
+-   repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+    -   id: prettier
+        types_or: [css, javascript, html, json]
+        additional_dependencies:
+            - prettier@3.3.3
+            - prettier-plugin-tailwindcss@0.6.6
