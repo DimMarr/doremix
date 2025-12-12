@@ -12,6 +12,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from models import (
+    Genre, Artist, User, Track, Playlist,
+    TrackArtist, TrackPlaylist, UserPlaylist
+)
+
 
 @app.get('/')
 async def index():
