@@ -19,5 +19,5 @@ deploy_beta:
   script:
     - echo "📂 Début du déploiement..."
     - ssh $SSH_USER_BETA@$SSH_HOST_BETA "mkdir -p $DEPLOY_PATH"
-    - rsync -avz --delete --exclude='.git/' --exclude='.gitlab-ci.yml' --exclude='.env' . $SSH_USER_BETA@$SSH_HOST_BETA:$DEPLOY_PATH
+    - rsync -avz --delete --exclude='.git/' --exclude='.gitlab-ci.yml' --exclude='.env' --exclude='__pycache__/' --exclude='node_modules/' . $SSH_USER_BETA@$SSH_HOST_BETA:$DEPLOY_PATH
     - ssh $SSH_USER_BETA@$SSH_HOST_BETA "cd $DEPLOY_PATH && docker compose up -d --build --remove-orphans"
