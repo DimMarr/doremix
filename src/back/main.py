@@ -3,14 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 
 # Import routes
-from routes import user_routes
+from routes import usersRouter, playlistsRouter
+routers = [usersRouter, playlistsRouter]
 
-from models import (
-    Genre, Artist, User, Track, Playlist,
-    TrackArtist, TrackPlaylist, UserPlaylist
-)
+#from models import (Genre, Artist, User, Track, Playlist,TrackArtist, TrackPlaylist, UserPlaylist)
 
 app = FastAPI()
+
+for router in routers:
+    app.include_router(router)
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
@@ -23,9 +24,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Include routers
-app.include_router(user_routes.router)
 
 
 @app.get('/')
