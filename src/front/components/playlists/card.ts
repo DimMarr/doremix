@@ -1,14 +1,15 @@
-import { cn, getCardClasses } from "./utils";
+import { cn, getCardClasses } from "../utils";
 
-export interface CardProps {
+export interface CardPlaylistProps {
   image: string;
   icon: string;
   title?: string;
   content?: string;
   className: string;
+  onClickPlay: Function
 }
 
-export function createCard(props: CardProps): HTMLDivElement {
+export function createPlaylistCard(props: CardPlaylistProps): HTMLDivElement {
   const { image, title, content, icon, className, ...rest } = props;
 
   const card = document.createElement("div");
@@ -30,6 +31,9 @@ export function createCard(props: CardProps): HTMLDivElement {
       iconElement.src = icon;
       iconElement.className =
         "absolute bottom-2 right-2 w-[40px] w-[40px] bg-[#2b7fff] p-2 rounded-[999px] cursor-pointer";
+      iconElement.onclick = () => { 
+        if(props.onClickPlay) {props.onClickPlay();} 
+      };
       container.appendChild(iconElement);
     }
 
@@ -56,4 +60,4 @@ export function createCard(props: CardProps): HTMLDivElement {
 }
 
 // Types for React usage
-export type CardComponent = CardProps;
+export type CardComponent = CardPlaylistProps;

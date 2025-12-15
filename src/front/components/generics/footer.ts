@@ -1,6 +1,4 @@
-/**
- * Create badge HTML element
- */
+
 export function createFooter(): HTMLElement {
     const footer = document.createElement('footer');
     footer.innerHTML = `

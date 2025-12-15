@@ -1,4 +1,4 @@
-import { cn, BadgeVariant, getBadgeClasses } from './utils';
+import { cn, BadgeVariant, getBadgeClasses } from '../utils';
 
 export interface BadgeProps {
   variant?: BadgeVariant;
