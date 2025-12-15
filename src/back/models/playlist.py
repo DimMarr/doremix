@@ -27,3 +27,9 @@ class Playlist(Base):
         secondary="track_playlist",
         back_populates="playlists"
     )
+
+    users = relationship(
+        "User",
+        secondary="user_playlist",
+        back_populates="playlists"
+    )

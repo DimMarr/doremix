@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, Enum
+from sqlalchemy.orm import relationship
 from database import Base
 import enum
 
@@ -16,3 +17,9 @@ class User(Base):
     username = Column("username", String(255), nullable=False)
     role = Column("role", Enum(UserRole), default=UserRole.USER)
     banned = Column("banned", Boolean, default=False)
+
+    playlists = relationship(
+        "Playlist",
+        secondary="user_playlist",
+        back_populates="users"
+    )
