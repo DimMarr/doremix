@@ -4,7 +4,7 @@
 
 ```bash
 # Installer les dépendances
-uv pip install pytest pytest-cov httpx
+uv pip install -r tests/requirements-test.txt
 
 # Lancer tous les tests
 uv run pytest tests/ -v
