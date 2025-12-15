@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
 from database import Base
 
 class Artist(Base):
@@ -6,3 +7,9 @@ class Artist(Base):
     
     idArtist = Column("idartist", Integer, primary_key=True, index=True)
     name = Column("name", String(255), nullable=False)
+
+    tracks = relationship(
+        "Track",
+        secondary="track_artist",
+        back_populates="artists"
+    )

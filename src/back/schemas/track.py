@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
+from .artist import ArtistSchema
 
 class TrackSchema(BaseModel):
     idTrack: int
@@ -9,7 +10,7 @@ class TrackSchema(BaseModel):
     listeningCount: int
     durationSeconds: Optional[int] = None
     createdAt: datetime
+    artists: List[ArtistSchema]
 
-    model_config = {
-        "from_attributes": True
-    }
+    class Config:
+        orm_mode = True
