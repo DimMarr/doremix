@@ -8,7 +8,6 @@ from schemas import PlaylistSchema, TrackSchema
 from database import get_db
 import os
 
-
 router = APIRouter(prefix='/playlists', tags=['Playlists'])
 
 @router.get(
