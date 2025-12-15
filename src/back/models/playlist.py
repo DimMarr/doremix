@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Enum, TIMESTAMP
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from database import Base
 import enum
 
@@ -20,3 +21,9 @@ class Playlist(Base):
     visibility = Column("visibility", Enum(PlaylistVisibility), default=PlaylistVisibility.PUBLIC)
     createdAt = Column("createdat", TIMESTAMP, server_default=func.now())
     updatedAt = Column("updatedat", TIMESTAMP, server_default=func.now(), onupdate=func.now())
+
+    tracks = relationship(
+        "Track",
+        secondary="track_playlist",
+        back_populates="playlists"
+    )

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from controllers import PlaylistController
-from schemas import PlaylistSchema
+from schemas import PlaylistSchema, TrackSchema
 from database import get_db
 
 router = APIRouter(prefix='/playlists', tags=['Playlists'])
@@ -18,4 +18,7 @@ def get_playlist(playlist_id: int, db: Session = Depends(get_db)):
     playlist = PlaylistController.get_playlist(db, playlist_id)
     return playlist
 
-#@router.get('/{playlist_id}/tracks', response_model=List[TrackSchema])
+@router.get('/{playlist_id}/tracks', response_model=List[TrackSchema])
+def get_playlist_tracks(playlist_id: int, db: Session = Depends(get_db)):
+    tracks = PlaylistController.get_playlist_tracks(db, playlist_id)
+    return tracks
