@@ -16,8 +16,9 @@ class PlaylistSchema(BaseModel):
     idOwner: int
     vote: int
     visibility: PlaylistVisibility
+    coverImage: Optional[str] = None 
     createdAt: datetime
     updatedAt: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True  
