@@ -6,8 +6,6 @@ from database import engine, Base
 from routes import usersRouter, playlistsRouter
 routers = [usersRouter, playlistsRouter]
 
-#from models import (Genre, Artist, User, Track, Playlist,TrackArtist, TrackPlaylist, UserPlaylist)
-
 app = FastAPI()
 
 for router in routers:
