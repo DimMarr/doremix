@@ -19,6 +19,7 @@ class Playlist(Base):
     idOwner = Column("idowner", Integer, ForeignKey("users.iduser", ondelete="CASCADE"), nullable=False)
     vote = Column("vote", Integer, default=0)
     visibility = Column("visibility", Enum(PlaylistVisibility), default=PlaylistVisibility.PUBLIC)
+    coverImage = Column("coverimage", String(500), nullable=True)
     createdAt = Column("createdat", TIMESTAMP, server_default=func.now())
     updatedAt = Column("updatedat", TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
