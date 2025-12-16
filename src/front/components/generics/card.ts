@@ -24,7 +24,7 @@ export function createCard(props: CardProps): HTMLDivElement {
     const imageElement = document.createElement("img");
     imageElement.src = image;
     imageElement.className =
-      "h-[250px]! w-[300px]! w-auto object-cover object-center rounded-md";
+      " w-[200px]! h-[200px]! md:h-[250px]! md:w-[300px]! w-auto object-cover object-center rounded-md";
 
     if (icon) {
       const iconElement = document.createElement("img");
@@ -56,7 +56,10 @@ export function createCard(props: CardProps): HTMLDivElement {
     descEl.textContent = content;
     headerDiv.appendChild(descEl);
   }
-  card.appendChild(headerDiv);
+
+  if(headerDiv.children.length){
+    card.appendChild(headerDiv);    
+  }
 
   Object.assign(card, rest);
   return card;

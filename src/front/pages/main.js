@@ -61,7 +61,6 @@ export default function init() {
       playlist: playlists[0],
       youtubePlayerHtmlElement: trackPlayerContainer
     });
-
     const playerUI = createTrackPlayer({
       youtubePlayer: trackPlayer,
       trackPlayerElement: trackPlayerContainer
@@ -76,11 +75,15 @@ export default function init() {
       image: p.image,
       content: p.description || '',
       icon: svg1,
-      className: 'px-0! max-w-[300px] shrink-0',
+      className: 'px-0! max-w-[200px] md:max-w-[300px] shrink-0',
       // Lorsqu'on clique sur le bouton play d'une playlist on doit jouer la playlist.
       onClickPlay: () => {
         trackPlayer.setPlaylist(p);
         trackPlayer.playTrack(0);
+
+        // Affichage du track player quand on clique sur le bouton play d'une playlist.
+        document.querySelector("#playerContainer").classList.remove('hidden');
+        document.querySelector("#playerContainer").classList.add('flex');
       }
     });
     tracksContentCard.appendChild(card);

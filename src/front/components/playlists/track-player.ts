@@ -17,10 +17,10 @@ export function createTrackPlayerContainer() {
 }
 
 function createPlayerTrackerHtmlElementDesktop() {
-    return `<div class="fixed bottom-0 left-0 right-0 bg-[#181818] border-t border-[#282828] shadow-2xl backdrop-blur-sm md:flex items-center justify-between md:flex-row flex-col px-6 py-4" id="playerContainer">
-        <div class="flex items-center justify-between w-[400px]">
+    return `<div class="fixed bottom-0 left-0 right-0 bg-[#181818] border-t border-[#282828] shadow-2xl backdrop-blur-sm flex items-start md:items-center justify-between md:flex-row flex-col px-6 py-4 hidden" id="playerContainer">
+        <div class="flex items-center justify-between w-full md:w-[400px]">
             <img src="/assets/images/playlist1.jpg" class="w-[75px] h-[75px] mr-4 rounded-md hidden md:block" alt="Music Note Icon" />
-            <div class="flex-1 min-w-0">
+            <div class="flex-1 min-w-0 w-full">
                 <div class="now-playing text-xs font-semibold text-[#2b7fff] uppercase tracking-wider mb-1">
                     Now Playing
                 </div>
