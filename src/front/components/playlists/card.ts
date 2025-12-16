@@ -31,8 +31,8 @@ export function createPlaylistCard(props: CardPlaylistProps): HTMLDivElement {
       iconElement.src = icon;
       iconElement.className =
         "absolute bottom-2 right-2 w-[40px] w-[40px] bg-[#2b7fff] p-2 rounded-[999px] cursor-pointer";
-      iconElement.onclick = () => { 
-        if(props.onClickPlay) {props.onClickPlay();} 
+      iconElement.onclick = () => {
+        if(props.onClickPlay) {props.onClickPlay();}
       };
       container.appendChild(iconElement);
     }

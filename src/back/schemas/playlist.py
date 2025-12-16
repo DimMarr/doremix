@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from enum import Enum
 from datetime import datetime
+from typing import Optional
 
 
 class PlaylistVisibility(str, Enum):
@@ -17,9 +18,9 @@ class PlaylistSchema(BaseModel):
     idOwner: int
     vote: int
     visibility: PlaylistVisibility
-    coverImage: Optional[str] = None 
+    coverImage: Optional[str] = None
     createdAt: datetime
     updatedAt: datetime
 
     class Config:
-        from_attributes = True  
+        from_attributes = True

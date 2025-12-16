@@ -58,7 +58,7 @@ export function createCard(props: CardProps): HTMLDivElement {
   }
 
   if(headerDiv.children.length){
-    card.appendChild(headerDiv);    
+    card.appendChild(headerDiv);
   }
 
   Object.assign(card, rest);
