@@ -36,25 +36,23 @@ services:
     networks:
       - backend-network
 
-  backend:
-    build:
-      context: .
-      dockerfile: build/backend/Dockerfile
-    container_name: backend_python
-    restart: unless-stopped
-    volumes:
-      - ./src/back:/app
-      - /app/__pycache__
-    ports:
-      - 8000:8000
-    environment:
-      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
-    volumes:
-      - ./src/back:/app
-      - ./uploads:/app/uploads
-    networks:
-      - frontend-network
-      - backend-network
+backend:
+  build:
+    context: .
+    dockerfile: build/backend/Dockerfile
+  container_name: backend_python
+  restart: unless-stopped
+  ports:
+    - 8000:8000
+  environment:
+    DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+  volumes:
+    - ./src/back:/app
+    - ./uploads:/app/uploads
+    - /app/__pycache__
+  networks:
+    - frontend-network
+    - backend-network
 
 networks:
   frontend-network:
