@@ -46,7 +46,6 @@ def upload_playlist_cover(
 
 @router.get('/covers/{filename}')
 def get_cover_image(filename: str):
-    """Serve playlist cover images."""
     filepath = f"/app/uploads/covers/{filename}"
     
     if not os.path.exists(filepath):
