@@ -2,8 +2,8 @@ from sqlalchemy.orm import Session
 from repositories import TrackRepository
 from fastapi import HTTPException
 
-class TrackController:
 
+class TrackController:
     @staticmethod
     def get_all_tracks(db: Session):
         return TrackRepository.get_all(db)

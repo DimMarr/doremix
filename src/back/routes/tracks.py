@@ -13,7 +13,7 @@ router = APIRouter(prefix="/tracks", tags=["Tracks"])
     "/",
     response_model=List[TrackSchema],
     summary="Lister tous les morceaux",
-    description="Retourne la liste complète des morceaux disponibles."
+    description="Retourne la liste complète des morceaux disponibles.",
 )
 def get_tracks(db: Session = Depends(get_db)):
     tracks = TrackController.get_all_tracks(db)
@@ -24,7 +24,7 @@ def get_tracks(db: Session = Depends(get_db)):
     "/{track_id}",
     response_model=TrackSchema,
     summary="Récupérer un morceau",
-    description="Retourne les informations détaillées d'un morceau à partir de son identifiant."
+    description="Retourne les informations détaillées d'un morceau à partir de son identifiant.",
 )
 def get_track(track_id: int, db: Session = Depends(get_db)):
     track = TrackController.get_track(db, track_id)
