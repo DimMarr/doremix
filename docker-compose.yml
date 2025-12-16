@@ -49,6 +49,9 @@ services:
       - 8000:8000
     environment:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+    volumes:
+      - ./src/back:/app
+      - ./uploads:/app/uploads
     networks:
       - frontend-network
       - backend-network
