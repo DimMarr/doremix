@@ -1,5 +1,5 @@
 // Utilities and helpers
-export * from './utils';
+export * from '../utils';
 
 // Components
 export { createButton, type ButtonProps, type ButtonComponent } from './button';
