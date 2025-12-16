@@ -3,8 +3,6 @@
 
 Application et CLI de gestion de playlists Youtube.
 
-L'application est développée au sein d'un groupe de 8 personnes. Le développement de l'application se déroule au cours de l'année 2025-2026 dans la classe DO3 de la promo Polytech.
-
 # Application web
 
 ### Prérequis : 
