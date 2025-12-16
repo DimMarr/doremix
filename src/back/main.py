@@ -1,7 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from database import engine, Base
+
+# Import routes
+from routes import usersRouter, playlistsRouter
+
+routers = [usersRouter, playlistsRouter]
 
 app = FastAPI()
+
+for router in routers:
+    app.include_router(router)
+
+# Create all tables
+Base.metadata.create_all(bind=engine)
 
 # CORS configuration
 app.add_middleware(
@@ -12,10 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get('/')
-async def index():
-    return {'message': 'API running'}
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=5000, reload=True)

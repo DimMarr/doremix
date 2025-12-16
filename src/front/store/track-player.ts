@@ -129,7 +129,7 @@ export class YoutubePlayer {
             this.updateTimer(currentVideoTime);
         }, 32);
     }
-    
+
     // Audio controls
     changeTrackState(): void {
         this.setTimer();
@@ -158,7 +158,7 @@ export class YoutubePlayer {
     pauseVideo(): void {
         if (this.audioPlayer && this.audioPlayer.pauseVideo) {
             document.querySelector("#playBtn").innerHTML = "";
-            document.querySelector("#playBtn").appendChild(createPlayIcon());            
+            document.querySelector("#playBtn").appendChild(createPlayIcon());
             this.audioPlayer.pauseVideo();
         }
     }

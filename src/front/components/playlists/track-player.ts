@@ -35,25 +35,25 @@ function createPlayerTrackerHtmlElementDesktop() {
             <div class="flex gap-10 md:order-1 order-2">
                             <!-- Controls Section -->
                 <div class="flex items-center justify-center gap-3">
-                    <button 
-                        class="control-btn w-10 h-10 rounded-full md:flex items-center justify-center font-bold text-sm shadow-lg hover:shadow-xl hidden" 
+                    <button
+                        class="control-btn w-10 h-10 rounded-full md:flex items-center justify-center font-bold text-sm shadow-lg hover:shadow-xl hidden"
                         id="previousBtn"
                         title="Previous Track"
                     >
                         <<
                     </button>
 
-                    <button 
-                        class="control-btn w-12 h-12 rounded-full relative flex items-center justify-center font-bold shadow-lg hover:shadow-xl" 
+                    <button
+                        class="control-btn w-12 h-12 rounded-full relative flex items-center justify-center font-bold shadow-lg hover:shadow-xl"
                         id="playBtn"
                         title="Play"
                     >
                         <img src="/assets/icons/play.svg" class="absolute z-99 w-10 p-2 rounded-[999px] cursor-pointer" >
                     </button>
-                    
 
-                    <button 
-                        class="control-btn w-10 h-10 rounded-full md:flex hidden items-center justify-center font-bold text-sm shadow-lg hover:shadow-xl" 
+
+                    <button
+                        class="control-btn w-10 h-10 rounded-full md:flex hidden items-center justify-center font-bold text-sm shadow-lg hover:shadow-xl"
                         id="nextBtn"
                         title="Next Track"
                     >
@@ -65,13 +65,13 @@ function createPlayerTrackerHtmlElementDesktop() {
             <!-- Progress Bar -->
             <div class="mb-4 w-full flex gap-4">
                 <span id="trackElapsedTime" class="hidden md:block"></span>
-                <input 
+                <input
                 class="range-input w-full"
-                    type="range" 
-                    id="trackTimer" 
-                    class="w-full h-1.5" 
-                    min="0" 
-                    max="0" 
+                    type="range"
+                    id="trackTimer"
+                    class="w-full h-1.5"
+                    min="0"
+                    max="0"
                 />
                 <span id="trackTotalTime" class="hidden md:block"></span>
             </div>
@@ -123,7 +123,7 @@ export function createTrackPlayer(props: TrackPlayerProps): HTMLDivElement {
 
         if (nextBtn) {
             nextBtn.addEventListener(
-                "click", 
+                "click",
                 () => playerStore!.nextTrack()
             );
         }
