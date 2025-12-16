@@ -4,6 +4,7 @@ from database import engine, Base
 
 # Import routes
 from routes import usersRouter, playlistsRouter
+
 routers = [usersRouter, playlistsRouter]
 
 app = FastAPI()
@@ -23,6 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=5000, reload=True)

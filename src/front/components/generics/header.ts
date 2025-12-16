@@ -9,7 +9,7 @@ export function createHeader(props: HeaderProps): HTMLElement {
 
   header.className = className + ` flex justify-between items-center gap-2 py-4`;
   if(disabled) header.classList.add('disabled');
-  
+
   Object.assign(header, rest);
 
   return header;

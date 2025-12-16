@@ -3,10 +3,12 @@ from enum import Enum
 from typing import Optional, List
 from .playlist import PlaylistSchema
 
+
 class UserRole(str, Enum):
     USER = "USER"
     MODERATOR = "MODERATOR"
     ADMIN = "ADMIN"
+
 
 class UserSchema(BaseModel):
     idUser: int

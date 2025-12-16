@@ -1,8 +1,38 @@
 stages:
+  - test
   - deploy
 
 variables:
   DEPLOY_PATH: "/home/$SSH_USER_BETA/doremix"
+  PRE_COMMIT_HOME: ${CI_PROJECT_DIR}/.cache/pre-commit
+
+pre_commit_check:
+  stage: test
+  image: python:3.11-slim
+  cache:
+    key: pre-commit-cache
+    paths:
+      - .cache/pre-commit
+  before_script:
+    - apt-get update && apt-get install -y git nodejs npm
+    - pip install pre-commit
+  script:
+    - echo "🔍 Exécution des hooks pre-commit sur l'ensemble des fichiers..."
+    - |
+      pre-commit run --all-files || {
+        echo ""
+        echo "🛑 🛑 🛑 ÉCHEC DE LA VALIDATION DU CODE 🛑 🛑 🛑"
+        echo "----------------------------------------------------------------"
+        echo "Le pipeline a été arrêté car le code ne respecte pas les standards."
+        echo "Nous ne déployons pas de code qui ne passe pas les tests."
+        echo ""
+        echo "👉 SOLUTION : Installez pre-commit sur votre machine :"
+        echo "   1. uv tool install pre-commit (ou pip install pre-commit)"
+        echo "   2. pre-commit install"
+        echo "   3. Corrigez les erreurs, commitez et pushez à nouveau."
+        echo "----------------------------------------------------------------"
+        exit 1
+      }
 
 deploy_beta:
   stage: deploy
