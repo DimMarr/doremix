@@ -1,6 +1,6 @@
 
 export default class Playlist {
-    private idPlaylist?: number;
+    public idPlaylist?: number;
     private idOwner?: number;
     public name?: string;
     private idGenre?: number;

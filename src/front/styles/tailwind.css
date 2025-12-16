@@ -92,3 +92,26 @@ body {
   background: #2b7fff;
   border-radius: 9999px;
 }
+
+/* Playing state styles */
+.playing .track-number {
+  display: none;
+}
+
+.playing .playing-icon {
+  display: block;
+  animation: bounce 1s infinite;
+}
+
+.playing .track-title {
+  color: #2b7fff;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-25%);
+  }
+}

@@ -219,7 +219,8 @@ export class YoutubePlayer {
 
         const playerContainer = document.getElementById("playerContainer");
         if (playerContainer) {
-            playerContainer.classList.add("active");
+            playerContainer.classList.remove("hidden");
+            playerContainer.classList.add("flex");
         }
 
         // Load and play video using YT.Player

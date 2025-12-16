@@ -6,6 +6,7 @@ export class Track {
     public listeningCount?: number;
     public durationSeconds?: number;
     public createdAt?: string;
+    public artist?: Artist;
 
     constructor(data: Partial<Track>) {
         Object.assign(this, data);
