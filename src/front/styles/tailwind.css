@@ -7,10 +7,91 @@ body {
   color: #eee !important;
 }
 
+
 @theme {
-  --destructive: red;
+    --destructive: red;
 }
 
 .mb-4 {
-  margin-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.control-btn {
+    @apply bg-[#2b7fff] border-none text-white px-5 py-2.5 rounded-[20px] cursor-pointer text-sm font-semibold transition-all duration-200 hover:bg-[#2b7fff] hover:scale-105 active:scale-95
+}
+
+
+/* Custom range input styles */
+.range-input {
+    -webkit-appearance: none;
+    /* Remove default styling for Safari */
+    -moz-appearance: none;
+    /* Remove default styling for Firefox */
+    appearance: none;
+    /* Remove default styling */
+    background: transparent;
+    /* Remove default background */
+    position: relative;
+}
+
+.range-input::-webkit-slider-runnable-track {
+    background-color: #d1d5db;
+    /* Track color */
+    /* height: 4px; */
+    /* Track height */
+    /* border-radius: 8px; */
+    /* Rounded track corners */
+}
+
+.range-input::-moz-range-track {
+    background-color: #d1d5db;
+    /* height: 4px; */
+    /* border-radius: 8px; */
+}
+
+.range-input::-ms-track {
+    background-color: #d1d5db;
+    /* height: 4px; */
+    /* border-radius: 8px; */
+    border: none;
+    /* color: transparent; */
+    /* width: 100%; */
+}
+
+.range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    border:none;
+}
+
+.range-input::-moz-range-thumb {
+        appearance: none;
+    width: 15px;
+    height: 15px;
+    border:none;
+}
+
+.range-input::-ms-thumb {
+        appearance: none;
+    width: 15px;
+    height: 15px;
+    border:none;
+}
+
+
+/* Dynamic background color based on range value */
+/* .range-input:focus::-webkit-slider-runnable-track {
+    background: #2b7fff;
+}
+
+.range-input:focus::-moz-range-track {
+    background: #2b7fff;
+} */
+
+.range-input::-moz-range-progress {
+  height: 6px;
+  background: #2b7fff;
+  border-radius: 9999px;
 }
