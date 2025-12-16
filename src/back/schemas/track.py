@@ -1,0 +1,16 @@
+from pydantic import BaseModel
+from typing import Optional, List
+from datetime import datetime
+from .artist import ArtistSchema
+
+class TrackSchema(BaseModel):
+    idTrack: int
+    title: str
+    youtubeLink: str = None
+    listeningCount: int
+    durationSeconds: Optional[int] = None
+    createdAt: datetime
+    artists: List[ArtistSchema]
+
+    class Config:
+        orm_mode = True
