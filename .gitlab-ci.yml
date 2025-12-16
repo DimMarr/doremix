@@ -15,7 +15,7 @@ pre_commit_check:
       - .cache/pre-commit
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends python3 python3-pip
-    - pip3 install pre-commit
+    - pip3 install --break-system-packages pre-commit
   script:
     - echo "🔍 Exécution des hooks pre-commit sur l'ensemble des fichiers..."
     - |
