@@ -11,7 +11,7 @@ export function createText(props: TextProps): HTMLElement {
   text.className = className ?? "";
   if(disabled) text.classList.add("disabled");
   text.innerHTML = typeof children === 'string' ? children : '';
-  
+
   Object.assign(text, rest);
 
   return text;

@@ -1,13 +1,14 @@
 from pydantic import BaseModel
 from enum import Enum
-from typing import Optional
 from datetime import datetime
+
 
 class PlaylistVisibility(str, Enum):
     PUBLIC = "PUBLIC"
     PRIVATE = "PRIVATE"
     OPEN = "OPEN"
     SHARED = "SHARED"
+
 
 class PlaylistSchema(BaseModel):
     idPlaylist: int

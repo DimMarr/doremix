@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from models import Playlist
 
-class PlaylistController:
 
+class PlaylistController:
     @staticmethod
     def get_all_playlists(db: Session):
         return db.query(Playlist).all()

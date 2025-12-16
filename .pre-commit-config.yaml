@@ -16,7 +16,7 @@ repos:
     hooks:
     -   id: ruff
         verbose: true
-        args: [ --fix ]
+        args: [ --fix, --ignore, F401 ]
     -   id: ruff-format
         verbose: true
 

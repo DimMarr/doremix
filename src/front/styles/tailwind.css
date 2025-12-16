@@ -1,17 +1,16 @@
 @import "tailwindcss";
-@plugin "@tailwindcss/forms";   
-@plugin "@tailwindcss/typography";  
+@plugin "@tailwindcss/forms";
+@plugin "@tailwindcss/typography";
 
 body {
-    background: #0a0a0a !important;
-    color: #eee !important;
+  background: #0a0a0a !important;
+  color: #eee !important;
 }
 
-
-@theme {  
-    --destructive: red;
+@theme {
+  --destructive: red;
 }
 
 .mb-4 {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
