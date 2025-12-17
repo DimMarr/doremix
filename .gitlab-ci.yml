@@ -10,7 +10,7 @@ test:
   image: python:3.13
   script:
     - cd src/back
-    - pip install -r build/python/requirements.txt
+    - pip install -r ../../build/python/requirements.txt
     - pip install -r tests/requirements-test.txt
     - pytest tests/ -v --cov
 
