@@ -12,7 +12,7 @@ const playlists = [
         description:
             "Golden-era beats, raw flows, and timeless classics from the East to the West.",
         image: img1,
-        tracks: [new Track({idTrack: 1, youtubeLink: "dQw4w9WgXcQ", title: "Never Gonna Give You Up", artist: {id: 1,name: "Rick Astley"} }), new Track({idTrack: 1, youtubeLink: "RMXJ2PW8rrE", title: "Superhero"})],
+        tracks: [new Track({idTrack: 1, youtubeLink: "dQw4w9WgXcQ", title: "Never Gonna Give You Up", durationSeconds: 61, artist: {id: 1,name: "Rick Astley"} }), new Track({idTrack: 1, youtubeLink: "RMXJ2PW8rrE", title: "Superhero"})],
         visibility: Visibility.public,
     }),
     new Playlist({

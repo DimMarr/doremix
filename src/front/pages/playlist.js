@@ -1,4 +1,5 @@
 import { createText, createButton } from "../components/generics/index";
+import { secondsToReadableTime } from "../components/utils";
 
 export function renderPlaylistPage(container, playlist, trackPlayer, onBack) {
   if (!container) return;
@@ -97,7 +98,9 @@ export function renderPlaylistPage(container, playlist, trackPlayer, onBack) {
       textContent:
         track.artist && track.artist.name ? track.artist.name : "Unknown",
     });
-    const trackDuration = createText({ textContent: "3:00" }); // No duration in track model yet
+    const trackDuration = createText({
+      textContent: secondsToReadableTime(track.durationSeconds),
+    });
 
     trackRow.append(
       trackNumberContainer,

@@ -69,3 +69,17 @@ export function getDialogOverlayClasses(): string {
 export function getDialogContentClasses(): string {
   return 'fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-[hsl(var(--border))] bg-background p-6 shadow-lg duration-200 rounded-lg';
 }
+
+export function secondsToReadableTime(seconds: number): string {
+  if (isNaN(seconds) || seconds === null || seconds === undefined) {
+    return '∞';
+  }
+
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+
+  const formattedMinutes = String(minutes).padStart(1, '0');
+  const formattedSeconds = String(remainingSeconds).padStart(2, '0');
+
+  return `${formattedMinutes}:${formattedSeconds}`;
+}
