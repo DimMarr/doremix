@@ -54,10 +54,10 @@ export default async function init() {
     renderHomePage(container, player);
   });
 
-  router.register("/playlist/:id", (container, params, player) => {
+  router.register("/playlist/:id", async (container, params, player) => {
     const repo = new PlaylistRepository();
     const playlistId = parseInt(params.id, 10);
-    const playlist = repo.getPlaylistById(playlistId);
+    const playlist = await repo.getPlaylistById(playlistId);
     if (playlist) {
       renderPlaylistPage(container, playlist, player, () =>
         router.navigate("/"),

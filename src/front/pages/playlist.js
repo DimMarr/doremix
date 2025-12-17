@@ -94,9 +94,17 @@ export function renderPlaylistPage(container, playlist, trackPlayer, onBack) {
       textContent: track.title,
       className: "font-medium track-title",
     });
+
+    let artistTextContext = "";
+    for (let i = 0; i < track.artists.length; i++) {
+      artistTextContext += track.artists[i].name;
+      if (i < track.artists.length - 1) {
+        artistTextContext += ", ";
+      }
+    }
+
     const trackArtist = createText({
-      textContent:
-        track.artist && track.artist.name ? track.artist.name : "Unknown",
+      textContent: artistTextContext ?? "Unknown",
     });
     const trackDuration = createText({
       textContent: secondsToReadableTime(track.durationSeconds),

@@ -41,6 +41,12 @@ declare global {
     }
 }
 
+const getVideoId = (link: string) => {
+            // Si le lien contient "v=", on coupe, sinon on suppose que c'est déjà l'ID
+            const videoIdMatch = link.match(/[?&]v=([^&]+)/);
+            return videoIdMatch ? videoIdMatch[1] : link;
+        };
+
 export class YoutubePlayer {
     public playlist: Playlist;
     private tracks: Track[] = [];
@@ -57,12 +63,6 @@ export class YoutubePlayer {
             throw new Error("Tracks list cannot be empty");
         }
 
-
-        const getVideoId = (link: string) => {
-            // Si le lien contient "v=", on coupe, sinon on suppose que c'est déjà l'ID
-            const videoIdMatch = link.match(/[?&]v=([^&]+)/);
-            return videoIdMatch ? videoIdMatch[1] : link;
-        };
 
         // Initialise le player youtube avec le player.
         this.audioPlayer = new window.YT.Player(youtubePlayerHtmlElement, {
@@ -232,7 +232,7 @@ export class YoutubePlayer {
 
         // Load and play video using YT.Player
         if (this.audioPlayer && this.audioPlayer.loadVideoById) {
-            this.audioPlayer.loadVideoById(track.youtubeLink);
+            this.audioPlayer.loadVideoById(getVideoId(track.youtubeLink));
             this.playVideo();
         }
 
