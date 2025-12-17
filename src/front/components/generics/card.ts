@@ -7,12 +7,19 @@ export interface CardProps {
   content?: string;
   className: string;
   onClickPlay?: () => void;
+  href?: string;
 }
 
-export function createCard(props: CardProps): HTMLDivElement {
-  const { image, title, content, icon, className, onClickPlay, ...rest } = props;
+export function createCard(
+  props: CardProps,
+): HTMLDivElement | HTMLAnchorElement {
+  const { image, title, content, icon, className, onClickPlay, href, ...rest } =
+    props;
 
-  const card = document.createElement("div");
+  const card = href ? document.createElement("a") : document.createElement("div");
+  if (href) {
+    (card as HTMLAnchorElement).href = href;
+  }
   card.className = cn(getCardClasses(), className);
 
   const headerDiv = document.createElement("div");
@@ -33,6 +40,7 @@ export function createCard(props: CardProps): HTMLDivElement {
         "absolute bottom-2 right-2 w-[40px] w-[40px] bg-[#2b7fff] p-2 rounded-[999px] cursor-pointer";
       if (onClickPlay) {
         iconElement.addEventListener("click", (e) => {
+          e.preventDefault();
           e.stopPropagation();
           onClickPlay();
         });

@@ -1,53 +1,11 @@
-import {
-  createButton,
-  createCard,
-  createText,
-  createHeader,
-  createFooter,
-} from "../components/generics/index";
-import { createTrackPlayer } from "../components/playlists";
-import { createTrackPlayerContainer } from "../components/playlists/track-player";
+import { createCard } from "../components/generics/index";
 import PlaylistRepository from "../repositories/playlistRepository";
-import YoutubePlayer from "../store/track-player";
-import { waitForYouTubeAPI } from "../utils/youtube-api-loader";
+import { renderPlaylistPage } from "./playlist.js";
+import { createMainLayout } from "../layouts/MainLayout.js";
+import { Router } from "../router.js";
 
-export default function init() {
-  const root = document.getElementById("app") || document.body;
-  root.innerHTML = "";
-
-  // App wrapper
-  const appWrapper = document.createElement("div");
-  appWrapper.className = "min-h-screen bg-background text-foreground px-6";
-
-  // Header
-  const header = createHeader({ header: {} });
-  const title = createText({
-    className: "font-bold text",
-    textContent: "Dorémix",
-  });
-
-  header.appendChild(title);
-
-  const rowButtons = document.createElement("div");
-  rowButtons.className = "flex gap-2";
-
-  const signBtn = createButton({
-    textContent: "Login",
-    variant: "ghost",
-    size: "sm",
-  });
-  const signupBtn = createButton({
-    textContent: "Signup",
-    variant: "destructive",
-    size: "sm",
-  });
-  rowButtons.appendChild(signBtn);
-  rowButtons.appendChild(signupBtn);
-
-  header.appendChild(rowButtons);
-  appWrapper.appendChild(header);
-
-  const svg1 = new URL("../assets/icons/play.svg", import.meta.url).href;
+async function renderHomePage(container, trackPlayer) {
+  container.innerHTML = "";
 
   const tracksCard = createCard({
     title: "Top Tracks",
@@ -57,28 +15,10 @@ export default function init() {
     className: "flex p-0! gap-10 mt-4 mb-2 overflow-scroll",
   });
 
-  const trackPlayerContainer = createTrackPlayerContainer();
-  appWrapper.appendChild(trackPlayerContainer);
-
-  // Récupérations des playlists
   const repo = new PlaylistRepository();
-  const playlists = repo.getPlaylists();
+  const playlists = await repo.getPlaylists();
+  const svg1 = new URL("../assets/icons/play.svg", import.meta.url).href;
 
-  let trackPlayer = undefined;
-
-  waitForYouTubeAPI().then(() => {
-    trackPlayer = new YoutubePlayer({
-      playlist: playlists[0],
-      youtubePlayerHtmlElement: trackPlayerContainer,
-    });
-    const playerUI = createTrackPlayer({
-      youtubePlayer: trackPlayer,
-      trackPlayerElement: trackPlayerContainer,
-    });
-    appWrapper.appendChild(playerUI);
-  });
-
-  // On créeer dynamiquement les cards pour chaque playlist
   playlists.forEach((p) => {
     const card = createCard({
       title: p.name || "",
@@ -86,27 +26,48 @@ export default function init() {
       content: p.description || "",
       icon: svg1,
       className: "px-0! max-w-[200px] md:max-w-[300px] shrink-0",
-      // Lorsqu'on clique sur le bouton play d'une playlist on doit jouer la playlist.
       onClickPlay: () => {
-        trackPlayer.setPlaylist(p);
+        if (trackPlayer.playlist.idPlaylist !== p.idPlaylist) {
+          trackPlayer.setPlaylist(p);
+        }
         trackPlayer.playTrack(0);
-
-        // Affichage du track player quand on clique sur le bouton play d'une playlist.
-        document.querySelector("#playerContainer").classList.remove("hidden");
-        document.querySelector("#playerContainer").classList.add("flex");
       },
     });
-    tracksContentCard.appendChild(card);
+
+    const link = document.createElement("a");
+    link.href = `/playlist/${p.idPlaylist}`;
+    link.setAttribute("data-link", "");
+    link.appendChild(card);
+
+    tracksContentCard.appendChild(link);
   });
 
   tracksCard.appendChild(tracksContentCard);
+  container.appendChild(tracksCard);
+}
 
-  appWrapper.appendChild(tracksCard);
+export default async function init() {
+  const { mainContent, trackPlayer } = await createMainLayout();
+  const router = new Router(mainContent, trackPlayer);
 
-  // Append trackplayer and keep a reference for play control
+  router.register("/", (container, params, player) => {
+    renderHomePage(container, player);
+  });
 
-  // Append app to root
-  root.appendChild(appWrapper);
+  router.register("/playlist/:id", async (container, params, player) => {
+    const repo = new PlaylistRepository();
+    const playlistId = parseInt(params.id, 10);
+    const playlist = await repo.getPlaylistById(playlistId);
+    if (playlist) {
+      renderPlaylistPage(container, playlist, player, () =>
+        router.navigate("/"),
+      );
+    } else {
+      container.innerHTML = "Playlist not found";
+    }
+  });
+
+  router.onRouteChange();
 }
 
 init();
