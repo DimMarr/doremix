@@ -40,6 +40,7 @@ export function createCard(
         "absolute bottom-2 right-2 w-[40px] w-[40px] bg-[#2b7fff] p-2 rounded-[999px] cursor-pointer";
       if (onClickPlay) {
         iconElement.addEventListener("click", (e) => {
+          e.preventDefault();
           e.stopPropagation();
           onClickPlay();
         });
