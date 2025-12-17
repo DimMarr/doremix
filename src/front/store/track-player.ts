@@ -57,11 +57,18 @@ export class YoutubePlayer {
             throw new Error("Tracks list cannot be empty");
         }
 
+
+        const getVideoId = (link: string) => {
+            // Si le lien contient "v=", on coupe, sinon on suppose que c'est déjà l'ID
+            const videoIdMatch = link.match(/[?&]v=([^&]+)/);
+            return videoIdMatch ? videoIdMatch[1] : link;
+        };
+
         // Initialise le player youtube avec le player.
         this.audioPlayer = new window.YT.Player(youtubePlayerHtmlElement, {
             height: "0",
             width: "0",
-            videoId: this.tracks[0].youtubeLink,
+            videoId: getVideoId(this.tracks[0]?.youtubeLink ?? ""),
             playerVars: {
                 playsinline: 1,
                 controls: 0,

@@ -50,7 +50,7 @@ export async function createMainLayout() {
   // This is problematic, we need playlists for the youtube player
   // I'll just use the first one for now.
   const repo = new PlaylistRepository();
-  const playlists = repo.getPlaylists();
+  const playlists = await repo.getPlaylists();
 
   await waitForYouTubeAPI();
 

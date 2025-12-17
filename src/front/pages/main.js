@@ -4,7 +4,7 @@ import { renderPlaylistPage } from "./playlist.js";
 import { createMainLayout } from "../layouts/MainLayout.js";
 import { Router } from "../router.js";
 
-function renderHomePage(container, trackPlayer) {
+async function renderHomePage(container, trackPlayer) {
   container.innerHTML = "";
 
   const tracksCard = createCard({
@@ -16,7 +16,7 @@ function renderHomePage(container, trackPlayer) {
   });
 
   const repo = new PlaylistRepository();
-  const playlists = repo.getPlaylists();
+  const playlists = await repo.getPlaylists();
   const svg1 = new URL("../assets/icons/play.svg", import.meta.url).href;
 
   playlists.forEach((p) => {
