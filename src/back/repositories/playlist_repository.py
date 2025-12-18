@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from models.playlist import Playlist
+from models.track_playlist import TrackPlaylist
 from typing import Optional, List
 
 
@@ -40,3 +41,18 @@ class PlaylistRepository:
             db.commit()
             db.refresh(playlist)
         return playlist
+
+    @staticmethod
+    def remove_track(db: Session, playlist_id: int, track_id: int) -> bool:
+        track = (
+            db.query(TrackPlaylist)
+            .filter(TrackPlaylist.idPlaylist == playlist_id)
+            .filter(TrackPlaylist.idTrack == track_id)
+            .first()
+        )
+
+        if track:
+            db.delete(track)
+            db.commit()
+            return True
+        return False

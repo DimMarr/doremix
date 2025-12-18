@@ -55,3 +55,10 @@ def get_cover_image(filename: str):
         raise HTTPException(status_code=404, detail="Image not found")
 
     return FileResponse(filepath)
+
+
+@router.delete("/{playlist_id}/track/{track_id}", response_model=PlaylistSchema)
+def remove_track(playlist_id: int, track_id: int, db: Session = Depends(get_db)):
+    updated_playlist = PlaylistController.remove_track(db, playlist_id, track_id)
+
+    return updated_playlist
