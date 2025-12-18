@@ -30,6 +30,35 @@ export function renderPlaylistPage(container, playlist, trackPlayer, onBack) {
   playlistImage.className = "w-48 h-48 rounded-md object-cover";
   playlistInfo.appendChild(playlistImage);
 
+  // TODO: Add upload cover button
+  // Instructions for implementation:
+  // 1. Import the utility: import { triggerCoverUpload } from '../utils/upload-cover';
+  // 2. Create upload button (example below)
+  // 3. Add click handler
+  //
+  // Example code:
+  // const uploadButton = createButton({
+  //   textContent: 'Upload Cover',
+  //   variant: 'outline',
+  //   size: 'sm'
+  // });
+  //
+  // uploadButton.addEventListener('click', () => {
+  //   triggerCoverUpload(
+  //     playlist.idPlaylist,
+  //     (newImageUrl) => {
+  //       playlistImage.src = newImageUrl;
+  //       console.log('Cover uploaded successfully');
+  //     },
+  //     (error) => {
+  //       console.error('Upload failed:', error);
+  //       alert('Upload failed: ' + error);
+  //     }
+  //   );
+  // });
+  //
+  // playlistInfo.appendChild(uploadButton);
+
   const playlistDetails = document.createElement("div");
   const playlistTitle = createText({
     textContent: playlist.name,
