@@ -7,13 +7,13 @@
 uv pip install -r build/python/requirements.txt
 
 # Installer les dépendances de test
-uv pip install -r tests/requirements-test.txt
+uv pip install -r src/back/tests/requirements-test.txt
 
 # Lancer tous les tests
-uv run pytest tests/ -v
+uv run pytest src/back/tests/ -v
 
 # Avec couverture
-uv run pytest tests/ --cov -v
+uv run pytest src/back/tests/ --cov -v
 ```
 
 ## 📊 Status
