@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from repositories import PlaylistRepository
 from models import Playlist
-from fastapi import HTTPException, UploadFile
+from fastapi import HTTPException, UploadFile, Response
 from utils import save_cover_image
 
 
@@ -37,3 +37,17 @@ class PlaylistController:
         )
 
         return updated_playlist
+
+    @staticmethod
+    def remove_track(db: Session, playlist_id: int, track_id: int):
+        playlist = PlaylistRepository.get_by_id(db, playlist_id)
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+        if not PlaylistRepository.remove_track(db, playlist_id, track_id):
+            raise HTTPException(
+                status_code=404, detail="This track is not in the current playlist"
+            )
+
+        db.refresh(playlist)
+
+        return playlist
