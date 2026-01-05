@@ -3,7 +3,12 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from services.playlist import get_all_playlists, get_playlist, get_playlist_tracks
+from services.playlist import (
+    get_all_playlists,
+    get_playlist,
+    get_playlist_tracks,
+    remove_track,
+)
 
 app = typer.Typer()
 console = Console()
@@ -63,3 +68,8 @@ def tracks(id: str):
         table.add_row(id, title)
 
     console.print(table)
+
+
+@app.command(help="Remove a track from a playlist.")
+def remove(playlist_id: str, track_id: str):
+    print(remove_track(playlist_id, track_id))

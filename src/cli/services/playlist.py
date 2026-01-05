@@ -29,3 +29,10 @@ def get_playlist_tracks(id: str) -> list[TrackSchema]:
 
     # Create a TrackSchema Object from raw JSON data
     return [TrackSchema(**item) for item in data]
+
+
+def remove_track(playlist_id: str, track_id: str):
+    res = requests.delete(f"{API_BASE_URL}/playlists/{playlist_id}/track/{track_id}")
+    if res.status_code == 404:
+        return "Track not found in playlist."
+    return "Track successfully deleted."
