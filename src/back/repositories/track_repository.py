@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from models.track import Track
+from models import Track
 from typing import Optional, List
 
 

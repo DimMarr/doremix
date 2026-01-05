@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from models.playlist import Playlist
+from models import Playlist
 from models.track_playlist import TrackPlaylist
 from typing import Optional, List
 
