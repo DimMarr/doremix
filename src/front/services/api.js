@@ -26,6 +26,19 @@ export async function fetchPlaylistTracks(playlistId) {
   return response.json();
 }
 
+export async function removeTrackFromPlaylist(playlistId, trackId) {
+  const response = await fetch(
+    `${API_BASE_URL}/playlists/${playlistId}/track/${trackId}`,
+    {
+      method: "DELETE",
+    },
+  );
+  if (!response.ok) {
+    throw new Error("Failed to remove track from playlist");
+  }
+  return response.json();
+}
+
 export async function uploadPlaylistCover(playlistId, imageFile) {
   const formData = new FormData();
   formData.append("file", imageFile);

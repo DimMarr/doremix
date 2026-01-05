@@ -1,70 +1,32 @@
 import { createText, createButton } from "../components/generics/index";
 import { secondsToReadableTime } from "../components/utils";
+import { removeTrackFromPlaylist } from "../services/api";
 
-export function renderPlaylistPage(container, playlist, trackPlayer, onBack) {
-  if (!container) return;
-
-  container.innerHTML = ""; // Clear the container
-
-  const page = document.createElement("div");
-  page.className = "";
-
-  // Header
-  const header = document.createElement("div");
-  header.className = "flex items-center mb-8 gap-4";
-  const backButton = createButton({
-    textContent: "← Back",
-    variant: "ghost",
-    size: "sm",
-  });
-  backButton.addEventListener("click", onBack);
-
-  header.appendChild(backButton);
-  page.appendChild(header);
-
-  // Playlist Info
-  const playlistInfo = document.createElement("div");
-  playlistInfo.className = "flex items-center gap-8 my-8";
-  const playlistImage = document.createElement("img");
-  playlistImage.src = playlist.image;
-  playlistImage.className = "w-48 h-48 rounded-md object-cover";
-  playlistInfo.appendChild(playlistImage);
-
-  const playlistDetails = document.createElement("div");
-  const playlistTitle = createText({
-    textContent: playlist.name,
-    size: "4xl",
-    className: "font-bold",
-  });
-  const playlistDescription = createText({
-    textContent: playlist.description,
-    size: "lg",
-    className: "text-muted-foreground",
-  });
-  playlistDetails.appendChild(playlistTitle);
-  playlistDetails.appendChild(playlistDescription);
-  playlistInfo.appendChild(playlistDetails);
-  page.appendChild(playlistInfo);
-
-  // Track list
-  const trackListContainer = document.createElement("div");
-  trackListContainer.className = "flex flex-col gap-4";
+function renderTrackList(trackListContainer, playlist, trackPlayer) {
+  trackListContainer.innerHTML = "";
 
   const trackListHeader = document.createElement("div");
   trackListHeader.className =
-    "grid grid-cols-[2rem_1fr_1fr_4rem] gap-4 px-4 text-muted-foreground";
+    "grid grid-cols-[2rem_1fr_1fr_4rem_3rem] gap-4 px-4 text-muted-foreground";
   const numHeader = createText({ textContent: "#" });
   const titleHeader = createText({ textContent: "Title" });
   const artistHeader = createText({ textContent: "Artist" });
   const durationHeader = createText({ textContent: "Time" });
-  trackListHeader.append(numHeader, titleHeader, artistHeader, durationHeader);
+  const actionsHeader = createText({ textContent: "" });
+  trackListHeader.append(
+    numHeader,
+    titleHeader,
+    artistHeader,
+    durationHeader,
+    actionsHeader,
+  );
   trackListContainer.appendChild(trackListHeader);
 
   const tracks = playlist.tracks || [];
   tracks.forEach((track, index) => {
     const trackRow = document.createElement("div");
     trackRow.className =
-      "grid grid-cols-[2rem_1fr_1fr_4rem] items-center gap-4 px-4 py-2 rounded-md transition-colors duration-200 hover:bg-gray-800 cursor-pointer";
+      "group grid grid-cols-[2rem_1fr_1fr_4rem_3rem] items-center gap-4 px-4 py-2 rounded-md transition-colors duration-200 hover:bg-gray-800 cursor-pointer";
 
     trackRow.id = `track-${index}`;
 
@@ -110,16 +72,98 @@ export function renderPlaylistPage(container, playlist, trackPlayer, onBack) {
       textContent: secondsToReadableTime(track.durationSeconds),
     });
 
+    const deleteButton = document.createElement("button");
+    deleteButton.className =
+      "opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500 flex items-center justify-center cursor-pointer";
+    deleteButton.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18"></path>
+        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+        </svg>
+      `;
+
+    deleteButton.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      try {
+        await removeTrackFromPlaylist(playlist.idPlaylist, track.idTrack);
+
+        trackRow.remove();
+
+        const allRows = trackListContainer.querySelectorAll('[id^="track-"]');
+        allRows.forEach((row, newIndex) => {
+          row.id = `track-${newIndex}`;
+          const numberElement = row.querySelector(".track-number");
+          if (numberElement) {
+            numberElement.textContent = `${newIndex + 1}`;
+          }
+        });
+
+        playlist.tracks.splice(index, 1);
+      } catch (error) {
+        console.error("Failed to delete track:", error);
+      }
+    });
+
     trackRow.append(
       trackNumberContainer,
       trackTitle,
       trackArtist,
       trackDuration,
+      deleteButton,
     );
     trackListContainer.appendChild(trackRow);
   });
+}
+
+export function renderPlaylistPage(container, playlist, trackPlayer, onBack) {
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const page = document.createElement("div");
+  page.className = "";
+
+  const header = document.createElement("div");
+  header.className = "flex items-center mb-8 gap-4";
+  const backButton = createButton({
+    textContent: "← Back",
+    variant: "ghost",
+    size: "sm",
+  });
+  backButton.addEventListener("click", onBack);
+
+  header.appendChild(backButton);
+  page.appendChild(header);
+
+  const playlistInfo = document.createElement("div");
+  playlistInfo.className = "flex items-center gap-8 my-8";
+  const playlistImage = document.createElement("img");
+  playlistImage.src = playlist.image;
+  playlistImage.className = "w-48 h-48 rounded-md object-cover";
+  playlistInfo.appendChild(playlistImage);
+
+  const playlistDetails = document.createElement("div");
+  const playlistTitle = createText({
+    textContent: playlist.name,
+    size: "4xl",
+    className: "font-bold",
+  });
+  const playlistDescription = createText({
+    textContent: playlist.description,
+    size: "lg",
+    className: "text-muted-foreground",
+  });
+  playlistDetails.appendChild(playlistTitle);
+  playlistDetails.appendChild(playlistDescription);
+  playlistInfo.appendChild(playlistDetails);
+  page.appendChild(playlistInfo);
+
+  const trackListContainer = document.createElement("div");
+  trackListContainer.className = "flex flex-col gap-4";
+
+  renderTrackList(trackListContainer, playlist, trackPlayer);
 
   page.appendChild(trackListContainer);
-
   container.appendChild(page);
 }
