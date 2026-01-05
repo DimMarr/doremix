@@ -1,6 +1,6 @@
 Need : uv
 
 >> cd src/cli
->> source .venv/bin/activate
 >> uv sync
+>> source .venv/bin/activate
 >> python3 main.py
