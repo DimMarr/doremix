@@ -1,7 +1,11 @@
 from sqlalchemy.orm import Session
 from models import Playlist
 from models.track_playlist import TrackPlaylist
+from models.track import Track
+from models.artist import Artist
 from typing import Optional, List
+from repositories.track_repository import TrackRepository
+from utils.youtube_utils import get_youtube_video_duration, get_youtube_video_author
 
 
 class PlaylistRepository:
@@ -56,3 +60,35 @@ class PlaylistRepository:
             db.commit()
             return True
         return False
+
+    @staticmethod
+    def add_track(
+        db: Session,
+        title: str,
+        youtubeLink: str,
+        playlist_id: int,
+    ):
+        track = TrackRepository.get_by_youtube_link(db, youtubeLink)
+
+        if not track:
+            durationSeconds = get_youtube_video_duration(youtubeLink)
+            author = get_youtube_video_author(youtubeLink)
+            if durationSeconds is None:
+                durationSeconds = 0
+            track = TrackRepository.create(
+                db,
+                Track(
+                    title=title,
+                    youtubeLink=youtubeLink,
+                    durationSeconds=durationSeconds,
+                    artists=[Artist(name=author)],
+                ),
+            )
+            if not track:
+                return None
+
+        trackPlaylist = TrackPlaylist(idPlaylist=playlist_id, idTrack=track.idTrack)
+        db.add(trackPlaylist)
+        db.commit()
+        db.refresh(trackPlaylist)
+        return trackPlaylist and track
