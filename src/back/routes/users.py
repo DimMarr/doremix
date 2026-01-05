@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from controllers import UserController
@@ -15,8 +15,8 @@ router = APIRouter(prefix="/users", tags=["Users"])
     summary="Lister tous les utilisateurs",
     description="Retourne la liste complète des utilisateurs enregistrés.",
 )
-def get_users(db: Session = Depends(get_db)):
-    users = UserController.get_all_users(db)
+async def get_users(db: AsyncSession = Depends(get_db)):
+    users = await UserController.get_all_users(db)
     return users
 
 
@@ -26,8 +26,8 @@ def get_users(db: Session = Depends(get_db)):
     summary="Récupérer un utilisateur",
     description="Retourne les informations détaillées d'un utilisateur à partir de son identifiant.",
 )
-def get_user(idUser: int, db: Session = Depends(get_db)):
-    user = UserController.get_user(db, idUser)
+async def get_user(idUser: int, db: AsyncSession = Depends(get_db)):
+    user = await UserController.get_user(db, idUser)
     return user
 
 
@@ -37,6 +37,6 @@ def get_user(idUser: int, db: Session = Depends(get_db)):
     summary="Récupérer les playlists d'un utilisateur",
     description="Retourne la liste des playlists associées à un utilisateur spécifique.",
 )
-def get_user_playlists(idUser: int, db: Session = Depends(get_db)):
-    playlists = UserController.get_user_playlists(db, idUser)
+async def get_user_playlists(idUser: int, db: AsyncSession = Depends(get_db)):
+    playlists = await UserController.get_user_playlists(db, idUser)
     return playlists

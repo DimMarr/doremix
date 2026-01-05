@@ -1,19 +1,21 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from models import User
+from repositories import UserRepository
 
 
 class UserController:
     @staticmethod
-    def get_all_users(db: Session):
-        return db.query(User).all()
+    async def get_all_users(db: AsyncSession):
+        return await UserRepository.get_all(db)
 
     @staticmethod
-    def get_user(db: Session, idUser: int):
-        return db.query(User).filter(User.idUser == idUser).first()
+    async def get_user(db: AsyncSession, idUser: int):
+        return await UserRepository.get_by_id(db, idUser)
 
     @staticmethod
-    def get_user_playlists(db: Session, idUser: int):
-        user = db.query(User).filter(User.idUser == idUser).first()
+    async def get_user_playlists(db: AsyncSession, idUser: int):
+        user = await UserRepository.get_by_id(db, idUser)
         if user:
             return user.playlists
         return []
+
