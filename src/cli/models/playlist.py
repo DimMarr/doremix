@@ -20,4 +20,3 @@ class PlaylistSchema(BaseModel):
     coverImage: str | None = None
     createdAt: datetime
     updatedAt: datetime
-

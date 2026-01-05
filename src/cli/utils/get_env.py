@@ -3,5 +3,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 def get_env(name: str):
     return os.getenv(name)

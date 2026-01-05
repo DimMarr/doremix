@@ -8,6 +8,7 @@ from services.playlist import get_all_playlists, get_playlist, get_playlist_trac
 app = typer.Typer()
 console = Console()
 
+
 @app.command(help="List all playlists.")
 def list():
     playlists = get_all_playlists()
@@ -20,18 +21,19 @@ def list():
     for playlist in playlists:
         id = str(playlist.idPlaylist)
         title = playlist.name
-        
+
         table.add_row(id, title)
 
     console.print(table)
 
+
 @app.command(help="Get playlist infos.")
-def get(id: int):
+def get(id: str):
     try:
         playlist = get_playlist(id)
-    except:
+    except typer.BadParameter:
         raise typer.BadParameter(f"Playlist n°{id} not found.")
-    
+
     table = Table(show_header=False)
 
     table.add_column("Field", style="cyan")
@@ -44,8 +46,9 @@ def get(id: int):
 
     console.print(table)
 
+
 @app.command(help="List all track from a playlist.")
-def tracks(id: int):
+def tracks(id: str):
     tracks = get_playlist_tracks(id)
 
     table = Table(title="All tracks")
@@ -56,7 +59,7 @@ def tracks(id: int):
     for track in tracks:
         id = str(track.idTrack)
         title = track.title
-        
+
         table.add_row(id, title)
 
     console.print(table)

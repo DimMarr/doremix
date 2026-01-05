@@ -6,4 +6,3 @@ setup.sh
 __pycache__/
 *.pyc
 *.pyo
-.venv/
