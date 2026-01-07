@@ -1,6 +1,7 @@
 import { Button } from "@components/generics/index";
 import { TrackListHeader } from "@components/tracks/header";
 import { TrackRow } from "@components/tracks/row";
+import { removeTrackFromPlaylist } from "@services/api";
 
 function TrackList(playlist, trackPlayer) {
   const tracks = playlist.tracks || [];
@@ -88,10 +89,16 @@ export function PlaylistDetailPage(container, playlist, trackPlayer, onBack) {
       if (deleteButton) {
         e.stopPropagation();
         const trackIndex = Number(deleteButton.getAttribute('data-track-index'));
-        if (!Number.isNaN(trackIndex) && proxyPlaylist.tracks) {
-          proxyPlaylist.tracks = proxyPlaylist.tracks.filter((_, i) => i !== trackIndex);
-        }
-        return;
+
+        removeTrackFromPlaylist(
+          proxyPlaylist.idPlaylist,
+          proxyPlaylist.tracks[trackIndex].idTrack,
+        ).then(() => {
+        }).catch((err) => {
+          console.error('Failed to remove track from playlist:', err);
+        });
+
+        proxyPlaylist.tracks = proxyPlaylist.tracks.filter((_, i) => i !== trackIndex);
       }
 
       if (row) {

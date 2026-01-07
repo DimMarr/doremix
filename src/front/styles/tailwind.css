@@ -10,6 +10,8 @@ body {
 @theme {
   --color-primary: #3b82f6;
   --color-primary-foreground: #ffffff;
+  --color-success: #22c55e;
+  --color-success-foreground: #ffffff;
   --color-destructive: #ef4444;
   --color-destructive-foreground: #ffffff;
   --color-secondary: #64748b;
