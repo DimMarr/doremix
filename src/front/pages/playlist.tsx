@@ -34,7 +34,7 @@ export function PlaylistDetailPage(container, playlist, trackPlayer, onBack) {
           ← Back
         </Button>
       </div>
-      
+
       <div class="flex items-center gap-8 my-8">
         <img src={playlist.image} class="w-48 h-48 rounded-md object-cover" alt={playlist.name} />
         <div>

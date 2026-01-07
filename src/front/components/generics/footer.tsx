@@ -10,7 +10,7 @@ export function Footer() {
             All systems operational
           </div>
         </div>
-        
+
         <div class="flex flex-1 justify-between flex-col md:flex-row md:justify-end gap-5 md:gap-[120px]">
           <div class="link-section flex flex-col gap-2">
             <p class="font-bold">Navigation</p>
@@ -25,7 +25,7 @@ export function Footer() {
           </div>
         </div>
       </div>
-      
+
       <div>© Dorémix 2025 — DO3 Inc.</div>
     </footer>
   );

@@ -10,7 +10,7 @@ export interface BadgeProps {
 
 export function Badge({ variant = 'default', className = '', text, ...rest }: BadgeProps) {
   const badgeClass = cn(getBadgeClasses(variant), className);
-  
+
   return (
     <span class={badgeClass} {...rest}>
       {text}
