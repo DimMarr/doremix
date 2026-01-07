@@ -1,7 +1,4 @@
-import { createPauseIcon } from '../components/generics/pause-icon';
-import {createPlayIcon } from '../components/generics/play-icon';
-import Playlist from '../models/playlist';
-import { Track } from '../models/track';
+import { Track, Playlist } from '@models/index';
 
 interface YTPlayer {
     loadVideoById(videoId: string): void;
@@ -16,7 +13,7 @@ interface YTPlayer {
 
 interface YoutubePlayerProps {
     playlist: Playlist;
-    youtubePlayerHtmlElement: HTMLElement;
+    youtubePlayerHtmlElementId: string;
 }
 
 enum YoutubePlayerState {
@@ -53,9 +50,10 @@ export class YoutubePlayer {
     private currentPlayingTrackIndex: number = 0;
     private intervalChangeVideo: NodeJS.Timeout | null = null;
     private audioPlayer: YTPlayer;
+    private isPlayerReady: boolean = false;
 
     constructor(
-        { youtubePlayerHtmlElement, playlist }: YoutubePlayerProps,
+        { youtubePlayerHtmlElementId, playlist }: YoutubePlayerProps,
     ) {
         this.playlist = playlist;
         this.tracks = this.playlist.tracks;
@@ -63,9 +61,8 @@ export class YoutubePlayer {
             throw new Error("Tracks list cannot be empty");
         }
 
-
         // Initialise le player youtube avec le player.
-        this.audioPlayer = new window.YT.Player(youtubePlayerHtmlElement, {
+        this.audioPlayer = new window.YT.Player(youtubePlayerHtmlElementId, {
             height: "0",
             width: "0",
             videoId: getVideoId(this.tracks[0]?.youtubeLink ?? ""),
@@ -74,7 +71,9 @@ export class YoutubePlayer {
                 controls: 0,
             },
             events: {
-                onReady: () => {},
+                onReady: () => {
+                    this.isPlayerReady = true;
+                },
                 onStateChange: (event: { data: number }): void => {
                     // Quand le track se termine on passe au praochine track automatiquement
                     if (event.data === window.YT.PlayerState.ENDED) {
@@ -103,7 +102,11 @@ export class YoutubePlayer {
         }
     }
 
-    private setTimer(): void {
+    public setTimer(): void {
+        if (!this.isPlayerReady) {
+            console.warn('Cannot set timer: Player not ready yet');
+            return;
+        }
         const trackTimerId = "trackTimer";
         const trackTimer = document.getElementById(trackTimerId) as
             | HTMLInputElement
@@ -116,12 +119,9 @@ export class YoutubePlayer {
             return;
         }
 
-        if(!trackTimer.value ){
-            trackTimer.value = "0";
-        }
-        trackTimer.min = "0";
-        trackTimer.max = String(this.audioPlayer.getDuration());
-
+        if(!trackTimer.value ) trackTimer.value = "0";
+        if(!trackTimer.min) trackTimer.min = "0";
+        if(!trackTimer.max) trackTimer.max = String(this.audioPlayer.getDuration());
 
         trackTotalTime.textContent = new Date(this.audioPlayer.getDuration() * 1000).toISOString().substr(14, 5);
 
@@ -137,8 +137,16 @@ export class YoutubePlayer {
         }, 32);
     }
 
+    private pauseTimer(): void {
+
+    }
+
     // Audio controls
     changeTrackState(): void {
+        if (!this.isPlayerReady) {
+            console.warn('Player not ready yet');
+            return;
+        }
         this.setTimer();
         if (this.audioPlayer && this.audioPlayer.getPlayerState) {
             if(this.audioPlayer.getPlayerState() === YoutubePlayerState.UNSTARTED || this.audioPlayer.getPlayerState() === YoutubePlayerState.CUED){
@@ -155,17 +163,25 @@ export class YoutubePlayer {
     }
 
     playVideo(): void {
+        if (!this.isPlayerReady) {
+            console.warn('Cannot play: Player not ready yet');
+            return;
+        }
         if (this.audioPlayer && this.audioPlayer.playVideo) {
-            document.querySelector("#playBtn").innerHTML = "";
-            document.querySelector("#playBtn").appendChild(createPauseIcon());
+            document.querySelector("#playBtn").classList.add("hidden");
+            document.querySelector("#pauseBtn").classList.remove("hidden");
             this.audioPlayer.playVideo();
         }
     }
 
     pauseVideo(): void {
+        if (!this.isPlayerReady) {
+            console.warn('Cannot pause: Player not ready yet');
+            return;
+        }
         if (this.audioPlayer && this.audioPlayer.pauseVideo) {
-            document.querySelector("#playBtn").innerHTML = "";
-            document.querySelector("#playBtn").appendChild(createPlayIcon());
+            document.querySelector("#pauseBtn").classList.add("hidden");
+            document.querySelector("#playBtn").classList.remove("hidden");
             this.audioPlayer.pauseVideo();
         }
     }
@@ -191,6 +207,10 @@ export class YoutubePlayer {
     }
 
     playTrack(index: number): void {
+        if (!this.isPlayerReady) {
+            console.warn('Cannot play track: Player not ready yet');
+            return;
+        }
         // Validate index
         if (index < 0 || index >= this.tracks.length) {
             console.warn(`Invalid track index: ${index}`);
@@ -198,7 +218,6 @@ export class YoutubePlayer {
         }
 
         const track = this.tracks[index];
-        console.log(track);
 
         // Update UI - remove playing state from previous track
         if (this.currentPlayingTrackIndex >= 0) {
@@ -258,7 +277,7 @@ export class YoutubePlayer {
     }
 
     // Cleanup method to clear interval when destroying the player
-    destroy(): void {
+    stopTimer(): void {
         if (this.intervalChangeVideo) {
             clearInterval(this.intervalChangeVideo);
             this.intervalChangeVideo = null;
