@@ -11,6 +11,9 @@ import os
 router = APIRouter(prefix="/playlists", tags=["Playlists"])
 
 
+# =========================
+# GET routes
+# =========================
 @router.get(
     "/",
     response_model=List[PlaylistSchema],
@@ -39,14 +42,6 @@ async def get_playlist_tracks(playlist_id: int, db: Session = Depends(get_db)):
     return tracks
 
 
-@router.post("/{playlist_id}/cover", response_model=PlaylistSchema)
-async def upload_playlist_cover(
-    playlist_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)
-):
-    updated_playlist = await PlaylistController.upload_cover(db, playlist_id, file)
-    return updated_playlist
-
-
 @router.get("/covers/{filename}")
 async def get_cover_image(filename: str):
     filepath = f"/app/uploads/covers/{filename}"
@@ -57,8 +52,22 @@ async def get_cover_image(filename: str):
     return FileResponse(filepath)
 
 
+# =========================
+# POST routes
+# =========================
+@router.post("/{playlist_id}/cover", response_model=PlaylistSchema)
+async def upload_playlist_cover(
+    playlist_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)
+):
+    updated_playlist = await PlaylistController.upload_cover(db, playlist_id, file)
+    return updated_playlist
+
+
+# =========================
+# DELETE routes
+# =========================
 @router.delete("/{playlist_id}/track/{track_id}", response_model=PlaylistSchema)
-def remove_track(playlist_id: int, track_id: int, db: Session = Depends(get_db)):
-    updated_playlist = PlaylistController.remove_track(db, playlist_id, track_id)
+async def remove_track(playlist_id: int, track_id: int, db: Session = Depends(get_db)):
+    updated_playlist = await PlaylistController.remove_track(db, playlist_id, track_id)
 
     return updated_playlist
