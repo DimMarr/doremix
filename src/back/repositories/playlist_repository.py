@@ -5,6 +5,7 @@ from models.track import Track
 from models.artist import Artist
 from typing import Optional, List
 from repositories.track_repository import TrackRepository
+from repositories.artist_repository import ArtistRepository
 from utils.youtube_utils import get_youtube_video_duration, get_youtube_video_author
 
 
@@ -72,16 +73,19 @@ class PlaylistRepository:
 
         if not track:
             durationSeconds = get_youtube_video_duration(youtubeLink)
-            author = get_youtube_video_author(youtubeLink)
+            author_name = get_youtube_video_author(youtubeLink)
             if durationSeconds is None:
                 durationSeconds = 0
+
+            artist = ArtistRepository.create(db, author_name)
+
             track = TrackRepository.create(
                 db,
                 Track(
                     title=title,
                     youtubeLink=youtubeLink,
                     durationSeconds=durationSeconds,
-                    artists=[Artist(name=author)],
+                    artists=[artist],
                 ),
             )
             if not track:
