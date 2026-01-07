@@ -16,7 +16,11 @@ console = Console()
 
 @app.command(help="List all playlists.")
 def list():
-    playlists = get_all_playlists()
+    try:
+        playlists = get_all_playlists()
+    except Exception as e:
+        print(e)
+        return
 
     table = Table(title="All Playlists")
 
@@ -36,8 +40,9 @@ def list():
 def get(id: str):
     try:
         playlist = get_playlist(id)
-    except typer.BadParameter:
-        raise typer.BadParameter(f"Playlist n°{id} not found.")
+    except Exception as e:
+        print(e)
+        return
 
     table = Table(show_header=False)
 
@@ -54,7 +59,11 @@ def get(id: str):
 
 @app.command(help="List all track from a playlist.")
 def tracks(id: str):
-    tracks = get_playlist_tracks(id)
+    try:
+        tracks = get_playlist_tracks(id)
+    except Exception as e:
+        print(e)
+        return
 
     table = Table(title="All tracks")
 
@@ -72,4 +81,8 @@ def tracks(id: str):
 
 @app.command(help="Remove a track from a playlist.")
 def remove(playlist_id: str, track_id: str):
-    print(remove_track(playlist_id, track_id))
+    try:
+        print(remove_track(playlist_id, track_id))
+    except Exception as e:
+        print(e)
+        return
