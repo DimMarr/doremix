@@ -1,13 +1,14 @@
 import { secondsToReadableTime } from "@components/utils";
 import { Track } from "@models/track";
 
-export function TrackRow({ track, index }: { track: Track; index: number }) {
+export function TrackRow({ track, index, current_track }: { track: Track; index: number, current_track?: Track }) {
   const artistText = track.artists?.map(a => a.name).join(', ') || 'Unknown';
   
   return (
     <div
       id={`track-${index}`}
-      class="group grid grid-cols-[2rem_1fr_1fr_4rem_3rem] items-center gap-4 px-4 py-2 rounded-md transition-colors duration-200 hover:bg-gray-800 cursor-pointer"
+      class={`group grid grid-cols-[2rem_1fr_1fr_4rem_3rem] items-center gap-4 px-4 py-2 rounded-md transition-colors duration-200 hover:bg-gray-800 cursor-pointer ${current_track.idTrack === track.idTrack ? "playing" : ""}`}
+  
       data-track-index={index}
     >
       <div class="relative">

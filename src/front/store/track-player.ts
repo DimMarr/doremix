@@ -131,14 +131,11 @@ export class YoutubePlayer {
 
         this.intervalChangeVideo = setInterval(() => {
             trackTimer.max = String(this.audioPlayer.getDuration());
-            trackElapsedTime.textContent = new Date(this.audioPlayer.getCurrentTime() * 1000).toISOString().substr(14, 5);
-            const currentVideoTime = this.audioPlayer.getCurrentTime();
-            this.updateTimer(currentVideoTime);
+            let time = this.audioPlayer.getCurrentTime(); 
+            if(!time) return;
+            trackElapsedTime.textContent = new Date(time * 1000).toISOString().substr(14, 5);
+            this.updateTimer(time);
         }, 32);
-    }
-
-    private pauseTimer(): void {
-
     }
 
     // Audio controls
@@ -299,6 +296,10 @@ export class YoutubePlayer {
 
     getCurrentTime(): number {
         return this.audioPlayer ? this.audioPlayer.getCurrentTime() : 0;
+    }
+
+    getCurrentTrack(): Track | null {
+        return this.tracks[this.currentPlayingTrackIndex] || null;
     }
 }
 

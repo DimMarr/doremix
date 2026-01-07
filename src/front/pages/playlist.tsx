@@ -5,12 +5,7 @@ import { TrackRow } from "@components/tracks/row";
 function TrackList(playlist, trackPlayer) {
   const tracks = playlist.tracks || [];
 
-  const current_track_player_index = trackPlayer.currentPlayingTrackIndex + 1;
-  const currentTrackEl = document.getElementById(`track-${current_track_player_index}`);
-
-  if (currentTrackEl) {
-    currentTrackEl.classList.add("playing");
-  }
+  const current_track = trackPlayer.getCurrentTrack();
 
   // Return the JSX block; previously missing return caused nothing to render
   return (
@@ -22,6 +17,7 @@ function TrackList(playlist, trackPlayer) {
           index={index}
           playlist={playlist}
           trackPlayer={trackPlayer}
+          current_track={current_track}
         />
       ))}
     </div>
@@ -51,6 +47,24 @@ export function PlaylistDetailPage(container, playlist, trackPlayer, onBack) {
     </div>
   );
 
+
+  const proxyPlaylist = new Proxy(playlist, {
+    set(target, prop, value) {
+      target[prop] = value;
+      Reflect.set(target, prop, value);
+
+      // Re-render the track list when the playlist is updated
+      const trackListContainer = container.querySelector('#track-list-container');
+      if (trackListContainer) {
+        trackListContainer.innerHTML = '';
+        trackListContainer.innerHTML = TrackList(proxyPlaylist, trackPlayer);
+      }
+
+      return true;
+    }
+
+  });
+
   container.innerHTML = pageHtml;
 
   const trackListContainer = container.querySelector('#track-list-container');
@@ -74,11 +88,9 @@ export function PlaylistDetailPage(container, playlist, trackPlayer, onBack) {
       if (deleteButton) {
         e.stopPropagation();
         const trackIndex = Number(deleteButton.getAttribute('data-track-index'));
-        console.log('Deleting track at index:', trackIndex);
-        if (!Number.isNaN(trackIndex)) {
-          playlist.tracks?.splice(trackIndex, 1);
+        if (!Number.isNaN(trackIndex) && proxyPlaylist.tracks) {
+          proxyPlaylist.tracks = proxyPlaylist.tracks.filter((_, i) => i !== trackIndex);
         }
-        console.log('Updated playlist tracks:', playlist.tracks);
         return;
       }
 
