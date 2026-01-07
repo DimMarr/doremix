@@ -1,3 +1,4 @@
+import { Artist } from "@models/artist";
 
 export class Track {
     public idTrack?: number;
@@ -6,7 +7,7 @@ export class Track {
     public listeningCount?: number;
     public durationSeconds?: number;
     public createdAt?: string;
-    public artist?: Artist;
+    public artists?: Artist[];
 
     constructor(data: Partial<Track>) {
         Object.assign(this, data);

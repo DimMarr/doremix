@@ -4,7 +4,6 @@ import { Artist } from "../models/artist";
 import { fetchPlaylists, fetchPlaylist, fetchPlaylistTracks } from "../services/api";
 
 export default class PlaylistRepository {
-
     async getPlaylists(): Promise<Playlist[]> {
       const img1 = new URL("../assets/images/playlist1.jpg", import.meta.url).href;
       try {
