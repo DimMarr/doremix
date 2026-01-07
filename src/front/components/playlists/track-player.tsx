@@ -82,7 +82,7 @@ const setupControlButtons = (container: HTMLElement, playerStore: YoutubePlayer)
     if (!isSeeking) return;
     const target = event.target as HTMLInputElement;
     if (!target) return;
-    
+
     const elapsedTime = container.querySelector('#trackElapsedTime') as HTMLElement;
     if (elapsedTime) {
       elapsedTime.textContent = new Date(Number(target.value) * 1000).toISOString().substr(14, 5);
@@ -96,7 +96,7 @@ const setupControlButtons = (container: HTMLElement, playerStore: YoutubePlayer)
 
     playerStore?.setTrackTime(Number(target.value));
     isSeeking = false;
-    
+
     // Wait a bit for the seek to complete before restarting the timer
     setTimeout(() => {
       playerStore?.setTimer();

@@ -5,7 +5,7 @@ Application et CLI de gestion de playlists Youtube.
 
 # Application web
 
-### Prérequis : 
+### Prérequis :
 - NPM
 - Docker
 
@@ -18,12 +18,12 @@ cd src/frontend
 # Il faut installer les dépendances
 npm install
 
-# Ensuite il faut exécuter l'application 
-npm run dev 
+# Ensuite il faut exécuter l'application
+npm run dev
 ```
 ## Setup en mode production
 
-Mettre en place un fichier .env dans la racine du projet : 
+Mettre en place un fichier .env dans la racine du projet :
 
 ```
 DB_USER=<DB_USERNAME>
@@ -32,7 +32,7 @@ DB_NAME=<DB_NAME>
 DATABASE_URL=postgresql://<DB_USERNAME>:<DB_PASSWORD>@db:5432/<DB_NAME>
 ```
 
-Démarrer l'infrastructure docker avec la commande suivante : 
+Démarrer l'infrastructure docker avec la commande suivante :
 
 ```bash
 docker compose up
@@ -53,15 +53,15 @@ En cas de problème avec l'infrastructure docker essayez de désactiver docker b
 export DOCKER_BUILDKIT=0
 ```
 
-Sinon essayez de rebuild l'infrastructure docker depuis le début : 
+Sinon essayez de rebuild l'infrastructure docker depuis le début :
 
 ```
 docker compose up --build
-``` 
+```
 
 # Processus de test
 
-### Prérequis : 
+### Prérequis :
 - uv
 - pip
 

@@ -22,7 +22,7 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const baseClass = "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium  focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/50 transition-colors disabled:pointer-events-none disabled:opacity-50 px-4 py-2 cursor-pointer";
-  
+
   const buttonClass = cn(baseClass, getButtonClasses(variant, size), className);
   const isDisabled = disabled || loading;
 

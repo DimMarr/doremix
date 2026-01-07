@@ -131,7 +131,7 @@ export class YoutubePlayer {
 
         this.intervalChangeVideo = setInterval(() => {
             trackTimer.max = String(this.audioPlayer.getDuration());
-            let time = this.audioPlayer.getCurrentTime(); 
+            let time = this.audioPlayer.getCurrentTime();
             if(!time) return;
             trackElapsedTime.textContent = new Date(time * 1000).toISOString().substr(14, 5);
             this.updateTimer(time);
