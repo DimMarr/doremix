@@ -9,7 +9,7 @@ export function cn(...classes: (string | undefined | null | false)[]): string {
 /**
  * Type for button variants matching shadcn style
  */
-export type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+export type ButtonVariant = 'default' | 'destructive' | 'outline' | 'primary' | 'secondary' | 'ghost' | 'link';
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
 
 /**
@@ -19,11 +19,12 @@ export function getButtonClasses(variant: ButtonVariant = 'default', size: Butto
   const baseClasses = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variantClasses: Record<ButtonVariant, string> = {
-    default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+    default: 'bg-white/80 text-background/90 hover:bg-white',
+    primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
     destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-    outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-    secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-    ghost: 'hover:bg-accent hover:text-accent-foreground',
+    outline: 'border border-input bg-background hover:bg-neutral-800',
+    secondary: 'bg-neutral-900 text-neutral-100 hover:bg-neutral-800/90',
+    ghost: 'hover:bg-neutral-800/90 text-neutral-100 hover:bg-neutral-800/90',
     link: 'text-primary underline-offset-4 hover:underline',
   };
 
@@ -50,11 +51,11 @@ export function getCardClasses(): string {
 export type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline';
 
 export function getBadgeClasses(variant: BadgeVariant = 'default'): string {
-  const baseClasses = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2';
+  const baseClasses = 'inline-flex items-center rounded-full px-4 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2';
 
   const variantClasses: Record<BadgeVariant, string> = {
     default: 'border-transparent bg-primary text-primary-foreground hover:bg-primary/80',
-    secondary: 'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
+    secondary: 'border-transparent bg-neutral-900 text-neutral-100 hover:bg-neutral-800/80',
     destructive: 'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
     outline: 'text-foreground border border-foreground/25',
   };
