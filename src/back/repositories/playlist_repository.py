@@ -69,7 +69,7 @@ class PlaylistRepository:
                     or_(
                         Playlist.visibility == PlaylistVisibility.PUBLIC,
                         Playlist.visibility == PlaylistVisibility.OPEN,
-                    )
+                    ),
                 )
             )
             .limit(limit)

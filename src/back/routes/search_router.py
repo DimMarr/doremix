@@ -5,15 +5,13 @@ from database import get_db
 
 router = APIRouter(prefix="/search", tags=["Search"])
 
+
 @router.get("/")
 def search(
     q: str = Query(..., min_length=2, description="Search query"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     tracks = TrackController.search(db, q)
     playlists = PlaylistController.search(db, q)
-    
-    return {
-        "tracks": tracks,
-        "playlists": playlists
-    }
+
+    return {"tracks": tracks, "playlists": playlists}
