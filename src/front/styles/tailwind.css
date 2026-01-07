@@ -118,15 +118,6 @@ body {
   border-radius: 9999px;
 }
 
-/* Playing state styles */
-.playing .track-number {
-  display: none;
-}
-
-.playing .playing-icon {
-  display: block;
-}
-
 .playing .track-title {
   color: #2b7fff;
 }
