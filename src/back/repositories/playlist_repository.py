@@ -3,6 +3,7 @@ from models import Playlist
 from models.track_playlist import TrackPlaylist
 from models.track import Track
 from models.artist import Artist
+from models.user_playlists import UserPlaylist
 from typing import Optional, List
 from repositories.track_repository import TrackRepository
 from repositories.artist_repository import ArtistRepository
@@ -109,3 +110,32 @@ class PlaylistRepository:
         db.commit()
         db.refresh(playlist)
         return playlist
+
+    @staticmethod
+    def add_track(db: Session, playlist_id: int, track_id: int) -> bool:
+        existing = (
+            db.query(TrackPlaylist)
+            .filter(TrackPlaylist.idPlaylist == playlist_id)
+            .filter(TrackPlaylist.idTrack == track_id)
+            .first()
+        )
+
+        if existing:
+            return False
+
+        track_playlist = TrackPlaylist(idPlaylist=playlist_id, idTrack=track_id)
+        db.add(track_playlist)
+        db.commit()
+        return True
+
+    @staticmethod
+    def is_user_editor(db: Session, playlist_id: int, user_id: int) -> bool:
+        user_playlist = (
+            db.query(UserPlaylist)
+            .filter(UserPlaylist.idPlaylist == playlist_id)
+            .filter(UserPlaylist.idUser == user_id)
+            .filter(UserPlaylist.editor == True)
+            .first()
+        )
+
+        return user_playlist is not None

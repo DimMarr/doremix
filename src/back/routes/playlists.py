@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from controllers import PlaylistController
-from schemas import PlaylistSchema, TrackSchema, PlaylistCreate, PlaylistUpdate
+from schemas import PlaylistSchema, TrackSchema, PlaylistCreate, PlaylistUpdate, PlaylistAddTrack
 from database import get_db
 import os
 
@@ -100,3 +100,16 @@ def update_playlist(identifier: str, playlist_data: PlaylistUpdate, db: Session 
     #     return PlaylistController.update_playlist(db, identifier, playlist_data.model_dump(exclude_unset=True), current_user.id)
 
     return PlaylistController.update_playlist(db, identifier, playlist_data.model_dump(exclude_unset=True))
+
+@router.post(
+    "/{identifier}/tracks",
+    response_model=PlaylistSchema,
+    summary="Add a track to a playlist",
+    description="Adds a track to a playlist by playlist ID or name.",
+)
+def add_track_to_playlist(identifier: str, track_data: PlaylistAddTrack, db: Session = Depends(get_db)):
+    # TODO: Quand l'auth sera en place :
+    # def add_track_to_playlist(identifier: str, track_data: PlaylistAddTrack, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    #     return PlaylistController.add_track_to_playlist(db, identifier, track_data.idTrack, current_user.id)
+
+    return PlaylistController.add_track_to_playlist(db, identifier, track_data.idTrack)

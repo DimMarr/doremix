@@ -12,6 +12,7 @@ from services.playlist import (
     delete_playlist,
     get_playlists_by_name,
     update_playlist,
+    add_track_to_playlist,
 )
 
 app = typer.Typer()
@@ -218,5 +219,34 @@ def update(
 
     except typer.Abort:
         pass
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+@app.command(help="Add a track to a playlist.")
+def add_track(
+        identifier: str = typer.Argument(..., help="Playlist ID or name"),
+        track_id: int = typer.Option(..., "--track", "-t", help="Track ID to add")
+        # TODO: Quand l'auth sera en place, l'utilisateur sera automatiquement identifié via le token
+):
+    try:
+        playlist = select_playlist(identifier)
+
+        updated_playlist = add_track_to_playlist(str(playlist.idPlaylist), track_id)
+
+        console.print(f"[green]✓ Track successfully added to playlist '{updated_playlist.name}'![/green]")
+
+        tracks = get_playlist_tracks(str(updated_playlist.idPlaylist))
+
+        table = Table(title=f"Tracks in '{updated_playlist.name}'")
+        table.add_column("id", style="cyan")
+        table.add_column("title", style="magenta")
+        table.add_column("artists", style="blue")
+
+        for track in tracks:
+            artists = ", ".join([artist.name for artist in track.artists])
+            table.add_row(str(track.idTrack), track.title, artists)
+
+        console.print(table)
+
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")
