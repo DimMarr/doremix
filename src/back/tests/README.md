@@ -1,7 +1,5 @@
 # Tests Documentation
 
-## 🚀 Quick Start
-
 ```bash
 # Installer les dépendances du projet
 uv pip install -r build/backend/requirements.txt
@@ -15,9 +13,3 @@ uv run pytest src/back/tests/ -v
 # Avec couverture
 uv run pytest src/back/tests/ --cov -v
 ```
-
-## 📊 Status
-
-| Module | Tests | Couverture |
-|--------|-------|-----------|
-| Playlists | 17 | 100% ✅ |
