@@ -8,8 +8,8 @@ uv pip install -r build/backend/requirements.txt
 uv pip install -r src/back/tests/requirements-test.txt
 
 # Lancer tous les tests
-uv run pytest src/back/tests/ -v
+uv run pytest -v
 
 # Avec couverture
-uv run pytest src/back/tests/ --cov -v
+uv run pytest --cov -v
 ```
