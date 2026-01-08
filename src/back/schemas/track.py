@@ -3,10 +3,11 @@ from typing import Optional, List
 from datetime import datetime
 from .artist import ArtistSchema
 
+
 class TrackSchema(BaseModel):
     idTrack: int
     title: str
-    youtubeLink: str = None
+    youtubeLink: Optional[str] = None
     listeningCount: int
     durationSeconds: Optional[int] = None
     createdAt: datetime
