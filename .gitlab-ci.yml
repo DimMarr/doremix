@@ -29,7 +29,8 @@ pre_commit_check:
         echo "👉 SOLUTION : Installez pre-commit sur votre machine :"
         echo "   1. uv tool install pre-commit (ou pip install pre-commit)"
         echo "   2. pre-commit install"
-        echo "   3. Corrigez les erreurs, commitez et pushez à nouveau."
+        echo "   3. pre-commit run --all-files"
+        echo "   4. Corrigez les erreurs, commitez et pushez à nouveau."
         echo "----------------------------------------------------------------"
         exit 1
       }

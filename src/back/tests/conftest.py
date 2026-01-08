@@ -2,6 +2,12 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from database import Base, get_db
+from routes.playlists import router as playlists_router
+from routes.users import router as users_router
+
 import os
 import sys
 
@@ -17,20 +23,6 @@ test_engine = create_engine(
     poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
-
-# Import only what we need
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-from database import Base, get_db
-
-# Import models to create tables
-from models.playlist import Playlist
-from models.user import User
-from models.genre import Genre
-
-# Import routes
-from routes.playlists import router as playlists_router
-from routes.users import router as users_router
 
 # Create app
 app = FastAPI()
@@ -51,6 +43,7 @@ def db():
 @pytest.fixture(scope="function")
 def client(db):
     """Create a test client with dependency override."""
+
     def override_get_db():
         try:
             yield db
@@ -58,7 +51,7 @@ def client(db):
             pass
 
     app.dependency_overrides[get_db] = override_get_db
-    
+
     test_client = TestClient(app)
     yield test_client
     app.dependency_overrides.clear()
