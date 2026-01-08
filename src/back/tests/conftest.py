@@ -8,12 +8,6 @@ from database import Base, get_db
 from routes.playlists import router as playlists_router
 from routes.users import router as users_router
 
-import os
-import sys
-
-# Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 # Create an in-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
