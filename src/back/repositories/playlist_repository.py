@@ -96,3 +96,16 @@ class PlaylistRepository:
         db.commit()
         db.refresh(trackPlaylist)
         return trackPlaylist and track
+
+    @staticmethod
+    def get_by_name(db: Session, name: str) -> List[Playlist]:
+        return db.query(Playlist).filter(Playlist.name == name).all()
+
+    @staticmethod
+    def update_playlist(db: Session, playlist: Playlist, update_data: dict) -> Playlist:
+        for key, value in update_data.items():
+            if value is not None:
+                setattr(playlist, key, value)
+        db.commit()
+        db.refresh(playlist)
+        return playlist

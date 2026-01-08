@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from controllers import PlaylistController
-from schemas import PlaylistSchema, TrackSchema, PlaylistCreate
+from schemas import PlaylistSchema, TrackSchema, PlaylistCreate, PlaylistUpdate
 from database import get_db
 import os
 
@@ -64,3 +64,39 @@ def get_cover_image(filename: str):
         raise HTTPException(status_code=404, detail="Image not found")
     
     return FileResponse(filepath)
+
+@router.delete(
+    "/{identifier}",
+    response_model=dict,
+    summary="Delete a playlist",
+    description="Deletes a playlist by its ID or name.",
+)
+def delete_playlist(identifier: str, db: Session = Depends(get_db)):
+    # TODO: Quand l'auth sera en place :
+    # def delete_playlist(identifier: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    #     return PlaylistController.delete_playlist(db, identifier, current_user.id)
+
+    return PlaylistController.delete_playlist(db, identifier)
+
+@router.get(
+    "/name/{name}",
+    response_model=List[PlaylistSchema],
+    summary="Get playlists by name",
+    description="Returns all playlists matching the given name.",
+)
+def get_playlist_by_name(name: str, db: Session = Depends(get_db)):
+    playlists = PlaylistController.get_playlist_by_name(db, name)
+    return playlists
+
+@router.patch(
+    "/{identifier}",
+    response_model=PlaylistSchema,
+    summary="Update a playlist",
+    description="Updates a playlist by its ID or name.",
+)
+def update_playlist(identifier: str, playlist_data: PlaylistUpdate, db: Session = Depends(get_db)):
+    # TODO: Quand l'auth sera en place :
+    # def update_playlist(identifier: str, playlist_data: PlaylistUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    #     return PlaylistController.update_playlist(db, identifier, playlist_data.model_dump(exclude_unset=True), current_user.id)
+
+    return PlaylistController.update_playlist(db, identifier, playlist_data.model_dump(exclude_unset=True))
