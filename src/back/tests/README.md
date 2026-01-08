@@ -4,7 +4,7 @@
 
 ```bash
 # Installer les dépendances du projet
-uv pip install -r build/python/requirements.txt
+uv pip install -r build/backend/requirements.txt
 
 # Installer les dépendances de test
 uv pip install -r src/back/tests/requirements-test.txt
