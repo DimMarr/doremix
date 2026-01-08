@@ -19,6 +19,13 @@ body {
   @apply bg-[#2b7fff] border-none text-white px-5 py-2.5 rounded-[20px] cursor-pointer text-sm font-semibold transition-all duration-200 hover:bg-[#2b7fff] hover:scale-105 active:scale-95;
 }
 
+.control-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: scale(1) !important;
+}
+
 /* Custom range input styles */
 .range-input {
   -webkit-appearance: none;
@@ -112,6 +119,7 @@ body {
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-25%);
   }

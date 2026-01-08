@@ -47,6 +47,10 @@ export async function createMainLayout() {
   const trackPlayerContainer = createTrackPlayerContainer();
   appWrapper.appendChild(trackPlayerContainer);
 
+  // IMPORTANT: Append to DOM BEFORE creating YouTube player
+  // YouTube IFrame API requires the target element to be in the document
+  root.appendChild(appWrapper);
+
   // This is problematic, we need playlists for the youtube player
   // I'll just use the first one for now.
   const repo = new PlaylistRepository();
@@ -63,8 +67,6 @@ export async function createMainLayout() {
     trackPlayerElement: trackPlayerContainer,
   });
   appWrapper.appendChild(playerUI);
-
-  root.appendChild(appWrapper);
 
   return { mainContent, trackPlayer };
 }

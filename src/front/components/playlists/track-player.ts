@@ -11,7 +11,7 @@ let playerStore: YoutubePlayer | null = null;
 export function createTrackPlayerContainer() {
     // Provide an empty container; YouTube IFrame API will inject the iframe
     const container = document.createElement("div");
-    container.classList = "hidden";
+    container.className = "hidden";
     // No id required; we'll pass the element reference directly
     return container;
 }
