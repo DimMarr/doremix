@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, UploadFile, File
-from fastapi.responses import FileResponse 
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -59,10 +59,10 @@ def upload_playlist_cover(
 @router.get('/covers/{filename}')
 def get_cover_image(filename: str):
     filepath = f"/app/uploads/covers/{filename}"
-    
+
     if not os.path.exists(filepath):
         raise HTTPException(status_code=404, detail="Image not found")
-    
+
     return FileResponse(filepath)
 
 @router.delete(

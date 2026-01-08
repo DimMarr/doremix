@@ -13,4 +13,3 @@ app.add_typer(playlist_app, name="playlist")
 app.add_typer(track_app, name="track")
 
 if __name__ == "__main__":
-    app()
