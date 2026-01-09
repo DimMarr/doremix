@@ -1,7 +1,4 @@
-import { createPauseIcon } from '../components/generics/pause-icon';
-import { createPlayIcon } from '../components/generics/play-icon';
-import Playlist from '../models/playlist';
-import { Track } from '../models/track';
+import { Track, Playlist } from '@models/index';
 
 interface YTPlayer {
     loadVideoById(videoId: string): void;
@@ -16,7 +13,7 @@ interface YTPlayer {
 
 interface YoutubePlayerProps {
     playlist: Playlist;
-    youtubePlayerHtmlElement: HTMLElement;
+    youtubePlayerHtmlElementId: string;
 }
 
 enum YoutubePlayerState {
@@ -57,7 +54,7 @@ export class YoutubePlayer {
     private pendingAction: (() => void) | null = null;
 
     constructor(
-        { youtubePlayerHtmlElement, playlist }: YoutubePlayerProps,
+        { youtubePlayerHtmlElementId, playlist }: YoutubePlayerProps,
     ) {
         this.playlist = playlist;
         this.tracks = this.playlist.tracks;
@@ -65,9 +62,10 @@ export class YoutubePlayer {
             throw new Error("Tracks list cannot be empty");
         }
 
-        this.audioPlayer = new window.YT.Player(youtubePlayerHtmlElement, {
-            height: "1",
-            width: "1",
+        // Initialise le player youtube avec le player.
+        this.audioPlayer = new window.YT.Player(youtubePlayerHtmlElementId, {
+            height: "0",
+            width: "0",
             videoId: getVideoId(this.tracks[0]?.youtubeLink ?? ""),
             playerVars: {
                 playsinline: 1,
@@ -111,7 +109,11 @@ export class YoutubePlayer {
         }
     }
 
-    private setTimer(): void {
+    public setTimer(): void {
+        if (!this.isPlayerReady) {
+            console.warn('Cannot set timer: Player not ready yet');
+            return;
+        }
         const trackTimerId = "trackTimer";
         const trackTimer = document.getElementById(trackTimerId) as
             | HTMLInputElement
@@ -123,14 +125,11 @@ export class YoutubePlayer {
             return;
         }
 
-        if (!trackTimer.value) {
-            trackTimer.value = "0";
-        }
-        trackTimer.min = "0";
-        trackTimer.max = String(this.audioPlayer.getDuration());
+        if(!trackTimer.value ) trackTimer.value = "0";
+        if(!trackTimer.min) trackTimer.min = "0";
+        if(!trackTimer.max) trackTimer.max = String(this.audioPlayer.getDuration());
 
-        const duration = this.audioPlayer.getDuration() || 0;
-        trackTotalTime.textContent = new Date(duration * 1000).toISOString().substr(14, 5);
+        trackTotalTime.textContent = new Date(this.audioPlayer.getDuration() * 1000).toISOString().substr(14, 5);
 
         if (this.intervalChangeVideo) {
             clearInterval(this.intervalChangeVideo);
@@ -138,19 +137,19 @@ export class YoutubePlayer {
 
         this.intervalChangeVideo = setInterval(() => {
             trackTimer.max = String(this.audioPlayer.getDuration());
-            const currentTime = this.audioPlayer.getCurrentTime() || 0;
-            trackElapsedTime.textContent = new Date(currentTime * 1000).toISOString().substr(14, 5);
-            const currentVideoTime = this.audioPlayer.getCurrentTime();
-            this.updateTimer(currentVideoTime);
+            let time = this.audioPlayer.getCurrentTime();
+            if(!time) return;
+            trackElapsedTime.textContent = new Date(time * 1000).toISOString().substr(14, 5);
+            this.updateTimer(time);
         }, 32);
     }
 
     // Audio controls
     changeTrackState(): void {
         if (!this.isPlayerReady) {
+            console.warn('Player not ready yet');
             return;
         }
-
         this.setTimer();
         if (this.audioPlayer && this.audioPlayer.getPlayerState) {
             if (this.audioPlayer.getPlayerState() === YoutubePlayerState.UNSTARTED || this.audioPlayer.getPlayerState() === YoutubePlayerState.CUED) {
@@ -173,23 +172,24 @@ export class YoutubePlayer {
 
     playVideo(): void {
         if (!this.isPlayerReady) {
+            console.warn('Cannot play: Player not ready yet');
             return;
         }
-
         if (this.audioPlayer && this.audioPlayer.playVideo) {
-            const playBtn = document.querySelector("#playBtn");
-            if (playBtn) {
-                playBtn.innerHTML = "";
-                playBtn.appendChild(createPauseIcon());
-            }
+            document.querySelector("#playBtn").classList.add("hidden");
+            document.querySelector("#pauseBtn").classList.remove("hidden");
             this.audioPlayer.playVideo();
         }
     }
 
     pauseVideo(): void {
+        if (!this.isPlayerReady) {
+            console.warn('Cannot pause: Player not ready yet');
+            return;
+        }
         if (this.audioPlayer && this.audioPlayer.pauseVideo) {
-            document.querySelector("#playBtn").innerHTML = "";
-            document.querySelector("#playBtn").appendChild(createPlayIcon());
+            document.querySelector("#pauseBtn").classList.add("hidden");
+            document.querySelector("#playBtn").classList.remove("hidden");
             this.audioPlayer.pauseVideo();
         }
     }
@@ -215,13 +215,18 @@ export class YoutubePlayer {
     }
 
     playTrack(index: number): void {
-        // Re-enable next/prev buttons disabled if single track mode is used
+        if (!this.isPlayerReady) {
+            console.warn('Cannot play track: Player not ready yet');
+            return;
+        }
+
+        // Re-enable next/prev buttons if they were disabled in single track mode
         const nextBtn = document.getElementById("nextBtn");
         const prevBtn = document.getElementById("previousBtn");
         if (nextBtn) nextBtn.removeAttribute("disabled");
         if (prevBtn) prevBtn.removeAttribute("disabled");
 
-
+        // Validate index
         if (index < 0 || index >= this.tracks.length) {
             return;
         }
@@ -342,7 +347,8 @@ export class YoutubePlayer {
         });
     }
 
-    destroy(): void {
+    // Cleanup method to clear interval when destroying the player
+    stopTimer(): void {
         if (this.intervalChangeVideo) {
             clearInterval(this.intervalChangeVideo);
             this.intervalChangeVideo = null;
@@ -363,6 +369,10 @@ export class YoutubePlayer {
 
     getCurrentTime(): number {
         return this.audioPlayer ? this.audioPlayer.getCurrentTime() : 0;
+    }
+
+    getCurrentTrack(): Track | null {
+        return this.tracks[this.currentPlayingTrackIndex] || null;
     }
 }
 

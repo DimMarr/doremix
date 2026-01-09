@@ -3,9 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 
 # Import routes
-from routes import usersRouter, playlistsRouter, tracksRouter, searchRouter
+from routes import (
+    usersRouter,
+    playlistsRouter,
+    tracksRouter,
+    artistsRouter,
+    searchRouter,
+)
 
-routers = [usersRouter, playlistsRouter, tracksRouter, searchRouter]
+routers = [usersRouter, playlistsRouter, tracksRouter, artistsRouter, searchRouter]
 
 app = FastAPI()
 

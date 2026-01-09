@@ -1,3 +1,4 @@
+import { Track } from "@models/track";
 
 export default class Playlist {
     public idPlaylist?: number;

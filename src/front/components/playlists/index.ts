@@ -1,2 +1,3 @@
 // Components
-export { createTrackPlayer } from './track-player';
+export { TrackPlayer, type TrackPlayerProps } from './track-player';
+export { PlaylistCard, type CardPlaylistProps } from './card';

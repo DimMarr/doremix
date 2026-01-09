@@ -29,10 +29,20 @@ pre_commit_check:
         echo "👉 SOLUTION : Installez pre-commit sur votre machine :"
         echo "   1. uv tool install pre-commit (ou pip install pre-commit)"
         echo "   2. pre-commit install"
-        echo "   3. Corrigez les erreurs, commitez et pushez à nouveau."
+        echo "   3. pre-commit run --all-files"
+        echo "   4. Corrigez les erreurs, commitez et pushez à nouveau."
         echo "----------------------------------------------------------------"
         exit 1
       }
+
+test:
+  stage: test
+  image: python:3.13
+  script:
+    - cd src/back
+    - pip install -r $CI_PROJECT_DIR/build/backend/requirements.txt
+    - pip install -r tests/requirements-test.txt
+    - pytest tests/ -v --cov
 
 deploy_beta:
   stage: deploy

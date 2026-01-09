@@ -2,7 +2,12 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_
 from models.playlist import Playlist, PlaylistVisibility
 from models.track_playlist import TrackPlaylist
+from models.track import Track
+from models.artist import Artist
 from typing import Optional, List
+from repositories.track_repository import TrackRepository
+from repositories.artist_repository import ArtistRepository
+from utils.youtube_utils import get_youtube_video_duration, get_youtube_video_author
 
 
 class PlaylistRepository:
@@ -57,6 +62,41 @@ class PlaylistRepository:
             db.commit()
             return True
         return False
+
+    @staticmethod
+    def add_track(
+        db: Session,
+        title: str,
+        youtubeLink: str,
+        playlist_id: int,
+    ):
+        track = TrackRepository.get_by_youtube_link(db, youtubeLink)
+
+        if not track:
+            durationSeconds = get_youtube_video_duration(youtubeLink)
+            author_name = get_youtube_video_author(youtubeLink)
+            if durationSeconds is None:
+                durationSeconds = 0
+
+            artist = ArtistRepository.create(db, author_name)
+
+            track = TrackRepository.create(
+                db,
+                Track(
+                    title=title,
+                    youtubeLink=youtubeLink,
+                    durationSeconds=durationSeconds,
+                    artists=[artist],
+                ),
+            )
+            if not track:
+                return None
+
+        trackPlaylist = TrackPlaylist(idPlaylist=playlist_id, idTrack=track.idTrack)
+        db.add(trackPlaylist)
+        db.commit()
+        db.refresh(trackPlaylist)
+        return trackPlaylist and track
 
     @staticmethod
     def search_playlists(db: Session, query: str, limit: int = 10) -> List[Playlist]:
