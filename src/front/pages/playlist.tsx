@@ -1,4 +1,4 @@
-import { Button } from "@components/generics/index";
+import { Button, AddTrackModal } from "@components/index";
 import { TrackListHeader } from "@components/tracks/header";
 import { TrackRow } from "@components/tracks/row";
 import { removeTrackFromPlaylist } from "@services/api";
@@ -30,15 +30,21 @@ export function PlaylistDetailPage(container, playlist, trackPlayer, onBack) {
 
   const pageHtml = (
     <div>
-      <div class="flex items-center mb-8 gap-4">
+      <div id="modal-container"></div>
+      <div class="mb-8">
         <Button id="back-button" variant="ghost" size="sm">
           ← Back
         </Button>
       </div>
 
-      <div class="flex items-center gap-8 my-8">
-        <img src={playlist.image} class="w-48 h-48 rounded-md object-cover" alt={playlist.name} />
-        <div>
+      <div class="flex items-start gap-8 my-8">
+        <div class="flex flex-col items-center gap-4">
+          <img src={playlist.image} class="w-48 h-48 rounded-md object-cover" alt={playlist.name} />
+          <Button id="add-track-button" variant="outline" size="md">
+            Add Track
+          </Button>
+        </div>
+        <div class="pt-2">
           <h1 class="font-bold text-4xl">{playlist.name}</h1>
           <p class="text-muted-foreground text-lg">{playlist.description || ''}</p>
         </div>
@@ -68,6 +74,22 @@ export function PlaylistDetailPage(container, playlist, trackPlayer, onBack) {
 
   container.innerHTML = pageHtml;
 
+  const modalContainer = container.querySelector('#modal-container');
+
+  function openAddTrackModal() {
+    const { render } = AddTrackModal({
+      playlistId: proxyPlaylist.idPlaylist,
+      onClose: () => {
+        modalContainer.innerHTML = '';
+      },
+      onTrackAdded: (newTrack) => {
+        proxyPlaylist.tracks = [...proxyPlaylist.tracks, newTrack];
+        modalContainer.innerHTML = '';
+      }
+    });
+    render(modalContainer);
+  }
+
   const trackListContainer = container.querySelector('#track-list-container');
 
   // Use event delegation on container
@@ -75,6 +97,12 @@ export function PlaylistDetailPage(container, playlist, trackPlayer, onBack) {
     const backButton = e.target.closest('#back-button');
     if (backButton) {
       onBack();
+      return;
+    }
+
+    const addTrackButton = e.target.closest('#add-track-button');
+    if (addTrackButton) {
+      openAddTrackModal();
       return;
     }
   };

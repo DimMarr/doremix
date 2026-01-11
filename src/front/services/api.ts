@@ -26,6 +26,28 @@ export async function fetchPlaylistTracks(playlistId) {
   return response.json();
 }
 
+export async function getTrackByUrl(url: string) {
+  const response = await fetch(`${API_BASE_URL}/tracks/by-url?url=${encodeURIComponent(url)}`);
+  if (!response.ok) {
+    throw new Error("Track not found");
+  }
+  return response.json();
+}
+
+export async function addTrackByUrl(playlistId: number, url: string, title: string) {
+  const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/tracks/by-url`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ url, title }),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to add track by URL");
+  }
+  return response.json();
+}
+
 export async function removeTrackFromPlaylist(playlistId, trackId) {
   const response = await fetch(
     `${API_BASE_URL}/playlists/${playlistId}/track/${trackId}`,

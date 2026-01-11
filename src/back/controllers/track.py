@@ -14,3 +14,7 @@ class TrackController:
         if not track:
             raise HTTPException(status_code=404, detail="Track not found")
         return track
+
+    @staticmethod
+    def get_track_by_url(db: Session, url: str):
+        return TrackRepository.get_by_youtube_link(db, url)
