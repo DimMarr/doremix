@@ -125,9 +125,9 @@ export class YoutubePlayer {
             return;
         }
 
-        if(!trackTimer.value ) trackTimer.value = "0";
-        if(!trackTimer.min) trackTimer.min = "0";
-        if(!trackTimer.max) trackTimer.max = String(this.audioPlayer.getDuration());
+        if (!trackTimer.value) trackTimer.value = "0";
+        if (!trackTimer.min) trackTimer.min = "0";
+        if (!trackTimer.max) trackTimer.max = String(this.audioPlayer.getDuration());
 
         trackTotalTime.textContent = new Date(this.audioPlayer.getDuration() * 1000).toISOString().substr(14, 5);
 
@@ -138,7 +138,7 @@ export class YoutubePlayer {
         this.intervalChangeVideo = setInterval(() => {
             trackTimer.max = String(this.audioPlayer.getDuration());
             let time = this.audioPlayer.getCurrentTime();
-            if(!time) return;
+            if (!time) return;
             trackElapsedTime.textContent = new Date(time * 1000).toISOString().substr(14, 5);
             this.updateTimer(time);
         }, 32);
@@ -340,6 +340,11 @@ export class YoutubePlayer {
 
     setupChangeTrackStateWhenPressingSpacebar() {
         document.addEventListener("keydown", (e) => {
+            const target = e.target as HTMLElement; //Cancels trigger if user is typing in an input or textarea
+            if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+                return;
+            }
+
             if (e.code === "Space") {
                 e.preventDefault();
                 this.changeTrackState();
