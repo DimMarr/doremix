@@ -84,6 +84,7 @@ export function PlaylistDetailPage(container, playlist, trackPlayer, onBack) {
       },
       onTrackAdded: (newTrack) => {
         proxyPlaylist.tracks = [...proxyPlaylist.tracks, newTrack];
+        trackPlayer.setPlaylist(proxyPlaylist);
         modalContainer.innerHTML = '';
       }
     });
