@@ -25,6 +25,18 @@ class PlaylistController:
         return playlist.tracks
 
     @staticmethod
+    def add_playlist_track(
+        db: Session,
+        title: str,
+        youtubeLink: str,
+        playlist_id: int,
+    ):
+        playlist = PlaylistRepository.get_by_id(db, playlist_id)
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+        return PlaylistRepository.add_track(db, title, youtubeLink, playlist_id)
+
+    @staticmethod
     def upload_cover(db: Session, playlist_id: int, file: UploadFile):
         playlist = PlaylistRepository.get_by_id(db, playlist_id)
         if not playlist:

@@ -8,9 +8,9 @@ from slowapi.middleware import SlowAPIMiddleware
 from middleware.rate_limiter import limiter, rate_limit_exceeded_handler
 
 # Import routes
-from routes import usersRouter, playlistsRouter, tracksRouter
+from routes import usersRouter, playlistsRouter, tracksRouter, artistsRouter
 
-routers = [usersRouter, playlistsRouter, tracksRouter]
+routers = [usersRouter, playlistsRouter, tracksRouter, artistsRouter]
 
 app = FastAPI()
 
