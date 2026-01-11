@@ -9,5 +9,5 @@ export { PlayIcon } from './play-icon';
 export { PauseIcon } from './pause-icon';
 
 // Search components
-export * from './search-input';
-export * from './search-results';
+export * from '@components/generics/SearchInput';
+export * from '@components/generics/SearchResults';

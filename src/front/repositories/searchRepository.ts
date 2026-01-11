@@ -1,6 +1,6 @@
-import { Track } from "../models/track";
-import Playlist from "../models/playlist";
-import { fetchSearch } from "../services/api";
+import { Track } from "@models/track";
+import Playlist from "@models/playlist";
+import { fetchSearch } from "@services/api";
 
 export interface SearchResults {
     tracks: Track[];
