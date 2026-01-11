@@ -20,7 +20,7 @@ function TrackList(playlist, trackPlayer) {
           trackPlayer={trackPlayer}
           current_track={current_track}
         />
-      ))}
+      )) as 'safe'}
     </div>
   );
 }
@@ -37,10 +37,10 @@ export function PlaylistDetailPage(container, playlist, trackPlayer, onBack) {
       </div>
 
       <div class="flex items-center gap-8 my-8">
-        <img src={playlist.image} class="w-48 h-48 rounded-md object-cover" alt={playlist.name} />
+        <img safe src={playlist.image} class="w-48 h-48 rounded-md object-cover" alt={playlist.name} />
         <div>
-          <h1 class="font-bold text-4xl">{playlist.name}</h1>
-          <p class="text-muted-foreground text-lg">{playlist.description || ''}</p>
+          <h1 safe class="font-bold text-4xl">{playlist.name}</h1>
+          <p safe class="text-muted-foreground text-lg">{(playlist.description || '')}</p>
         </div>
       </div>
 

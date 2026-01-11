@@ -37,7 +37,7 @@ async function HomePage(container, trackPlayer) {
             <div>
               <h2 class="text-lg font-semibold leading-none tracking-tight mb-4">Top Tracks</h2>
               <div class="flex p-0! gap-10 mt-4 mb-2 overflow-scroll">
-                {playlistCards}
+                {playlistCards as 'safe'}
               </div>
             </div>
           )
