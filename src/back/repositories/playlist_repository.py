@@ -94,11 +94,20 @@ class PlaylistRepository:
             if not track:
                 return None
 
+        existing = (
+            db.query(TrackPlaylist)
+            .filter(TrackPlaylist.idPlaylist == playlist_id)
+            .filter(TrackPlaylist.idTrack == track.idTrack)
+            .first()
+        )
+        if existing:
+            return track, "already_exists"
+
         trackPlaylist = TrackPlaylist(idPlaylist=playlist_id, idTrack=track.idTrack)
         db.add(trackPlaylist)
         db.commit()
         db.refresh(trackPlaylist)
-        return trackPlaylist and track
+        return track, "added"
 
     @staticmethod
     def get_by_name(db: Session, name: str) -> List[Playlist]:

@@ -34,7 +34,22 @@ class PlaylistController:
         playlist = PlaylistRepository.get_by_id(db, playlist_id)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
-        return PlaylistRepository.add_track(db, title, youtubeLink, playlist_id)
+        # TODO: Quand l'auth sera en place, vérifier les permissions :
+        # is_owner = playlist.idOwner == user_id
+        # is_editor = PlaylistRepository.is_user_editor(db, playlist.idPlaylist, user_id)
+        # is_open = playlist.visibility.value == "OPEN"
+        #
+        # if not (is_owner or is_editor or is_open):
+        #     raise HTTPException(status_code=403, detail="You don't have permission to edit this playlist")
+
+        track, status = PlaylistRepository.add_track(db, title, youtubeLink, playlist_id)
+
+        if track is None:
+            raise HTTPException(status_code=400, detail="Failed to add track")
+
+        if status == "already_exists":
+            raise HTTPException(status_code=409, detail="Track already exists in this playlist")
+        return track
 
     @staticmethod
     def upload_cover(db: Session, playlist_id: int, file: UploadFile):

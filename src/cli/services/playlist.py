@@ -115,6 +115,8 @@ def add_track_to_playlist(playlist_id: int, title: str, youtube_link: str) -> Tr
 
     if res.status_code == 404:
         raise Exception("Playlist not found")
+    if res.status_code == 409:
+        raise Exception("Track already exists in this playlist")
     if res.status_code != 200:
         raise Exception(f"Error while adding track: {res.text}")
 
