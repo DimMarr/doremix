@@ -1,17 +1,14 @@
 services:
   frontend:
     build:
-      context: .
-      dockerfile: build/frontend/Dockerfile-prod
+      context: ./src/front
+      dockerfile: ../../build/frontend/Dockerfile-prod
     container_name: web
     restart: unless-stopped
     ports:
-      - "80:3000"
-    environment:
-      - NODE_ENV=production
-    command: ["npm", "start"]
+      - "81:80"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:80"]
       interval: 1m30s
       timeout: 10s
       retries: 3
