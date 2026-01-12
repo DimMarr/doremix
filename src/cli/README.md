@@ -8,3 +8,16 @@ Pré-requis : uv
 >> uv sync
 >> source .venv/bin/activate
 >> python3 main.py
+
+doremix
+|- playlist
+    |- list
+    |- get <playlist-id>
+    |- tracks <playlist-id>
+    |- remove <playlist-id> <track-id>
+    |- add <playlist-id> <track-id> (WIP)
+|- track
+    |- get <track-id> (WIP)
+    |- play [track-id] (WIP)
+    |- stop (WIP)
+    |- pause (WIP)
