@@ -39,10 +39,10 @@ declare global {
 }
 
 const getVideoId = (link: string) => {
-            // Si le lien contient "v=", on coupe, sinon on suppose que c'est déjà l'ID
-            const videoIdMatch = link.match(/[?&]v=([^&]+)/);
-            return videoIdMatch ? videoIdMatch[1] : link;
-        };
+    // Si le lien contient "v=", on coupe, sinon on suppose que c'est déjà l'ID
+    const videoIdMatch = link.match(/[?&]v=([^&]+)/);
+    return videoIdMatch ? videoIdMatch[1] : link;
+};
 
 export class YoutubePlayer {
     public playlist: Playlist;
@@ -51,13 +51,14 @@ export class YoutubePlayer {
     private intervalChangeVideo: NodeJS.Timeout | null = null;
     private audioPlayer: YTPlayer;
     private isPlayerReady: boolean = false;
+    private pendingAction: (() => void) | null = null;
 
     constructor(
         { youtubePlayerHtmlElementId, playlist }: YoutubePlayerProps,
     ) {
         this.playlist = playlist;
         this.tracks = this.playlist.tracks;
-        if(this.tracks.length === 0){
+        if (this.tracks.length === 0) {
             throw new Error("Tracks list cannot be empty");
         }
 
@@ -69,10 +70,15 @@ export class YoutubePlayer {
             playerVars: {
                 playsinline: 1,
                 controls: 0,
+                autoplay: 0,
             },
             events: {
                 onReady: () => {
                     this.isPlayerReady = true;
+                    if (this.pendingAction) {
+                        this.pendingAction();
+                        this.pendingAction = null;
+                    }
                 },
                 onStateChange: (event: { data: number }): void => {
                     // Quand le track se termine on passe au praochine track automatiquement
@@ -80,6 +86,7 @@ export class YoutubePlayer {
                         this.nextTrack();
                     }
                 },
+                onError: () => { },
             },
         });
 
@@ -115,13 +122,12 @@ export class YoutubePlayer {
         const trackTotalTime = document.getElementById("trackTotalTime") as HTMLSpanElement | null;
 
         if (!trackTimer || !trackElapsedTime || !trackTotalTime) {
-            console.error(`Some track elements with IDs ${trackTimerId}, trackElapsedTime or trackTotalTime were not found.`);
             return;
         }
 
-        if(!trackTimer.value ) trackTimer.value = "0";
-        if(!trackTimer.min) trackTimer.min = "0";
-        if(!trackTimer.max) trackTimer.max = String(this.audioPlayer.getDuration());
+        if (!trackTimer.value) trackTimer.value = "0";
+        if (!trackTimer.min) trackTimer.min = "0";
+        if (!trackTimer.max) trackTimer.max = String(this.audioPlayer.getDuration());
 
         trackTotalTime.textContent = new Date(this.audioPlayer.getDuration() * 1000).toISOString().substr(14, 5);
 
@@ -132,7 +138,7 @@ export class YoutubePlayer {
         this.intervalChangeVideo = setInterval(() => {
             trackTimer.max = String(this.audioPlayer.getDuration());
             let time = this.audioPlayer.getCurrentTime();
-            if(!time) return;
+            if (!time) return;
             trackElapsedTime.textContent = new Date(time * 1000).toISOString().substr(14, 5);
             this.updateTimer(time);
         }, 32);
@@ -146,11 +152,16 @@ export class YoutubePlayer {
         }
         this.setTimer();
         if (this.audioPlayer && this.audioPlayer.getPlayerState) {
-            if(this.audioPlayer.getPlayerState() === YoutubePlayerState.UNSTARTED || this.audioPlayer.getPlayerState() === YoutubePlayerState.CUED){
-                this.playTrack(this.currentPlayingTrackIndex);
+            if (this.audioPlayer.getPlayerState() === YoutubePlayerState.UNSTARTED || this.audioPlayer.getPlayerState() === YoutubePlayerState.CUED) {
+                // Don't call playTrack if we're in single track mode
+                if (this.currentPlayingTrackIndex === -1) {
+                    this.playVideo();
+                } else {
+                    this.playTrack(this.currentPlayingTrackIndex);
+                }
             } else if (
                 this.audioPlayer.getPlayerState() ===
-                    YoutubePlayerState.PLAYING
+                YoutubePlayerState.PLAYING
             ) {
                 this.pauseVideo();
             } else {
@@ -208,15 +219,21 @@ export class YoutubePlayer {
             console.warn('Cannot play track: Player not ready yet');
             return;
         }
+
+        // Re-enable next/prev buttons if they were disabled in single track mode
+        const nextBtn = document.getElementById("nextBtn");
+        const prevBtn = document.getElementById("previousBtn");
+        if (nextBtn) nextBtn.removeAttribute("disabled");
+        if (prevBtn) prevBtn.removeAttribute("disabled");
+
         // Validate index
         if (index < 0 || index >= this.tracks.length) {
-            console.warn(`Invalid track index: ${index}`);
             return;
         }
 
         const track = this.tracks[index];
 
-        // Update UI - remove playing state from previous track
+
         if (this.currentPlayingTrackIndex >= 0) {
             const prevTrackEl = document.getElementById(
                 `track-${this.currentPlayingTrackIndex}`,
@@ -226,7 +243,7 @@ export class YoutubePlayer {
             }
         }
 
-        // Add playing state to current track
+
         const currentTrackEl = document.getElementById(`track-${index}`);
         if (currentTrackEl) {
             currentTrackEl.classList.add("playing");
@@ -234,7 +251,7 @@ export class YoutubePlayer {
 
         this.currentPlayingTrackIndex = index;
 
-        // Update player display
+
         const currentTrackDisplay = document.getElementById("currentTrack");
         if (currentTrackDisplay) {
             currentTrackDisplay.textContent = track.title;
@@ -246,16 +263,73 @@ export class YoutubePlayer {
             playerContainer.classList.add("flex");
         }
 
-        // Load and play video using YT.Player
-        if (this.audioPlayer && this.audioPlayer.loadVideoById) {
-            this.audioPlayer.loadVideoById(getVideoId(track.youtubeLink));
-            this.playVideo();
+        const loadAndPlay = () => {
+            if (this.audioPlayer && this.audioPlayer.loadVideoById) {
+                const videoId = getVideoId(track.youtubeLink);
+                this.audioPlayer.loadVideoById(videoId);
+                this.playVideo();
+            }
+
+            setTimeout(() => {
+                this.setTimer();
+            }, 2000);
+        };
+
+        if (this.isPlayerReady) {
+            loadAndPlay();
+        } else {
+            this.pendingAction = loadAndPlay;
+        }
+    }
+
+    public playSingleTrack(track: Track): void {
+        if (this.currentPlayingTrackIndex >= 0) {
+            const prevTrackEl = document.getElementById(
+                `track-${this.currentPlayingTrackIndex}`
+            );
+            if (prevTrackEl) {
+                prevTrackEl.classList.remove("playing");
+            }
         }
 
-        setTimeout(() => {
-            this.setTimer();
+        // Reset track index (no playlist context)
+        this.currentPlayingTrackIndex = -1;
+
+        // Disable next/prev buttons
+        const nextBtn = document.getElementById("nextBtn");
+        const prevBtn = document.getElementById("previousBtn");
+        if (nextBtn) nextBtn.setAttribute("disabled", "true");
+        if (prevBtn) prevBtn.setAttribute("disabled", "true");
+
+        // Update player display
+        const currentTrackDisplay = document.getElementById("currentTrack");
+        if (currentTrackDisplay) {
+            currentTrackDisplay.textContent = track.title || "Unknown Track";
         }
-        , 2000);
+
+        const playerContainer = document.getElementById("playerContainer");
+        if (playerContainer) {
+            playerContainer.classList.remove("hidden");
+            playerContainer.classList.add("flex");
+        }
+
+        const loadAndPlay = () => {
+            if (this.audioPlayer && this.audioPlayer.loadVideoById) {
+                const videoId = getVideoId(track.youtubeLink || "");
+                this.audioPlayer.loadVideoById(videoId);
+                this.playVideo();
+            }
+
+            setTimeout(() => {
+                this.setTimer();
+            }, 2000);
+        };
+
+        if (this.isPlayerReady) {
+            loadAndPlay();
+        } else {
+            this.pendingAction = loadAndPlay;
+        }
     }
 
     setTrackTime(time: number): void {
@@ -264,8 +338,13 @@ export class YoutubePlayer {
         }
     }
 
-    setupChangeTrackStateWhenPressingSpacebar(){
+    setupChangeTrackStateWhenPressingSpacebar() {
         document.addEventListener("keydown", (e) => {
+            const target = e.target as HTMLElement; //Cancels trigger if user is typing in an input or textarea
+            if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+                return;
+            }
+
             if (e.code === "Space") {
                 e.preventDefault();
                 this.changeTrackState();
@@ -281,7 +360,6 @@ export class YoutubePlayer {
         }
     }
 
-    // Player GETTERS state
     getPlayerState(): number {
         return this.audioPlayer ? this.audioPlayer.getPlayerState() : -1;
     }

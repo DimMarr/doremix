@@ -7,6 +7,6 @@ class Artist(Base):
     __tablename__ = "artist"
 
     idArtist = Column("idartist", Integer, primary_key=True, index=True)
-    name = Column("name", String(255), nullable=False)
+    name = Column("name", String(255), nullable=False, index=True)
 
     tracks = relationship("Track", secondary="track_artist", back_populates="artists")
