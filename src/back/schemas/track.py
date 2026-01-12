@@ -14,4 +14,4 @@ class TrackSchema(BaseModel):
     artists: List[ArtistSchema]
 
     class Config:
-        orm_mode = True
+        from_attributes = True

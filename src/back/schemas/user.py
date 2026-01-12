@@ -19,4 +19,4 @@ class UserSchema(BaseModel):
     playlists: Optional[List[PlaylistSchema]] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True

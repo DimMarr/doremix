@@ -30,7 +30,8 @@ CREATE TABLE USERS (
     password VARCHAR(255) NOT NULL,
     username VARCHAR(255) NOT NULL,
     role user_role DEFAULT 'USER',
-    banned BOOLEAN DEFAULT FALSE
+    banned BOOLEAN DEFAULT FALSE,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE TRACK (
@@ -97,3 +98,4 @@ CREATE TRIGGER update_playlist_updated_at
 CREATE INDEX IF NOT EXISTS idx_track_title ON track(title);
 CREATE INDEX IF NOT EXISTS idx_playlist_name ON playlist(name);
 CREATE INDEX IF NOT EXISTS idx_artist_name ON artist(name);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);

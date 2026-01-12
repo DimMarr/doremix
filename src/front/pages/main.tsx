@@ -5,8 +5,11 @@ import { Router } from "../router";
 import { Card } from "@components/generics/index";
 import { SearchInput, SearchResults } from "@components/generics/index";
 import SearchRepository from "@repositories/searchRepository";
+import { AuthStore } from "@store/auth";
+import { LoginPage } from "./login";
+import { SignupPage } from "./signup";
 
-async function HomePage(container, trackPlayer) {
+async function HomePage(container, trackPlayer, router) {
   container.innerHTML = "";
 
   const repo = new PlaylistRepository();
@@ -123,14 +126,17 @@ async function HomePage(container, trackPlayer) {
             playlistItems.forEach((item) => {
               const index = parseInt((item as HTMLElement).dataset.playlistIndex || '0', 10);
               item.addEventListener('click', () => {
-                trackPlayer.setPlaylist(currentResults!.playlists[index]);
-                trackPlayer.playTrack(0);
+                const playlist = currentResults!.playlists[index];
 
+                // Clear search results
                 const resultsElement = searchSection.querySelector('[class*="absolute top-full"]');
                 if (resultsElement) {
                   resultsElement.remove();
                 }
                 currentResults = null;
+
+                // Navigate to playlist detail page
+                router.navigate(`/playlist/${playlist.idPlaylist}`);
               });
             });
           }
@@ -158,11 +164,17 @@ async function HomePage(container, trackPlayer) {
 }
 
 export default async function init() {
-  const { mainContent, trackPlayer } = await createMainLayout();
-  const router = new Router(mainContent, trackPlayer);
+  const authStore = new AuthStore();
+  const router = new Router(null as any, null as any); // Temporary, will be updated after layout
+
+  const { mainContent, trackPlayer } = await createMainLayout(authStore, router);
+
+  // Update router with actual containers
+  router.container = mainContent;
+  router.trackPlayer = trackPlayer;
 
   router.register("/", (container, params, player) => {
-    HomePage(container, player);
+    HomePage(container, player, router);
   });
 
   router.register("/playlist/:id", async (container, params, player) => {
@@ -176,6 +188,14 @@ export default async function init() {
     } else {
       container.innerHTML = "Playlist not found";
     }
+  });
+
+  router.register("/login", (container) => {
+    LoginPage(container, authStore, router);
+  });
+
+  router.register("/signup", (container) => {
+    SignupPage(container, authStore, router);
   });
 
   router.onRouteChange();

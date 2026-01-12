@@ -9,26 +9,38 @@ from routes import (
     tracksRouter,
     artistsRouter,
     searchRouter,
+    authRouter,
 )
 
-routers = [usersRouter, playlistsRouter, tracksRouter, artistsRouter, searchRouter]
+routers = [
+    usersRouter,
+    playlistsRouter,
+    tracksRouter,
+    artistsRouter,
+    searchRouter,
+    authRouter,
+]
 
 app = FastAPI()
 
+# CORS configuration - MUST be added BEFORE including routers
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include routers
 for router in routers:
     app.include_router(router)
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
-
-# CORS configuration
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for development
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 if __name__ == "__main__":
     import uvicorn

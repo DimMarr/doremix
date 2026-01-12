@@ -68,4 +68,11 @@ INSERT INTO USER_PLAYLIST (idUser, idPlaylist, editor) VALUES
 (3, 6, TRUE),
 (4, 5, TRUE);
 
+-- Admin user for authentication system (password: admin123, change after first login)
+-- To generate a new hashed password, run: python build/database/create_admin.py
+-- Then replace the hash below with the generated one
+INSERT INTO USERS (email, password, username, role, banned)
+VALUES ('admin@umontpellier.fr', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzpLhJ86Oy', 'Admin', 'ADMIN', FALSE)
+ON CONFLICT (email) DO NOTHING;
+
 COMMIT;

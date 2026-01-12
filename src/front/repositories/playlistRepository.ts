@@ -4,8 +4,19 @@ import { Track } from "../models/track";
 import { Artist } from "../models/artist";
 
 export default class PlaylistRepository {
+    static getAuthHeaders() {
+        const token = localStorage.getItem('auth_token');
+        const headers: any = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        return headers;
+    }
+
     static async fetchPlaylists() {
-        const response = await fetch(`${API_BASE_URL}/playlists/`);
+        const response = await fetch(`${API_BASE_URL}/playlists/`, {
+            headers: PlaylistRepository.getAuthHeaders()
+        });
         if (!response.ok) {
             throw new Error("Failed to fetch playlists");
         }
@@ -13,7 +24,9 @@ export default class PlaylistRepository {
     }
 
     static async fetchPlaylist(playlistId: number) {
-        const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}`);
+        const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}`, {
+            headers: PlaylistRepository.getAuthHeaders()
+        });
         if (!response.ok) {
             throw new Error("Failed to fetch playlist");
         }
@@ -23,6 +36,9 @@ export default class PlaylistRepository {
     static async fetchPlaylistTracks(playlistId: number) {
         const response = await fetch(
             `${API_BASE_URL}/playlists/${playlistId}/tracks`,
+            {
+                headers: PlaylistRepository.getAuthHeaders()
+            }
         );
         if (!response.ok) {
             throw new Error("Failed to fetch tracks");
@@ -38,6 +54,7 @@ export default class PlaylistRepository {
             `${API_BASE_URL}/playlists/${playlistId}/cover`,
             {
                 method: "POST",
+                headers: PlaylistRepository.getAuthHeaders(),
                 body: formData,
             },
         );
