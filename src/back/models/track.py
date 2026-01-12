@@ -8,7 +8,7 @@ class Track(Base):
     __tablename__ = "track"
 
     idTrack = Column("idtrack", Integer, primary_key=True, index=True)
-    title = Column("title", String(255), nullable=False)
+    title = Column("title", String(255), nullable=False, index=True)
     youtubeLink = Column("youtubelink", String(2048), nullable=True)
     listeningCount = Column("listeningcount", Integer, default=0)
     durationSeconds = Column("durationseconds", Integer, nullable=True)

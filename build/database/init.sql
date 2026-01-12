@@ -93,3 +93,7 @@ CREATE TRIGGER update_playlist_updated_at
     BEFORE UPDATE ON PLAYLIST
     FOR EACH ROW
     EXECUTE PROCEDURE update_updated_at_column();
+
+CREATE INDEX IF NOT EXISTS idx_track_title ON track(title);
+CREATE INDEX IF NOT EXISTS idx_playlist_name ON playlist(name);
+CREATE INDEX IF NOT EXISTS idx_artist_name ON artist(name);
