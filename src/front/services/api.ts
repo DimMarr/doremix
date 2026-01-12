@@ -61,3 +61,13 @@ export function getCoverImageUrl(coverPath) {
   if (!coverPath) return null;
   return `${API_BASE_URL}/playlists/${coverPath}`;
 }
+
+export async function fetchSearch(query) {
+  const response = await fetch(
+    `${API_BASE_URL}/search/?q=${encodeURIComponent(query)}`,
+  );
+  if (!response.ok) {
+    throw new Error("Failed to search");
+  }
+  return response.json();
+}
