@@ -1,0 +1,36 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+    -   id: trailing-whitespace
+        verbose: true
+    -   id: end-of-file-fixer
+        verbose: true
+    -   id: check-added-large-files
+        verbose: true
+    -   id: check-yaml
+        verbose: true
+
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.6
+    hooks:
+    -   id: ruff
+        verbose: true
+        args: [ --fix, --ignore, F401 ]
+    -   id: ruff-format
+        verbose: true
+
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.2
+    hooks:
+    -   id: mypy
+        verbose: true
+
+-   repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+    -   id: prettier
+        types_or: [css, javascript, html, json]
+        additional_dependencies:
+            - prettier@3.3.3
+            - prettier-plugin-tailwindcss@0.6.6

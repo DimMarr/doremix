@@ -1,0 +1,85 @@
+stages:
+  - test
+  - deploy
+
+variables:
+  PRE_COMMIT_HOME: ${CI_PROJECT_DIR}/.cache/pre-commit
+
+pre_commit_check:
+  stage: test
+  image: node:20
+  cache:
+    key: pre-commit-cache
+    paths:
+      - .cache/pre-commit
+  before_script:
+    - apt-get update && apt-get install -y --no-install-recommends python3 python3-pip
+    - pip3 install --break-system-packages pre-commit
+  script:
+    - echo "🔍 Exécution des hooks pre-commit sur l'ensemble des fichiers..."
+    - |
+      pre-commit run --all-files || {
+        echo ""
+        echo "🛑 🛑 🛑 ÉCHEC DE LA VALIDATION DU CODE 🛑 🛑 🛑"
+        echo "----------------------------------------------------------------"
+        echo "Le pipeline a été arrêté car le code ne respecte pas les standards."
+        echo "Nous ne déployons pas de code qui ne passe pas les tests."
+        echo ""
+        echo "👉 SOLUTION : Installez pre-commit sur votre machine :"
+        echo "   1. uv tool install pre-commit (ou pip install pre-commit)"
+        echo "   2. pre-commit install"
+        echo "   3. pre-commit run --all-files"
+        echo "   4. Corrigez les erreurs, commitez et pushez à nouveau."
+        echo "----------------------------------------------------------------"
+        exit 1
+      }
+
+test:
+  stage: test
+  image: python:3.13
+  script:
+    - cd src/back
+    - pip install -r $CI_PROJECT_DIR/build/backend/requirements.txt
+    - pip install -r tests/requirements-test.txt
+    - pytest tests/ -v --cov
+
+deploy_beta:
+  stage: deploy
+  image: alpine:3.23.2
+  only:
+    - beta
+  variables:
+    DEPLOY_PATH: "/home/$SSH_USER_BETA/doremix"
+  before_script:
+    - apk add --no-cache openssh-client rsync bash
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY_BETA" | base64 -d | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H "$SSH_HOST_BETA" >> ~/.ssh/known_hosts
+  script:
+    - echo "📂 Début du déploiement..."
+    - ssh $SSH_USER_BETA@$SSH_HOST_BETA "mkdir -p $DEPLOY_PATH"
+    - rsync -avz --delete --exclude='.git/' --exclude='.gitlab-ci.yml' --exclude='.env' --exclude='__pycache__/' --exclude='node_modules/' . $SSH_USER_BETA@$SSH_HOST_BETA:$DEPLOY_PATH
+    - ssh $SSH_USER_BETA@$SSH_HOST_BETA "cd $DEPLOY_PATH && docker compose up -d --build --remove-orphans"
+
+deploy_prod:
+  stage: deploy
+  image: alpine:3.23.2
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_COMMIT_TAG'
+      when: on_success
+  variables:
+    DEPLOY_PATH: "/home/$SSH_USER_PROD/doremix"
+  before_script:
+    - apk add --no-cache openssh-client rsync bash
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY_PROD" | base64 -d | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H "$SSH_HOST_PROD" >> ~/.ssh/known_hosts
+  script:
+    - echo "📂 Début du déploiement..."
+    - ssh $SSH_USER_PROD@$SSH_HOST_PROD "mkdir -p $DEPLOY_PATH"
+    - rsync -avz --delete --exclude='.git/' --exclude='.gitlab-ci.yml' --exclude='.env' --exclude='__pycache__/' --exclude='node_modules/' . $SSH_USER_PROD@$SSH_HOST_PROD:$DEPLOY_PATH
+    - ssh $SSH_USER_PROD@$SSH_HOST_PROD "cd $DEPLOY_PATH && docker compose -f docker-compose_prod.yml up -d --build --remove-orphans"
