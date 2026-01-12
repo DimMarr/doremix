@@ -94,9 +94,17 @@ export class YoutubePlayer {
     }
 
     public setPlaylist(playlist: Playlist): void {
+        const currentTrack = this.getCurrentTrack();
         this.playlist = playlist;
         this.tracks = this.playlist.tracks;
-        this.currentPlayingTrackIndex = 0;
+        this.currentPlayingTrackIndex = 0; // Default to 0
+
+        if (currentTrack) {
+            const newIndex = this.tracks.findIndex(t => t.idTrack === currentTrack.idTrack);
+            if (newIndex !== -1) {
+                this.currentPlayingTrackIndex = newIndex;
+            }
+        }
     }
 
     // Timer controls

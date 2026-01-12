@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List
+from pydantic import BaseModel
 
 from controllers import PlaylistController
 from schemas import PlaylistSchema, TrackSchema
@@ -9,6 +10,11 @@ from database import get_db
 import os
 
 router = APIRouter(prefix="/playlists", tags=["Playlists"])
+
+
+class AddTrackBody(BaseModel):
+    url: str
+    title: str
 
 
 @router.get(
@@ -37,6 +43,22 @@ def get_playlist(idPlaylist: int, db: Session = Depends(get_db)):
 def get_playlist_tracks(playlist_id: int, db: Session = Depends(get_db)):
     tracks = PlaylistController.get_playlist_tracks(db, playlist_id)
     return tracks
+
+
+@router.post(
+    "/{playlist_id}/tracks/by-url",
+    response_model=TrackSchema,
+    summary="Ajoute un track à une playlist via URL",
+)
+def add_playlist_track_by_url(
+    playlist_id: int,
+    body: AddTrackBody,
+    db: Session = Depends(get_db),
+):
+    track = PlaylistController.add_playlist_track(db, body.title, body.url, playlist_id)
+    if not track:
+        raise HTTPException(status_code=500, detail="Failed to add track")
+    return track
 
 
 @router.post(
