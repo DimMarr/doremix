@@ -6,10 +6,24 @@ services:
     container_name: web
     restart: unless-stopped
     ports:
-      - "80:3000"
+      - "81:3000"
     environment:
       - NODE_ENV=production
     command: ["npm", "start"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
     networks:
       - frontend-network
 
@@ -30,6 +44,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     networks:
       - backend-network
 
@@ -47,6 +69,20 @@ services:
       - ./src/back:/app
       - ./uploads:/app/uploads
       - /app/__pycache__
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
     networks:
       - frontend-network
       - backend-network
