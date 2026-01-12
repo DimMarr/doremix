@@ -87,6 +87,10 @@ const setupControlButtons = (container: HTMLElement, playerStore: YoutubePlayer)
     if (elapsedTime) {
       elapsedTime.textContent = new Date(Number(target.value) * 1000).toISOString().substr(14, 5);
     }
+
+    // Update CSS variable for Chrome progress styling
+    const progress = (parseFloat(target.value) / parseFloat(target.max)) * 100;
+    target.style.setProperty('--range-progress', `${progress}%`);
   });
 
   trackTimer.addEventListener('mouseup', (event: Event) => {
