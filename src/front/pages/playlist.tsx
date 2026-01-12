@@ -1,7 +1,7 @@
+import { TrackRepository } from "@repositories/trackRepository";
 import { Button, AddTrackModal } from "@components/index";
 import { TrackListHeader } from "@components/tracks/header";
 import { TrackRow } from "@components/tracks/row";
-import { removeTrackFromPlaylist } from "@services/api";
 
 function TrackList(playlist, trackPlayer) {
   const tracks = playlist.tracks || [];
@@ -119,7 +119,7 @@ export function PlaylistDetailPage(container, playlist, trackPlayer, onBack) {
         e.stopPropagation();
         const trackIndex = Number(deleteButton.getAttribute('data-track-index'));
 
-        removeTrackFromPlaylist(
+        TrackRepository.removeTrackFromPlaylist(
           proxyPlaylist.idPlaylist,
           proxyPlaylist.tracks[trackIndex].idTrack,
         ).then(() => {
