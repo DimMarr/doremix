@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from controllers import PlaylistController
-from schemas import PlaylistSchema, TrackSchema, PlaylistCreate, PlaylistUpdate, PlaylistAddTrack
+from schemas import PlaylistSchema, TrackSchema, PlaylistCreate, PlaylistUpdate
 from database import get_db
 import os
 
@@ -47,6 +47,20 @@ def get_playlist_tracks(playlist_id: int, db: Session = Depends(get_db)):
     tracks = PlaylistController.get_playlist_tracks(db, playlist_id)
     return tracks
 
+@router.post(
+    "/{playlist_id}/track",
+    response_model=TrackSchema,
+    summary="Ajoute un track à une playlist",
+)
+def add_playlist_track(
+        playlist_id: int,
+        title: str,
+        youtubeLink: str,
+        db: Session = Depends(get_db),
+):
+    tracks = PlaylistController.add_playlist_track(db, title, youtubeLink, playlist_id)
+    return tracks
+
 @router.post('/{playlist_id}/cover', response_model=PlaylistSchema)
 def upload_playlist_cover(
     playlist_id: int,
@@ -66,50 +80,28 @@ def get_cover_image(filename: str):
     return FileResponse(filepath)
 
 @router.delete(
-    "/{identifier}",
+    "/{playlist_id}",
     response_model=dict,
     summary="Delete a playlist",
-    description="Deletes a playlist by its ID or name.",
+    description="Deletes a playlist by its ID.",
 )
-def delete_playlist(identifier: str, db: Session = Depends(get_db)):
+def delete_playlist(playlist_id: int, db: Session = Depends(get_db)):
     # TODO: Quand l'auth sera en place :
-    # def delete_playlist(identifier: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    #     return PlaylistController.delete_playlist(db, identifier, current_user.id)
+    # def delete_playlist(playlist_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    #     return PlaylistController.delete_playlist(db, playlist_id, current_user.id)
 
-    return PlaylistController.delete_playlist(db, identifier)
+    return PlaylistController.delete_playlist(db, playlist_id)
 
-@router.get(
-    "/name/{name}",
-    response_model=List[PlaylistSchema],
-    summary="Get playlists by name",
-    description="Returns all playlists matching the given name.",
-)
-def get_playlist_by_name(name: str, db: Session = Depends(get_db)):
-    playlists = PlaylistController.get_playlist_by_name(db, name)
-    return playlists
 
 @router.patch(
-    "/{identifier}",
+    "/{playlist_id}",
     response_model=PlaylistSchema,
     summary="Update a playlist",
-    description="Updates a playlist by its ID or name.",
+    description="Updates a playlist by its ID.",
 )
-def update_playlist(identifier: str, playlist_data: PlaylistUpdate, db: Session = Depends(get_db)):
+def update_playlist(playlist_id: int, playlist_data: PlaylistUpdate, db: Session = Depends(get_db)):
     # TODO: Quand l'auth sera en place :
-    # def update_playlist(identifier: str, playlist_data: PlaylistUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    #     return PlaylistController.update_playlist(db, identifier, playlist_data.model_dump(exclude_unset=True), current_user.id)
+    # def update_playlist(playlist_id: int, playlist_data: PlaylistUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    #     return PlaylistController.update_playlist(db, playlist_id, playlist_data.model_dump(exclude_unset=True), current_user.id)
 
-    return PlaylistController.update_playlist(db, identifier, playlist_data.model_dump(exclude_unset=True))
-
-@router.post(
-    "/{identifier}/tracks",
-    response_model=PlaylistSchema,
-    summary="Add a track to a playlist",
-    description="Adds a track to a playlist by playlist ID or name.",
-)
-def add_track_to_playlist(identifier: str, track_data: PlaylistAddTrack, db: Session = Depends(get_db)):
-    # TODO: Quand l'auth sera en place :
-    # def add_track_to_playlist(identifier: str, track_data: PlaylistAddTrack, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    #     return PlaylistController.add_track_to_playlist(db, identifier, track_data.idTrack, current_user.id)
-
-    return PlaylistController.add_track_to_playlist(db, identifier, track_data.idTrack)
+    return PlaylistController.update_playlist(db, playlist_id, playlist_data.model_dump(exclude_unset=True))

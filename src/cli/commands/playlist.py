@@ -10,56 +10,12 @@ from services.playlist import (
     remove_track,
     create_playlist,
     delete_playlist,
-    get_playlists_by_name,
     update_playlist,
     add_track_to_playlist,
 )
 
 app = typer.Typer()
 console = Console()
-
-def select_playlist(identifier: str):
-
-    if identifier.isdigit():
-        return get_playlist(identifier)
-
-    playlists = get_playlists_by_name(identifier)
-
-    if len(playlists) == 1:
-        return playlists[0]
-
-    console.print(f"[yellow]Multiple playlists found with name '{identifier}':[/yellow]\n")
-
-    table = Table(title="Choose a playlist")
-    table.add_column("#", style="green")
-    table.add_column("id", style="cyan")
-    table.add_column("name", style="magenta")
-    table.add_column("genre", style="blue")
-    table.add_column("visibility", style="yellow")
-    table.add_column("createdAt", style="white")
-
-    for idx, playlist in enumerate(playlists, 1):
-        table.add_row(
-            str(idx),
-            str(playlist.idPlaylist),
-            playlist.name,
-            str(playlist.idGenre),
-            playlist.visibility.value,
-            playlist.createdAt.strftime("%B %d %Y")
-        )
-
-    console.print(table)
-
-    choice = typer.prompt("\nEnter the number of the playlist to select")
-
-    try:
-        choice_idx = int(choice) - 1
-        if 0 <= choice_idx < len(playlists):
-            return playlists[choice_idx]
-        else:
-            raise Exception("Invalid selection")
-    except ValueError:
-        raise Exception("Invalid input, please enter a number")
 
 @app.command(help="List all playlists.")
 def list():
@@ -163,14 +119,14 @@ def create(
     except Exception as e:
         console.print(f"[red]✗ Erreur: {e}[/red]")
 
-@app.command(help="Delete a playlist by ID or name.")
+@app.command(help="Delete a playlist by ID.")
 def delete(
-        identifier: str = typer.Argument(..., help="Playlist ID or name to delete"),
+        playlist_id: int = typer.Argument(..., help="Playlist ID to delete"),
         force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation")
         # TODO: Quand l'auth sera en place, l'utilisateur sera automatiquement identifié via le token
 ):
     try:
-        playlist = select_playlist(identifier)
+        playlist = get_playlist(str(playlist_id))
 
         if not force:
             confirm = typer.confirm(f"Do you really want to delete the playlist '{playlist.name}'?")
@@ -178,7 +134,7 @@ def delete(
                 console.print("[yellow]Deletion cancelled.[/yellow]")
                 raise typer.Abort()
 
-        result = delete_playlist(str(playlist.idPlaylist))
+        result = delete_playlist(str(playlist_id))
         console.print(f"[green]✓ {result['message']}[/green]")
 
     except typer.Abort:
@@ -186,9 +142,9 @@ def delete(
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")
 
-@app.command(help="Update a playlist by ID or name.")
+@app.command(help="Update a playlist by ID.")
 def update(
-        identifier: str = typer.Argument(..., help="Playlist ID or name to update"),
+        playlist_id: int = typer.Argument(..., help="Playlist ID to update"),
         name: str = typer.Option(None, "--name", "-n", help="New playlist name"),
         genre: int = typer.Option(None, "--genre", "-g", help="New genre ID (1=Sans genre, 2=Rock, 3=Pop, 4=Hip-Hop, 5=Jazz, 6=Electro, 7=Metal, 8=Classical, 9=Reggae)"),
         visibility: str = typer.Option(None, "--visibility", "-v", help="New visibility (PUBLIC, PRIVATE, OPEN, SHARED)")
@@ -199,8 +155,7 @@ def update(
             console.print("[yellow]No changes specified. Use --name, --genre, or --visibility.[/yellow]")
             raise typer.Abort()
 
-        playlist = select_playlist(identifier)
-        updated_playlist = update_playlist(str(playlist.idPlaylist), name, genre, visibility)
+        updated_playlist = update_playlist(str(playlist_id), name, genre, visibility)
 
         console.print(f"[green]✓ Playlist successfully updated![/green]")
 
@@ -224,29 +179,46 @@ def update(
 
 @app.command(help="Add a track to a playlist.")
 def add_track(
-        identifier: str = typer.Argument(..., help="Playlist ID or name"),
-        track_id: int = typer.Option(..., "--track", "-t", help="Track ID to add")
+        playlist_id: int = typer.Argument(..., help="Playlist ID"),
+        youtube_link: str = typer.Option(..., "--url", "-u", help="YouTube link of the track"),
+        title: str = typer.Option(..., "--title", "-t", help="Track title (ignored if track already exists)")
         # TODO: Quand l'auth sera en place, l'utilisateur sera automatiquement identifié via le token
 ):
     try:
-        playlist = select_playlist(identifier)
+        console.print(f"[green]Test[/green]")
+        track = add_track_to_playlist(playlist_id, title, youtube_link)
 
-        updated_playlist = add_track_to_playlist(str(playlist.idPlaylist), track_id)
+        console.print(f"[green]✓ Track '{track.title}' successfully added![/green]")
 
-        console.print(f"[green]✓ Track successfully added to playlist '{updated_playlist.name}'![/green]")
+        table = Table(show_header=False)
+        table.add_column("Field", style="cyan")
+        table.add_column("Value", style="magenta")
 
-        tracks = get_playlist_tracks(str(updated_playlist.idPlaylist))
+        artists = ", ".join([artist.name for artist in track.artists])
+        duration = f"{track.durationSeconds // 60}:{track.durationSeconds % 60:02d}" if track.durationSeconds else "N/A"
 
-        table = Table(title=f"Tracks in '{updated_playlist.name}'")
-        table.add_column("id", style="cyan")
-        table.add_column("title", style="magenta")
-        table.add_column("artists", style="blue")
-
-        for track in tracks:
-            artists = ", ".join([artist.name for artist in track.artists])
-            table.add_row(str(track.idTrack), track.title, artists)
+        table.add_row("id", str(track.idTrack))
+        table.add_row("title", track.title)
+        table.add_row("artists", artists)
+        table.add_row("duration", duration)
+        table.add_row("youtube", track.youtubeLink or "N/A")
 
         console.print(table)
+
+
+        playlist = get_playlist(str(playlist_id))
+        tracks = get_playlist_tracks(str(playlist_id))
+
+        tracks_table = Table(title=f"All tracks in '{playlist.name}'")
+        tracks_table.add_column("id", style="cyan")
+        tracks_table.add_column("title", style="magenta")
+        tracks_table.add_column("artists", style="blue")
+
+        for t in tracks:
+            t_artists = ", ".join([artist.name for artist in t.artists])
+            tracks_table.add_row(str(t.idTrack), t.title, t_artists)
+
+        console.print(tracks_table)
 
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")

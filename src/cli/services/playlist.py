@@ -80,15 +80,6 @@ def delete_playlist(identifier: str) -> dict:
 
     return res.json()
 
-def get_playlists_by_name(name: str) -> list[PlaylistSchema]:
-    res = requests.get(f"{API_BASE_URL}/playlists/name/{name}")
-
-    if res.status_code == 404:
-        raise Exception("Playlist not found")
-
-    data = res.json()
-    return [PlaylistSchema(**item) for item in data]
-
 def update_playlist(identifier: str, name: str = None, id_genre: int = None, visibility: str = None) -> PlaylistSchema:
     payload = {}
     if name is not None:
@@ -114,17 +105,16 @@ def update_playlist(identifier: str, name: str = None, id_genre: int = None, vis
     data = res.json()
     return PlaylistSchema(**data)
 
-def add_track_to_playlist(playlist_id: str, track_id: int) -> PlaylistSchema:
-    payload = {"idTrack": track_id}
-
+def add_track_to_playlist(playlist_id: int, title: str, youtube_link: str) -> TrackSchema:
     # TODO: Quand l'auth sera en place, ajouter le token dans les headers
 
-    res = requests.post(f"{API_BASE_URL}/playlists/{playlist_id}/tracks", json=payload)
+    res = requests.post(
+        f"{API_BASE_URL}/playlists/{playlist_id}/track",
+        params={"title": title, "youtubeLink": youtube_link}
+    )
 
     if res.status_code == 404:
-        raise Exception(res.json().get("detail", "Not found"))
-    if res.status_code == 400:
-        raise Exception(res.json().get("detail", "Bad request"))
+        raise Exception("Playlist not found")
     if res.status_code != 200:
         raise Exception(f"Error while adding track: {res.text}")
 
@@ -133,4 +123,4 @@ def add_track_to_playlist(playlist_id: str, track_id: int) -> PlaylistSchema:
     #     raise Exception("You don't have permission to edit this playlist")
 
     data = res.json()
-    return PlaylistSchema(**data)
+    return TrackSchema(**data)

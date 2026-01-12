@@ -35,6 +35,3 @@ class PlaylistUpdate(BaseModel):
     name: Optional[str] = None
     idGenre: Optional[int] = None
     visibility: Optional[PlaylistVisibility] = None
-
-class PlaylistAddTrack(BaseModel):
-    idTrack: int
