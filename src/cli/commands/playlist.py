@@ -185,7 +185,7 @@ def add_track(
         # TODO: Quand l'auth sera en place, l'utilisateur sera automatiquement identifié via le token
 ):
     try:
-        track = add_track_to_playlist(playlist_id, title, youtube_link)
+        track = add_track_to_playlist(str(playlist_id), title, youtube_link)
 
         console.print(f"[green]✓ Track '{track.title}' successfully added![/green]")
 

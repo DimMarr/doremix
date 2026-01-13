@@ -106,7 +106,7 @@ def update_playlist(playlist_id: str, name: Optional[str] = None, id_genre: Opti
     data = res.json()
     return PlaylistSchema(**data)
 
-def add_track_to_playlist(playlist_id: int, title: str, youtube_link: str) -> TrackSchema:
+def add_track_to_playlist(playlist_id: str, title: str, youtube_link: str) -> TrackSchema:
     # TODO: Quand l'auth sera en place, ajouter le token dans les headers
 
     res = requests.post(
