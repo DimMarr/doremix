@@ -1,3 +1,4 @@
+from typing import Optional
 from utils.get_env import get_env
 from models.playlist import PlaylistSchema
 from models.track import TrackSchema
@@ -80,7 +81,7 @@ def delete_playlist(identifier: str) -> dict:
 
     return res.json()
 
-def update_playlist(identifier: str, name: str = None, id_genre: int = None, visibility: str = None) -> PlaylistSchema:
+def update_playlist(playlist_id: str, name: Optional[str] = None, id_genre: Optional[int] = None, visibility: Optional[str] = None) -> PlaylistSchema:
     payload = {}
     if name is not None:
         payload["name"] = name
@@ -91,7 +92,7 @@ def update_playlist(identifier: str, name: str = None, id_genre: int = None, vis
 
     # TODO: Quand l'auth sera en place, ajouter le token dans les headers
 
-    res = requests.patch(f"{API_BASE_URL}/playlists/{identifier}", json=payload)
+    res = requests.patch(f"{API_BASE_URL}/playlists/{playlist_id}", json=payload)
 
     if res.status_code == 404:
         raise Exception("Playlist not found")
