@@ -114,6 +114,9 @@ export class YoutubePlayer {
             | null;
         if (trackTimer) {
             trackTimer.value = String(videoTime);
+            // Update CSS variable for Chrome progress styling
+            const progress = (videoTime / parseFloat(trackTimer.max)) * 100;
+            trackTimer.style.setProperty('--range-progress', `${progress}%`);
         }
     }
 

@@ -3,7 +3,7 @@ import { PlaylistDetailPage } from "@pages/playlist";
 import { createMainLayout } from "@layouts/mainLayout";
 import { Router } from "../router";
 import { Card } from "@components/generics/index";
-import { SearchInput, SearchResults } from "@components/generics/index";
+import { SearchBar, SearchResults } from "@components/generics/index";
 import SearchRepository from "@repositories/searchRepository";
 
 async function HomePage(container, trackPlayer) {
@@ -61,14 +61,14 @@ async function HomePage(container, trackPlayer) {
     let debounceTimer: ReturnType<typeof setTimeout>;
 
     // Render search input
-    searchSection.innerHTML = SearchInput({
+    searchSection.innerHTML = SearchBar({
       placeholder: "Search tracks and playlists..."
     });
 
     // Attach event handler to search input
-    const searchInputElement = document.getElementById("search-input") as HTMLInputElement;
-    if (searchInputElement) {
-      searchInputElement.addEventListener("input", async (e) => {
+    const SearchBarElement = document.getElementById("search-input") as HTMLInputElement;
+    if (SearchBarElement) {
+      SearchBarElement.addEventListener("input", async (e) => {
         const target = e.target as HTMLInputElement;
         const query = target.value.trim();
 
