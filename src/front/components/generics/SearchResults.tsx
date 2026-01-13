@@ -48,12 +48,14 @@ export function SearchResults({
                 <div class="p-4 border-t border-gray-700">
                     <h3 class="text-sm font-semibold text-gray-400 mb-2">PLAYLISTS</h3>
                     {playlists.map((playlist, index) => (
-                        <div
-                            class="p-2 hover:bg-gray-700 rounded cursor-pointer"
+                        <a
+                            href={`/playlist/${playlist.idPlaylist}`}
+                            data-link
+                            class="block p-2 hover:bg-gray-700 rounded cursor-pointer"
                             data-playlist-index={index}
                         >
                             {playlist.name ?? 'Unknown Playlist'}
-                        </div>
+                        </a>
                     ))}
                 </div>
             )}
