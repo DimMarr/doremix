@@ -121,11 +121,9 @@ async function HomePage(container, trackPlayer) {
 
             const playlistItems = searchContainer.querySelectorAll('[data-playlist-index]');
             playlistItems.forEach((item) => {
-              const index = parseInt((item as HTMLElement).dataset.playlistIndex || '0', 10);
               item.addEventListener('click', () => {
-                trackPlayer.setPlaylist(currentResults!.playlists[index]);
-                trackPlayer.playTrack(0);
-
+                // Close search results when navigating to playlist
+                // The actual navigation is handled by the router via data-link attribute
                 const resultsElement = searchSection.querySelector('[class*="absolute top-full"]');
                 if (resultsElement) {
                   resultsElement.remove();
