@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 @pytest.fixture
 def sample_genre(db: Session):
-    """Create a sample genre for testing."""
+    """Crée un genre de test."""
     genre = Genre(label="Rock")
     db.add(genre)
     db.commit()
@@ -16,7 +16,7 @@ def sample_genre(db: Session):
 
 @pytest.fixture
 def sample_user(db: Session):
-    """Create a sample user for testing."""
+    """Crée un utilisateur de test."""
     user = User(
         email="test@example.com", password="hashed_password", username="testuser"
     )
@@ -28,7 +28,7 @@ def sample_user(db: Session):
 
 @pytest.fixture
 def sample_playlists(db: Session, sample_user, sample_genre):
-    """Create sample playlists for testing."""
+    """Crée des playlists de test."""
     playlists = [
         Playlist(
             name="My Favorite Songs",
@@ -62,10 +62,10 @@ def sample_playlists(db: Session, sample_user, sample_genre):
 
 
 class TestGetAllPlaylists:
-    """Tests for GET /playlists/ endpoint."""
+    """Tests pour l'endpoint GET /playlists/."""
 
     def test_get_all_playlists_success(self, client, sample_playlists):
-        """Test successfully retrieving all playlists."""
+        """Test la récupération de toutes les playlists avec succès."""
         response = client.get("/playlists/")
         assert response.status_code == 200
 
@@ -73,7 +73,7 @@ class TestGetAllPlaylists:
         assert isinstance(data, list)
         assert len(data) == 3
 
-        # Verify structure of response
+        # Vérifier la structure de la réponse
         for playlist in data:
             assert "idPlaylist" in playlist
             assert "name" in playlist
@@ -85,7 +85,7 @@ class TestGetAllPlaylists:
             assert "updatedAt" in playlist
 
     def test_get_all_playlists_empty(self, client):
-        """Test retrieving playlists when database is empty."""
+        """Test la récupération de playlists quand la BD est vide."""
         response = client.get("/playlists/")
         assert response.status_code == 200
 
@@ -94,24 +94,24 @@ class TestGetAllPlaylists:
         assert len(data) == 0
 
     def test_get_all_playlists_returns_correct_data(self, client, sample_playlists):
-        """Test that returned data matches created playlists."""
+        """Test que les données retournées correspondent aux playlists créées."""
         response = client.get("/playlists/")
         assert response.status_code == 200
 
         data = response.json()
 
-        # Check first playlist
+        # Vérifier la première playlist
         assert data[0]["name"] == "My Favorite Songs"
         assert data[0]["vote"] == 10
         assert data[0]["visibility"] == "PUBLIC"
 
-        # Check second playlist
+        # Vérifier la deuxième playlist
         assert data[1]["name"] == "Private Mix"
         assert data[1]["vote"] == 5
         assert data[1]["visibility"] == "PRIVATE"
 
     def test_get_all_playlists_different_visibilities(self, client, sample_playlists):
-        """Test retrieving playlists with different visibility levels."""
+        """Test la récupération de playlists avec différents niveaux de visibilité."""
         response = client.get("/playlists/")
         assert response.status_code == 200
 
@@ -122,14 +122,14 @@ class TestGetAllPlaylists:
         assert "PRIVATE" in visibilities
 
     def test_get_all_playlists_response_schema(self, client, sample_playlists):
-        """Test response conforms to expected schema."""
+        """Test que la réponse correspond au schéma attendu."""
         response = client.get("/playlists/")
         assert response.status_code == 200
 
         data = response.json()
 
         for playlist in data:
-            # All fields should be present
+            # Tous les champs doivent être présents
             assert isinstance(playlist["idPlaylist"], int)
             assert isinstance(playlist["name"], str)
             assert isinstance(playlist["idGenre"], int)
@@ -141,10 +141,10 @@ class TestGetAllPlaylists:
 
 
 class TestGetPlaylistById:
-    """Tests for GET /playlists/{playlist_id} endpoint."""
+    """Tests pour l'endpoint GET /playlists/{playlist_id}."""
 
     def test_get_playlist_by_id_success(self, client, sample_playlists):
-        """Test successfully retrieving a playlist by ID."""
+        """Test la récupération d'une playlist par ID avec succès."""
         playlist_id = sample_playlists[0].idPlaylist
         response = client.get(f"/playlists/{playlist_id}")
 
@@ -156,21 +156,21 @@ class TestGetPlaylistById:
         assert data["vote"] == 10
 
     def test_get_playlist_by_id_not_found(self, client):
-        """Test retrieving a non-existent playlist."""
+        """Test la récupération d'une playlist inexistante."""
         try:
             response = client.get("/playlists/999")
-            # If no exception, check status codes
+            # Si pas d'exception, vérifier les status codes
             assert response.status_code in [404, 422, 500]
         except Exception as e:
-            # FastAPI raises ResponseValidationError when None is returned
-            # This is expected given the current implementation
+            # FastAPI lève ResponseValidationError quand None est retourné
+            # C'est attendu avec l'implémentation actuelle
             assert (
                 "ResponseValidationError" in str(type(e))
                 or "validation error" in str(e).lower()
             )
 
     def test_get_playlist_by_id_structure(self, client, sample_playlists):
-        """Test response structure for single playlist."""
+        """Test la structure de la réponse pour une playlist unique."""
         playlist_id = sample_playlists[1].idPlaylist
         response = client.get(f"/playlists/{playlist_id}")
 
@@ -187,7 +187,7 @@ class TestGetPlaylistById:
         assert "updatedAt" in data
 
     def test_get_playlist_private_visibility(self, client, sample_playlists):
-        """Test retrieving a private playlist."""
+        """Test la récupération d'une playlist privée."""
         private_playlist = next(
             p for p in sample_playlists if p.visibility == PlaylistVisibility.PRIVATE
         )
@@ -198,13 +198,13 @@ class TestGetPlaylistById:
         assert data["visibility"] == "PRIVATE"
 
     def test_get_playlist_by_id_invalid_id_type(self, client):
-        """Test with invalid playlist ID type."""
+        """Test avec un type d'ID de playlist invalide."""
         response = client.get("/playlists/invalid")
 
-        assert response.status_code == 422  # Validation error
+        assert response.status_code == 422  # Erreur de validation
 
     def test_get_playlist_by_id_negative_id(self, client):
-        """Test with negative playlist ID."""
+        """Test avec un ID de playlist négatif."""
         try:
             response = client.get("/playlists/-1")
             # If no exception, check status codes
@@ -220,7 +220,7 @@ class TestGetPlaylistById:
     def test_get_playlist_preserves_data_integrity(
         self, client, sample_playlists, db: Session
     ):
-        """Test that retrieving a playlist doesn't modify it."""
+        """Test que la récupération d'une playlist ne la modifie pas."""
         original_playlist = sample_playlists[0]
         original_name = original_playlist.name
         original_vote = original_playlist.vote
@@ -228,7 +228,7 @@ class TestGetPlaylistById:
         response = client.get(f"/playlists/{original_playlist.idPlaylist}")
         assert response.status_code == 200
 
-        # Verify database record hasn't changed
+        # Vérifier que l'enregistrement en BD n'a pas changé
         db_playlist = (
             db.query(Playlist)
             .filter(Playlist.idPlaylist == original_playlist.idPlaylist)
@@ -239,7 +239,7 @@ class TestGetPlaylistById:
         assert db_playlist.vote == original_vote
 
     def test_get_playlist_response_types(self, client, sample_playlists):
-        """Test that response fields have correct data types."""
+        """Test que les champs de la réponse ont les bons types de données."""
         playlist_id = sample_playlists[0].idPlaylist
         response = client.get(f"/playlists/{playlist_id}")
 
@@ -257,12 +257,12 @@ class TestGetPlaylistById:
 
 
 class TestPlaylistEdgeCases:
-    """Tests for edge cases and special scenarios."""
+    """Tests pour les cas limites et scénarios spéciaux."""
 
     def test_get_multiple_playlists_from_same_owner(
         self, client, db: Session, sample_user, sample_genre
     ):
-        """Test retrieving multiple playlists from same owner."""
+        """Test la récupération de plusieurs playlists du même propriétaire."""
         playlists = [
             Playlist(
                 name=f"Playlist {i}",
@@ -280,13 +280,13 @@ class TestPlaylistEdgeCases:
         data = response.json()
         assert len(data) == 5
 
-        # All should have the same owner
+        # Tous devraient avoir le même propriétaire
         assert all(p["idOwner"] == sample_user.idUser for p in data)
 
     def test_playlist_with_high_vote_count(
         self, client, db: Session, sample_user, sample_genre
     ):
-        """Test playlist with high vote count."""
+        """Test une playlist avec un haut nombre de votes."""
         playlist = Playlist(
             name="Popular Playlist",
             idGenre=sample_genre.idGenre,
@@ -306,7 +306,7 @@ class TestPlaylistEdgeCases:
     def test_playlist_name_with_special_characters(
         self, client, db: Session, sample_user, sample_genre
     ):
-        """Test playlist with special characters in name."""
+        """Test une playlist avec des caractères spéciaux dans le nom."""
         special_names = [
             "Rock & Roll Mix",
             "80's Classics",
@@ -329,10 +329,11 @@ class TestPlaylistEdgeCases:
         returned_names = [p["name"] for p in data]
 
         for name in special_names:
+            # Vérifier que chaque nom spécial est dans les résultats
             assert name in returned_names
 
     def test_all_visibility_types(self, client, db: Session, sample_user, sample_genre):
-        """Test all visibility types are returned correctly."""
+        """Test que tous les types de visibilité sont retournés correctement."""
         visibility_types = [
             PlaylistVisibility.PUBLIC,
             PlaylistVisibility.PRIVATE,
@@ -358,7 +359,8 @@ class TestPlaylistEdgeCases:
         returned_visibilities = [p["visibility"] for p in data]
 
         for visibility in visibility_types:
+            # Vérifier que chaque type de visibilité est dans les résultats
             assert visibility.value in returned_visibilities
 
 
-# Import Playlist model for reference in tests
+# Référence au modèle Playlist pour les tests
