@@ -121,6 +121,13 @@ def delete_playlist(playlist_id: int, db: Session = Depends(get_db)):
     return PlaylistController.delete_playlist(db, playlist_id)
 
 
+@router.delete("/{playlist_id}/track/{track_id}", response_model=PlaylistSchema)
+def remove_track(playlist_id: int, track_id: int, db: Session = Depends(get_db)):
+    updated_playlist = PlaylistController.remove_track(db, playlist_id, track_id)
+
+    return updated_playlist
+
+
 @router.patch(
     "/{playlist_id}",
     response_model=PlaylistSchema,
