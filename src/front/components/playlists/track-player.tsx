@@ -1,4 +1,7 @@
 import YoutubePlayer from '@store/track-player';
+import playlist1 from '@assets/images/playlist1.jpg';
+import playIcon from '@assets/icons/play.svg';
+import pauseIcon from '@assets/icons/pause.svg';
 
 let currentTrackIndex = 0;
 let overlayTrackRows: HTMLElement[] = [];
@@ -87,6 +90,10 @@ const setupControlButtons = (container: HTMLElement, playerStore: YoutubePlayer)
     if (elapsedTime) {
       elapsedTime.textContent = new Date(Number(target.value) * 1000).toISOString().substr(14, 5);
     }
+
+    // Update CSS variable for Chrome progress styling
+    const progress = (parseFloat(target.value) / parseFloat(target.max)) * 100;
+    target.style.setProperty('--range-progress', `${progress}%`);
   });
 
   trackTimer.addEventListener('mouseup', (event: Event) => {
@@ -174,7 +181,7 @@ export function TrackPlayer() {
         >
           <img
             id="playerCover"
-            src="/assets/images/playlist1.jpg"
+            src={playlist1}
             class="w-[75px] h-[75px] mr-2 rounded-md hidden md:block object-cover"
             alt="Playlist Cover"
           />
@@ -210,7 +217,7 @@ export function TrackPlayer() {
                 title="Play"
               >
                 <img
-                  src="/assets/icons/play.svg"
+                  src={playIcon}
                   class="absolute z-99 w-10 p-2 rounded-[999px] cursor-pointer"
                   alt="Play"
                 />
@@ -223,7 +230,7 @@ export function TrackPlayer() {
                 title="Play"
               >
                 <img
-                  src="/assets/icons/pause.svg"
+                  src={pauseIcon}
                   class="absolute z-99 w-10 p-2 rounded-[999px] cursor-pointer"
                   alt="Pause"
                 />

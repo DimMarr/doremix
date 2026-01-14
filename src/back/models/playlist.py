@@ -16,7 +16,7 @@ class Playlist(Base):
     __tablename__ = "playlist"
 
     idPlaylist = Column("idplaylist", Integer, primary_key=True, index=True)
-    name = Column("name", String(255), nullable=False)
+    name = Column("name", String(255), nullable=False, index=True)
     idGenre = Column(
         "idgenre", Integer, ForeignKey("genre.idgenre"), nullable=False, default=1
     )
@@ -26,6 +26,7 @@ class Playlist(Base):
         ForeignKey("users.iduser", ondelete="CASCADE"),
         nullable=False,
     )
+    owner = relationship("User", foreign_keys=[idOwner])
     vote = Column("vote", Integer, default=0)
     visibility = Column(
         "visibility", Enum(PlaylistVisibility), default=PlaylistVisibility.PUBLIC

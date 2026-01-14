@@ -1,5 +1,6 @@
-from sqlalchemy.orm import Session
-from models.playlist import Playlist
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import and_, or_
+from models.playlist import Playlist, PlaylistVisibility
 from models.track_playlist import TrackPlaylist
 from models.track import Track
 from models.artist import Artist
@@ -125,3 +126,22 @@ class PlaylistRepository:
         db.commit()
         db.refresh(playlist)
         return playlist
+
+    @staticmethod
+    def search_playlists(db: Session, query: str, limit: int = 10) -> List[Playlist]:
+        playlists = (
+            db.query(Playlist)
+            .options(joinedload(Playlist.owner))
+            .filter(
+                and_(
+                    Playlist.name.ilike(f"%{query}%"),
+                    or_(
+                        Playlist.visibility == PlaylistVisibility.PUBLIC,
+                        Playlist.visibility == PlaylistVisibility.OPEN,
+                    ),
+                )
+            )
+            .limit(limit)
+            .all()
+        )
+        return playlists

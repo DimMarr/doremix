@@ -6,3 +6,16 @@ Pré-requis : uv
 
 >> cd src/cli
 >> uv run main.py <arguments>
+
+doremix
+|- playlist
+    |- list
+    |- get <playlist-id>
+    |- tracks <playlist-id>
+    |- remove <playlist-id> <track-id>
+    |- add <playlist-id> <track-id> (WIP)
+|- track
+    |- get <track-id> (WIP)
+    |- play [track-id] (WIP)
+    |- stop (WIP)
+    |- pause (WIP)

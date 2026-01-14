@@ -3,6 +3,8 @@ import { PlaylistDetailPage } from "@pages/playlist";
 import { createMainLayout } from "@layouts/mainLayout";
 import { Router } from "../router";
 import { Card } from "@components/generics/index";
+import { SearchBar, SearchResults } from "@components/generics/index";
+import SearchRepository from "@repositories/searchRepository";
 
 async function HomePage(container, trackPlayer) {
   container.innerHTML = "";
@@ -31,6 +33,9 @@ async function HomePage(container, trackPlayer) {
 
   const pageHtml = (
     <div>
+      {/* Search section */}
+      <div id="searchSection" class="mb-8"></div>
+
       {
         Card({
           children: (
@@ -47,6 +52,90 @@ async function HomePage(container, trackPlayer) {
   );
 
   container.innerHTML = pageHtml;
+
+  // Add search functionality
+  const searchSection = document.getElementById("searchSection");
+  if (searchSection) {
+    const searchRepo = new SearchRepository();
+    let currentResults: { tracks: any[], playlists: any[] } | null = null;
+    let debounceTimer: ReturnType<typeof setTimeout>;
+
+    // Render search input
+    searchSection.innerHTML = SearchBar({
+      placeholder: "Search tracks and playlists..."
+    });
+
+    // Attach event handler to search input
+    const SearchBarElement = document.getElementById("search-input") as HTMLInputElement;
+    if (SearchBarElement) {
+      SearchBarElement.addEventListener("input", async (e) => {
+        const target = e.target as HTMLInputElement;
+        const query = target.value.trim();
+
+        clearTimeout(debounceTimer);
+
+        // Remove existing results
+        const existingResults = searchSection.querySelector('[class*="absolute top-full"]');
+        if (existingResults) {
+          existingResults.remove();
+        }
+
+        if (query.length < 2) {
+          currentResults = null;
+          return;
+        }
+
+        // Wait 300ms before searching
+        debounceTimer = setTimeout(async () => {
+          const results = await searchRepo.search(query);
+          currentResults = results;
+
+          // Render search results
+          const resultsHtml = SearchResults({
+            tracks: results.tracks,
+            playlists: results.playlists,
+          });
+
+          // Insert results into DOM
+          const searchContainer = searchSection.querySelector('[class*="relative w-full"]');
+          if (searchContainer) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = resultsHtml;
+            searchContainer.appendChild(tempDiv.firstElementChild!);
+
+
+            const trackItems = searchContainer.querySelectorAll('[data-track-index]');
+            trackItems.forEach((item) => {
+              const index = parseInt((item as HTMLElement).dataset.trackIndex || '0', 10);
+              item.addEventListener('click', () => {
+                trackPlayer.playSingleTrack(currentResults!.tracks[index]);
+
+                const resultsElement = searchSection.querySelector('[class*="absolute top-full"]');
+                if (resultsElement) {
+                  resultsElement.remove();
+                }
+                currentResults = null;
+              });
+            });
+
+
+            const playlistItems = searchContainer.querySelectorAll('[data-playlist-index]');
+            playlistItems.forEach((item) => {
+              item.addEventListener('click', () => {
+                // Close search results when navigating to playlist
+                // The actual navigation is handled by the router via data-link attribute
+                const resultsElement = searchSection.querySelector('[class*="absolute top-full"]');
+                if (resultsElement) {
+                  resultsElement.remove();
+                }
+                currentResults = null;
+              });
+            });
+          }
+        }, 300);
+      });
+    }
+  }
 
   // Re-attach event handlers after DOM is updated
   const cardElements = container.querySelectorAll('[data-link]');
