@@ -15,8 +15,10 @@ doremix
     |- remove <playlist-id> <track-id>
     |- create --name <playlist-name> [--genre <genre-id>] [--visibility <visibility>]
     |- delete <playlist-id>
-    |- create <playlist-id> [--name <playlist-name>] [--genre <genre-id>] [--visibility <visibility>]
+    |- update <playlist-id> [--name <playlist-name>] [--genre <genre-id>] [--visibility <visibility>]
     |- add-track <playlist-id> --url <youtube-link> --title <title>
 |- track
-    |- get list
+    |- list
     |- get <track-id>
+    |- play <track-id>
+    |- stop
