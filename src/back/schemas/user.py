@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from enum import Enum
 from typing import Optional, List
 from .playlist import PlaylistSchema
@@ -18,5 +18,4 @@ class UserSchema(BaseModel):
     banned: bool
     playlists: Optional[List[PlaylistSchema]] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
