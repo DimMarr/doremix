@@ -1,6 +1,7 @@
 import yt_dlp
 from typing import Optional, Tuple
 
+
 def get_youtube_video_info(url: str) -> Tuple[Optional[int], Optional[str]]:
     ydl_opts = {
         "quiet": True,
@@ -17,6 +18,7 @@ def get_youtube_video_info(url: str) -> Tuple[Optional[int], Optional[str]]:
     except Exception as e:
         print(f"Error fetching YouTube info: {e}")
         return None, None
+
 
 def get_youtube_video_duration(url: str) -> Optional[int]:
     ydl_opts = {

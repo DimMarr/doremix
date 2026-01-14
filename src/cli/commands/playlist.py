@@ -17,6 +17,7 @@ from services.playlist import (
 app = typer.Typer()
 console = Console()
 
+
 @app.command(help="List all playlists.")
 def list():
     try:
@@ -90,19 +91,30 @@ def remove(playlist_id: str, track_id: str):
         print(e)
         return
 
+
 @app.command(help="Create a new playlist.")
 def create(
-        name: str = typer.Option(..., "--name", "-n", help="Playlist name"),
-        genre: int = typer.Option(1, "--genre", "-g", help="Genre ID (1=Sans genre, 2=Rock, 3=Pop, 4=Hip-Hop, 5=Jazz, 6=Electro, 7=Metal, 8=Classical, 9=Reggae)"),
-        visibility: str = typer.Option("PUBLIC", "--visibility", "-v", help="Visibility (PUBLIC, PRIVATE, OPEN, SHARED)")
-        # owner: int = typer.Option(..., "--owner", "-o", help="Owner ID")  # TODO: À supprimer quand l'auth sera en place (récupéré depuis le token)
+    name: str = typer.Option(..., "--name", "-n", help="Playlist name"),
+    genre: int = typer.Option(
+        1,
+        "--genre",
+        "-g",
+        help="Genre ID (1=Sans genre, 2=Rock, 3=Pop, 4=Hip-Hop, 5=Jazz, 6=Electro, 7=Metal, 8=Classical, 9=Reggae)",
+    ),
+    visibility: str = typer.Option(
+        "PUBLIC",
+        "--visibility",
+        "-v",
+        help="Visibility (PUBLIC, PRIVATE, OPEN, SHARED)",
+    ),
+    # owner: int = typer.Option(..., "--owner", "-o", help="Owner ID")  # TODO: À supprimer quand l'auth sera en place (récupéré depuis le token)
 ):
     try:
         playlist = create_playlist(name, genre, visibility)
         # TODO: Quand l'auth sera en place :
         # playlist = create_playlist(name, genre, visibility, current_user.id)
 
-        console.print(f"[green]✓ Playlist créée avec succès ![/green]")
+        console.print("[green]✓ Playlist créée avec succès ![/green]")
 
         table = Table(show_header=False)
         table.add_column("Field", style="cyan")
@@ -119,17 +131,20 @@ def create(
     except Exception as e:
         console.print(f"[red]✗ Erreur: {e}[/red]")
 
+
 @app.command(help="Delete a playlist by ID.")
 def delete(
-        playlist_id: int = typer.Argument(..., help="Playlist ID to delete"),
-        force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation")
-        # TODO: Quand l'auth sera en place, l'utilisateur sera automatiquement identifié via le token
+    playlist_id: int = typer.Argument(..., help="Playlist ID to delete"),
+    force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
+    # TODO: Quand l'auth sera en place, l'utilisateur sera automatiquement identifié via le token
 ):
     try:
         playlist = get_playlist(str(playlist_id))
 
         if not force:
-            confirm = typer.confirm(f"Do you really want to delete the playlist '{playlist.name}'?")
+            confirm = typer.confirm(
+                f"Do you really want to delete the playlist '{playlist.name}'?"
+            )
             if not confirm:
                 console.print("[yellow]Deletion cancelled.[/yellow]")
                 raise typer.Abort()
@@ -142,22 +157,35 @@ def delete(
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")
 
+
 @app.command(help="Update a playlist by ID.")
 def update(
-        playlist_id: int = typer.Argument(..., help="Playlist ID to update"),
-        name: str = typer.Option(None, "--name", "-n", help="New playlist name"),
-        genre: int = typer.Option(None, "--genre", "-g", help="New genre ID (1=Sans genre, 2=Rock, 3=Pop, 4=Hip-Hop, 5=Jazz, 6=Electro, 7=Metal, 8=Classical, 9=Reggae)"),
-        visibility: str = typer.Option(None, "--visibility", "-v", help="New visibility (PUBLIC, PRIVATE, OPEN, SHARED)")
-        # TODO: Quand l'auth sera en place, l'utilisateur sera automatiquement identifié via le token
+    playlist_id: int = typer.Argument(..., help="Playlist ID to update"),
+    name: str = typer.Option(None, "--name", "-n", help="New playlist name"),
+    genre: int = typer.Option(
+        None,
+        "--genre",
+        "-g",
+        help="New genre ID (1=Sans genre, 2=Rock, 3=Pop, 4=Hip-Hop, 5=Jazz, 6=Electro, 7=Metal, 8=Classical, 9=Reggae)",
+    ),
+    visibility: str = typer.Option(
+        None,
+        "--visibility",
+        "-v",
+        help="New visibility (PUBLIC, PRIVATE, OPEN, SHARED)",
+    ),
+    # TODO: Quand l'auth sera en place, l'utilisateur sera automatiquement identifié via le token
 ):
     try:
         if name is None and genre is None and visibility is None:
-            console.print("[yellow]No changes specified. Use --name, --genre, or --visibility.[/yellow]")
+            console.print(
+                "[yellow]No changes specified. Use --name, --genre, or --visibility.[/yellow]"
+            )
             raise typer.Abort()
 
         updated_playlist = update_playlist(str(playlist_id), name, genre, visibility)
 
-        console.print(f"[green]✓ Playlist successfully updated![/green]")
+        console.print("[green]✓ Playlist successfully updated![/green]")
 
         table = Table(show_header=False)
         table.add_column("Field", style="cyan")
@@ -177,12 +205,17 @@ def update(
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")
 
+
 @app.command(help="Add a track to a playlist.")
 def add_track(
-        playlist_id: int = typer.Argument(..., help="Playlist ID"),
-        youtube_link: str = typer.Option(..., "--url", "-u", help="YouTube link of the track"),
-        title: str = typer.Option(..., "--title", "-t", help="Track title (ignored if track already exists)")
-        # TODO: Quand l'auth sera en place, l'utilisateur sera automatiquement identifié via le token
+    playlist_id: int = typer.Argument(..., help="Playlist ID"),
+    youtube_link: str = typer.Option(
+        ..., "--url", "-u", help="YouTube link of the track"
+    ),
+    title: str = typer.Option(
+        ..., "--title", "-t", help="Track title (ignored if track already exists)"
+    ),
+    # TODO: Quand l'auth sera en place, l'utilisateur sera automatiquement identifié via le token
 ):
     try:
         track = add_track_to_playlist(str(playlist_id), title, youtube_link)
@@ -194,7 +227,11 @@ def add_track(
         table.add_column("Value", style="magenta")
 
         artists = ", ".join([artist.name for artist in track.artists])
-        duration = f"{track.durationSeconds // 60}:{track.durationSeconds % 60:02d}" if track.durationSeconds else "N/A"
+        duration = (
+            f"{track.durationSeconds // 60}:{track.durationSeconds % 60:02d}"
+            if track.durationSeconds
+            else "N/A"
+        )
 
         table.add_row("id", str(track.idTrack))
         table.add_row("title", track.title)
@@ -203,7 +240,6 @@ def add_track(
         table.add_row("youtube", track.youtubeLink or "N/A")
 
         console.print(table)
-
 
         playlist = get_playlist(str(playlist_id))
         tracks = get_playlist_tracks(str(playlist_id))

@@ -8,6 +8,7 @@ from services.track import get_track, get_all_tracks
 app = typer.Typer()
 console = Console()
 
+
 @app.command(help="List all tracks.")
 def list():
     try:
@@ -22,13 +23,17 @@ def list():
 
         for track in tracks:
             artists = ", ".join([artist.name for artist in track.artists])
-            duration = f"{track.durationSeconds // 60}:{track.durationSeconds % 60:02d}" if track.durationSeconds else "N/A"
+            duration = (
+                f"{track.durationSeconds // 60}:{track.durationSeconds % 60:02d}"
+                if track.durationSeconds
+                else "N/A"
+            )
             table.add_row(
                 str(track.idTrack),
                 track.title,
                 artists,
                 duration,
-                str(track.listeningCount)
+                str(track.listeningCount),
             )
 
         console.print(table)
@@ -47,7 +52,11 @@ def get(id: int = typer.Argument(..., help="Track ID")):
         table.add_column("Value", style="magenta")
 
         artists = ", ".join([artist.name for artist in track.artists])
-        duration = f"{track.durationSeconds // 60}:{track.durationSeconds % 60:02d}" if track.durationSeconds else "N/A"
+        duration = (
+            f"{track.durationSeconds // 60}:{track.durationSeconds % 60:02d}"
+            if track.durationSeconds
+            else "N/A"
+        )
 
         table.add_row("id", str(track.idTrack))
         table.add_row("title", track.title)
@@ -61,4 +70,3 @@ def get(id: int = typer.Argument(..., help="Track ID")):
 
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")
-

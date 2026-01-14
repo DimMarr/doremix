@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import List
 from datetime import datetime
-from models.artist import ArtistSchema
+from .artist import ArtistSchema
 
 
 class TrackSchema(BaseModel):

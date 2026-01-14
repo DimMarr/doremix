@@ -42,13 +42,17 @@ class PlaylistController:
         # if not (is_owner or is_editor or is_open):
         #     raise HTTPException(status_code=403, detail="You don't have permission to edit this playlist")
 
-        track, status = PlaylistRepository.add_track(db, title, youtubeLink, playlist_id)
+        track, status = PlaylistRepository.add_track(
+            db, title, youtubeLink, playlist_id
+        )
 
         if track is None:
             raise HTTPException(status_code=400, detail="Failed to add track")
 
         if status == "already_exists":
-            raise HTTPException(status_code=409, detail="Track already exists in this playlist")
+            raise HTTPException(
+                status_code=409, detail="Track already exists in this playlist"
+            )
         return track
 
     @staticmethod
@@ -107,7 +111,6 @@ class PlaylistController:
         PlaylistRepository.delete(db, playlist)
 
         return {"message": f"Playlist '{playlist.name}' successfully deleted"}
-
 
     @staticmethod
     def update_playlist(db: Session, playlist_id: int, update_data: dict):

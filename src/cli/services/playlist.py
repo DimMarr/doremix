@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 from utils.get_env import get_env
 from models.playlist import PlaylistSchema
 from models.track import TrackSchema
@@ -50,13 +50,14 @@ def remove_track(playlist_id: str, track_id: str):
         raise Exception("Playlist ID and Track ID should be integers")
     return "Track successfully deleted."
 
+
 def create_playlist(name: str, id_genre: int, visibility: str) -> PlaylistSchema:
     # TODO: Quand l'auth sera en place, la signature deviendra :
     # def create_playlist(name: str, id_genre: int, visibility: str, user_id: int) -> PlaylistSchema:
     payload = {
         "name": name,
         "idGenre": id_genre,
-        "visibility": visibility
+        "visibility": visibility,
         # "idOwner": user_id  # TODO: À ajouter quand l'auth sera en place
     }
     res = requests.post(f"{API_BASE_URL}/playlists/", json=payload)
@@ -66,6 +67,7 @@ def create_playlist(name: str, id_genre: int, visibility: str) -> PlaylistSchema
 
     data = res.json()
     return PlaylistSchema(**data)
+
 
 def delete_playlist(identifier: str) -> dict:
     res = requests.delete(f"{API_BASE_URL}/playlists/{identifier}")
@@ -81,8 +83,14 @@ def delete_playlist(identifier: str) -> dict:
 
     return res.json()
 
-def update_playlist(playlist_id: str, name: Optional[str] = None, id_genre: Optional[int] = None, visibility: Optional[str] = None) -> PlaylistSchema:
-    payload = {}
+
+def update_playlist(
+    playlist_id: str,
+    name: Optional[str] = None,
+    id_genre: Optional[int] = None,
+    visibility: Optional[str] = None,
+) -> PlaylistSchema:
+    payload: dict[str, Any] = {}
     if name is not None:
         payload["name"] = name
     if id_genre is not None:
@@ -106,12 +114,15 @@ def update_playlist(playlist_id: str, name: Optional[str] = None, id_genre: Opti
     data = res.json()
     return PlaylistSchema(**data)
 
-def add_track_to_playlist(playlist_id: str, title: str, youtube_link: str) -> TrackSchema:
+
+def add_track_to_playlist(
+    playlist_id: str, title: str, youtube_link: str
+) -> TrackSchema:
     # TODO: Quand l'auth sera en place, ajouter le token dans les headers
 
     res = requests.post(
         f"{API_BASE_URL}/playlists/{playlist_id}/track",
-        params={"title": title, "youtubeLink": youtube_link}
+        params={"title": title, "youtubeLink": youtube_link},
     )
 
     if res.status_code == 404:

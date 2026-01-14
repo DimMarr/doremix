@@ -7,7 +7,11 @@ from models.user_playlists import UserPlaylist
 from typing import Optional, List
 from repositories.track_repository import TrackRepository
 from repositories.artist_repository import ArtistRepository
-from utils.youtube_utils import get_youtube_video_duration, get_youtube_video_author, get_youtube_video_info
+from utils.youtube_utils import (
+    get_youtube_video_duration,
+    get_youtube_video_author,
+    get_youtube_video_info,
+)
 
 
 class PlaylistRepository:
@@ -65,10 +69,10 @@ class PlaylistRepository:
 
     @staticmethod
     def add_track(
-            db: Session,
-            title: str,
-            youtubeLink: str,
-            playlist_id: int,
+        db: Session,
+        title: str,
+        youtubeLink: str,
+        playlist_id: int,
     ):
         track = TrackRepository.get_by_youtube_link(db, youtubeLink)
 
