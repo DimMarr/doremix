@@ -24,3 +24,12 @@ class PlaylistSchema(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class PlaylistSchemaCreate(BaseModel):
+    name: str
+    idGenre: Optional[int] = 1
+    idOwner: Optional[int] = 1  # This should be set when we will have authentication
+    vote: Optional[int] = 0
+    visibility: Optional[PlaylistVisibility] = PlaylistVisibility.PUBLIC
+    coverImage: Optional[str] = None

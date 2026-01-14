@@ -25,6 +25,10 @@ class PlaylistController:
         return playlist.tracks
 
     @staticmethod
+    def create_playlist(db: Session, playlist: dict):
+        return PlaylistRepository.create(db, playlist)
+
+    @staticmethod
     def add_playlist_track(
         db: Session,
         title: str,

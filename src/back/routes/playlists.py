@@ -5,7 +5,7 @@ from typing import List
 from pydantic import BaseModel
 
 from controllers import PlaylistController
-from schemas import PlaylistSchema, TrackSchema
+from schemas import PlaylistSchema, PlaylistSchemaCreate, TrackSchema
 from database import get_db
 import os
 
@@ -43,6 +43,19 @@ def get_playlist(idPlaylist: int, db: Session = Depends(get_db)):
 def get_playlist_tracks(playlist_id: int, db: Session = Depends(get_db)):
     tracks = PlaylistController.get_playlist_tracks(db, playlist_id)
     return tracks
+
+
+@router.post(
+    "/",
+    response_model=PlaylistSchema,
+    summary="Créer une playlist",
+)
+def create_playlist(
+    playlist: PlaylistSchemaCreate,
+    db: Session = Depends(get_db),
+):
+    playlist = PlaylistController.create_playlist(db, playlist.model_dump())
+    return playlist
 
 
 @router.post(

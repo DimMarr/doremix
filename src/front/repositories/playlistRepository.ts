@@ -30,6 +30,21 @@ export default class PlaylistRepository {
         return response.json();
     }
 
+    static async createPlaylist(name: string) {
+        const response = await fetch(`${API_BASE_URL}/playlists/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ name }),
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to create playlist");
+        }
+        return response.json();
+    }
+
     static async uploadPlaylistCover(playlistId: number, imageFile: File) {
         const formData = new FormData();
         formData.append("file", imageFile);

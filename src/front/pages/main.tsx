@@ -5,6 +5,7 @@ import { Router } from "../router";
 import { Card } from "@components/generics/index";
 import { SearchInput, SearchResults } from "@components/generics/index";
 import SearchRepository from "@repositories/searchRepository";
+import { AddPlaylistButton, AddPlaylistModal, setupModalLogic } from "@components/playlists/add-playlist-modal";
 
 async function HomePage(container, trackPlayer) {
   container.innerHTML = "";
@@ -33,8 +34,11 @@ async function HomePage(container, trackPlayer) {
 
   const pageHtml = (
     <div>
-      {/* Search section */}
-      <div id="searchSection" class="mb-8"></div>
+      {/* Conteneur flex pour Search + Button */}
+      <div class="flex items-center justify-between mb-8 gap-4">
+        <div id="searchSection" class="flex-1"></div>
+        <div id="addPlaylistSection"></div>
+      </div>
 
       {
         Card({
@@ -48,6 +52,7 @@ async function HomePage(container, trackPlayer) {
           )
         })
       }
+      <div id="modal-container"></div>
     </div>
   );
 
@@ -55,6 +60,15 @@ async function HomePage(container, trackPlayer) {
 
   // Add search functionality
   const searchSection = document.getElementById("searchSection");
+  const addPlaylistSection = document.getElementById("addPlaylistSection");
+  const modalContainer = document.getElementById("modal-container");
+  if (addPlaylistSection) {
+    addPlaylistSection.innerHTML = AddPlaylistButton();
+  }
+  if (modalContainer) {
+    modalContainer.innerHTML = AddPlaylistModal();
+  }
+  setupModalLogic();
   if (searchSection) {
     const searchRepo = new SearchRepository();
     let currentResults: { tracks: any[], playlists: any[] } | null = null;
