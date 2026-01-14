@@ -12,7 +12,7 @@ export function Badge({ variant = 'default', className = '', text, ...rest }: Ba
   const badgeClass = cn(getBadgeClasses(variant), className);
 
   return (
-    <span class={badgeClass} {...rest}>
+    <span safe class={badgeClass} {...rest}>
       {text}
     </span>
   );

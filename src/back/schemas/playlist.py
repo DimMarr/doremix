@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from enum import Enum
 from datetime import datetime
 from typing import Optional
@@ -37,3 +37,4 @@ class PlaylistUpdate(BaseModel):
     name: Optional[str] = None
     idGenre: Optional[int] = None
     visibility: Optional[PlaylistVisibility] = None
+    model_config = ConfigDict(from_attributes=True)
