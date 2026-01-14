@@ -3,7 +3,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from services.track import get_track, get_all_tracks
+from services.track import get_track, get_all_tracks, play_track, stop_track
 
 app = typer.Typer()
 console = Console()
@@ -70,3 +70,13 @@ def get(id: int = typer.Argument(..., help="Track ID")):
 
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(help="Play a track.")
+def play(id: int):
+    return play_track(id)
+
+
+@app.command(help="Stop a track.")
+def stop():
+    return stop_track()

@@ -5,12 +5,13 @@ import requests
 import yt_dlp
 import subprocess
 import psutil
+import os
 from pathlib import Path
 
 API_BASE_URL = get_env("API_BASE_URL")
 
 # PID of the current song playing is stored in this file
-PID_FILE = Path(__file__).parent.parent / ".yt_player.pid"
+PID_FILE = Path(f"/run/user/{os.getuid()}/yt-player.pid")
 
 
 def get_track(id: int) -> TrackSchema:
