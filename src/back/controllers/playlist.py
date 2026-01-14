@@ -62,3 +62,13 @@ class PlaylistController:
         db.refresh(playlist)
 
         return playlist
+
+    @staticmethod
+    def search(db: Session, query: str):
+        if not query or len(query) < 2:
+            raise HTTPException(
+                status_code=400, detail="Query must be at least 2 characters"
+            )
+
+        playlists = PlaylistRepository.search_playlists(db, query)
+        return playlists

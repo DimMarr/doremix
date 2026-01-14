@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from controllers import TrackController
 from schemas import TrackSchema
@@ -18,6 +18,19 @@ router = APIRouter(prefix="/tracks", tags=["Tracks"])
 def get_tracks(db: Session = Depends(get_db)):
     tracks = TrackController.get_all_tracks(db)
     return tracks
+
+
+@router.get(
+    "/by-url",
+    response_model=TrackSchema,
+    summary="Récupérer un morceau par son URL",
+    description="Retourne les informations détaillées d'un morceau à partir de son URL YouTube.",
+)
+def get_track_by_url(url: str, db: Session = Depends(get_db)):
+    track = TrackController.get_track_by_url(db, url)
+    if not track:
+        raise HTTPException(status_code=404, detail="Track not found")
+    return track
 
 
 @router.get(
