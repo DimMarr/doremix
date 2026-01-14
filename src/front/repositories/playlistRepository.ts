@@ -82,7 +82,7 @@ export default class PlaylistRepository {
                 ...item,
                 image: item.coverImage ?? img1,
                 visibility: item.visibility ? item.visibility.toLowerCase() as Visibility : Visibility.public,
-                tracks: tracks
+                tracks: tracks,
             });
         });
         const playlists = await Promise.all(playlistPromises);

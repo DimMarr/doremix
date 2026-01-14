@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from enum import Enum
 from datetime import datetime
 from typing import Optional
@@ -22,14 +22,4 @@ class PlaylistSchema(BaseModel):
     createdAt: datetime
     updatedAt: datetime
 
-    class Config:
-        from_attributes = True
-
-
-class PlaylistSchemaCreate(BaseModel):
-    name: str
-    idGenre: Optional[int] = 1
-    idOwner: Optional[int] = 1  # This should be set when we will have authentication
-    vote: Optional[int] = 0
-    visibility: Optional[PlaylistVisibility] = PlaylistVisibility.PUBLIC
-    coverImage: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)

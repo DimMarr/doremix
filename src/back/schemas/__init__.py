@@ -1,3 +1,3 @@
-from .playlist import PlaylistSchema, PlaylistSchemaCreate
+from .playlist import PlaylistSchema
 from .track import TrackSchema
 from .user import UserSchema
