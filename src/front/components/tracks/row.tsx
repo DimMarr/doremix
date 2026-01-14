@@ -14,9 +14,9 @@ export function TrackRow({ track, index, current_track }: { track: Track; index:
       <div class="relative">
         <span class="track-number">{index + 1}</span>
       </div>
-      <span class="font-medium track-title">{track.title}</span>
-      <span>{artistText}</span>
-      <span>{secondsToReadableTime(track.durationSeconds)}</span>
+      <span safe class="font-medium track-title">{track.title}</span>
+      <span safe>{artistText}</span>
+      <span safe>{secondsToReadableTime(track.durationSeconds)}</span>
       <button
         class="opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500 flex items-center justify-center cursor-pointer delete-track"
         data-track-id={track.idTrack}

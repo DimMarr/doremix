@@ -30,6 +30,9 @@ DB_USER=<DB_USERNAME>
 DB_PASSWORD=<DB_PASSWORD>
 DB_NAME=<DB_NAME>
 DATABASE_URL=postgresql://<DB_USERNAME>:<DB_PASSWORD>@db:5432/<DB_NAME>
+
+CORS_ORIGINS=http://localhost:8080,https://localhost:8080
+RATE_LIMIT=50/minute
 ```
 
 Démarrer l'infrastructure docker avec la commande suivante :
@@ -59,7 +62,13 @@ Sinon essayez de rebuild l'infrastructure docker depuis le début :
 docker compose up --build
 ```
 
-# Tests
+Si rien ne s'affiche sur l'application web, vérifiez que les cors sont bien configurés dans le .env :
+```
+CORS_ORIGINS=http://localhost:8080,https://localhost:8080
+```
+
+# Processus de test
+
 
 ### Prérequis :
 - uv
@@ -79,4 +88,28 @@ uv run pytest -v
 
 # Avec couverture
 uv run pytest --cov -v
+```
+
+# Sécurité
+
+## Frontend
+
+### Injections xss
+
+Vérifier s'il y a des injections xss possibles :
+
+```bash
+npx run xss-scan
+```
+
+Pour indiquer au système de templating qu'il faut échapper des caractères, on ajoute l'attribut `safe` :
+
+```html
+<span safe class="font-medium track-title">{track.title}</span>
+```
+
+Parfois, certaines données dynamiques sont considérées comme sûres car elles sont générées par le script lui-même et ne proviennent pas de l'utilisateur ; dans ce cas, il n'est pas nécessaire de les échapper.
+
+```html
+<div>{playlistCards as 'safe'}</div>
 ```

@@ -20,7 +20,7 @@ function TrackList(playlist, trackPlayer) {
           trackPlayer={trackPlayer}
           current_track={current_track}
         />
-      ))}
+      )) as 'safe'}
     </div>
   );
 }

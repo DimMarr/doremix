@@ -7,3 +7,4 @@ pydantic
 Pillow
 python-multipart
 yt_dlp
+slowapi
