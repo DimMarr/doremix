@@ -129,6 +129,7 @@ export function PlaylistDetailPage(container, playlist, trackPlayer, onBack) {
 
         proxyPlaylist.tracks = proxyPlaylist.tracks.filter((_, i) => i !== trackIndex);
         trackPlayer.setPlaylist(proxyPlaylist);
+        return; // Prevent row click handler from executing
       }
 
       if (row) {
