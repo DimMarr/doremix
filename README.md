@@ -1,4 +1,3 @@
-
 # DoRéMix
 
 Application et CLI de gestion de playlists Youtube.
@@ -21,6 +20,7 @@ npm install
 # Ensuite il faut exécuter l'application
 npm run dev
 ```
+
 ## Setup en mode production
 
 Mettre en place un fichier .env dans la racine du projet :
@@ -67,8 +67,8 @@ Si rien ne s'affiche sur l'application web, vérifiez que les cors sont bien con
 CORS_ORIGINS=http://localhost:8080,https://localhost:8080
 ```
 
-
 # Processus de test
+
 
 ### Prérequis :
 - uv
@@ -77,14 +77,17 @@ CORS_ORIGINS=http://localhost:8080,https://localhost:8080
 ## Setup
 
 ```bash
-# Installer les dépendances
-uv pip install -r tests/requirements-test.txt
+# Installer les dépendances du projet
+uv pip install -r build/backend/requirements.txt
+
+# Installer les dépendances de test
+uv pip install -r src/back/tests/requirements-test.txt
 
 # Lancer tous les tests
-uv run pytest tests/ -v
+uv run pytest -v
 
 # Avec couverture
-uv run pytest tests/ --cov -v
+uv run pytest --cov -v
 ```
 
 # Sécurité

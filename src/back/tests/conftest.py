@@ -8,7 +8,7 @@ from database import Base, get_db
 from routes.playlists import router as playlists_router
 from routes.users import router as users_router
 
-# Create an in-memory SQLite database for testing
+# Crée une base de données SQLite en mémoire pour les tests
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 test_engine = create_engine(
@@ -18,7 +18,7 @@ test_engine = create_engine(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
-# Create app
+# Crée l'application FastAPI
 app = FastAPI()
 app.include_router(playlists_router)
 app.include_router(users_router)
@@ -26,7 +26,7 @@ app.include_router(users_router)
 
 @pytest.fixture(scope="function")
 def db():
-    """Create a fresh database for each test."""
+    """Crée une base de données pour chaque test."""
     Base.metadata.create_all(bind=test_engine)
     db = TestingSessionLocal()
     yield db
@@ -36,7 +36,7 @@ def db():
 
 @pytest.fixture(scope="function")
 def client(db):
-    """Create a test client with dependency override."""
+    """Crée un client de test avec dépendance override."""
 
     def override_get_db():
         try:

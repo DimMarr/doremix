@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 from .artist import ArtistSchema
@@ -13,5 +13,4 @@ class TrackSchema(BaseModel):
     createdAt: datetime
     artists: List[ArtistSchema]
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
