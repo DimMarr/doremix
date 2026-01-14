@@ -5,9 +5,7 @@ Pré-requis : uv
 >> docker compose up
 
 >> cd src/cli
->> uv sync
->> source .venv/bin/activate
->> python3 main.py
+>> uv run main.py <arguments>
 
 doremix
 |- playlist
@@ -15,9 +13,10 @@ doremix
     |- get <playlist-id>
     |- tracks <playlist-id>
     |- remove <playlist-id> <track-id>
-    |- add <playlist-id> <track-id> (WIP)
+    |- create --name <playlist-name> [--genre <genre-id>] [--visibility <visibility>]
+    |- delete <playlist-id>
+    |- create <playlist-id> [--name <playlist-name>] [--genre <genre-id>] [--visibility <visibility>]
+    |- add-track <playlist-id> --url <youtube-link> --title <title>
 |- track
-    |- get <track-id> (WIP)
-    |- play [track-id] (WIP)
-    |- stop (WIP)
-    |- pause (WIP)
+    |- get list
+    |- get <track-id>

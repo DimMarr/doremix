@@ -14,8 +14,3 @@ dependencies = [
     "typer>=0.21.0",
     "yt-dlp>=2025.12.8",
 ]
-
-[dependency-groups]
-dev = [
-    "mypy>=1.19.1",
-]
