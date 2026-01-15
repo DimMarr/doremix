@@ -47,7 +47,7 @@ export function AddPlaylistModal() {
 }
 
 // Fonction utilitaire pour gérer les événements de la modale
-export function setupModalLogic() {
+export function setupModalAddPlaylist() {
   const modal = document.getElementById("add-playlist-modal");
   const openBtn = document.getElementById("btn-open-add-playlist");
   const closeBtn = document.getElementById("close-modal");

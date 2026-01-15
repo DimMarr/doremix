@@ -5,7 +5,7 @@ import { Router } from "../router";
 import { Card } from "@components/generics/index";
 import { SearchBar, SearchResults } from "@components/generics/index";
 import SearchRepository from "@repositories/searchRepository";
-import { AddPlaylistButton, AddPlaylistModal, setupModalLogic } from "@components/playlists/add-playlist-modal";
+import { AddPlaylistButton, AddPlaylistModal, setupModalAddPlaylist } from "@components/playlists/add-playlist-modal";
 
 async function HomePage(container, trackPlayer) {
   container.innerHTML = "";
@@ -35,9 +35,7 @@ async function HomePage(container, trackPlayer) {
   const pageHtml = (
     <div>
       {/* Conteneur flex pour Search + Button */}
-      <div class="flex items-center justify-between mb-8 gap-4">
-        <div id="searchSection" class="flex-1"></div>
-      </div>
+      <div id="searchSection" class="mb-8"></div>
 
       {
         Card({
@@ -70,7 +68,7 @@ async function HomePage(container, trackPlayer) {
   if (modalContainer) {
     modalContainer.innerHTML = AddPlaylistModal();
   }
-  setupModalLogic();
+  setupModalAddPlaylist();
   if (searchSection) {
     const searchRepo = new SearchRepository();
     let currentResults: { tracks: any[], playlists: any[] } | null = null;
