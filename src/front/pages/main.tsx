@@ -34,7 +34,7 @@ async function HomePage(container, trackPlayer) {
 
   const pageHtml = (
     <div>
-      {/* Conteneur flex pour Search + Button */}
+      {/* Search section */}
       <div id="searchSection" class="mb-8"></div>
 
       {
