@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from repositories import PlaylistRepository
-from models import Playlist
 from fastapi import HTTPException, UploadFile, Response
-from utils import save_cover_image
+from utils.image_processor import save_cover_image
+from models.playlist import Playlist
 
 
 class PlaylistController:
@@ -25,17 +25,6 @@ class PlaylistController:
         return playlist.tracks
 
     @staticmethod
-    def create_playlist(db: Session, playlist_data: dict):
-        new_playlist = Playlist(
-            name=playlist_data["name"],
-            idGenre=playlist_data["idGenre"],
-            visibility=playlist_data["visibility"],
-            idOwner=1,  # TODO: Remplacer par current_user.id quand l'auth sera en place
-        )
-
-        return PlaylistRepository.create(db, new_playlist)
-
-    @staticmethod
     def add_playlist_track(
         db: Session,
         title: str,
@@ -45,7 +34,26 @@ class PlaylistController:
         playlist = PlaylistRepository.get_by_id(db, playlist_id)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
-        return PlaylistRepository.add_track(db, title, youtubeLink, playlist_id)
+        # TODO: Quand l'auth sera en place, vérifier les permissions :
+        # is_owner = playlist.idOwner == user_id
+        # is_editor = PlaylistRepository.is_user_editor(db, playlist.idPlaylist, user_id)
+        # is_open = playlist.visibility.value == "OPEN"
+        #
+        # if not (is_owner or is_editor or is_open):
+        #     raise HTTPException(status_code=403, detail="You don't have permission to edit this playlist")
+
+        track, status = PlaylistRepository.add_track(
+            db, title, youtubeLink, playlist_id
+        )
+
+        if track is None:
+            raise HTTPException(status_code=400, detail="Failed to add track")
+
+        if status == "already_exists":
+            raise HTTPException(
+                status_code=409, detail="Track already exists in this playlist"
+            )
+        return track
 
     @staticmethod
     def upload_cover(db: Session, playlist_id: int, file: UploadFile):
@@ -84,3 +92,48 @@ class PlaylistController:
 
         playlists = PlaylistRepository.search_playlists(db, query)
         return playlists
+
+    @staticmethod
+    def create_playlist(db: Session, playlist_data: dict):
+        new_playlist = Playlist(
+            name=playlist_data["name"],
+            idGenre=playlist_data["idGenre"],
+            visibility=playlist_data["visibility"],
+            idOwner=1,  # TODO: Remplacer par current_user.id quand l'auth sera en place
+        )
+
+        return PlaylistRepository.create(db, new_playlist)
+
+    @staticmethod
+    def delete_playlist(db: Session, playlist_id: int):
+        # TODO: Quand l'auth sera en place, ajouter user_id en paramètre :
+        # def delete_playlist(db: Session, playlist_id: int, user_id: int):
+
+        playlist = PlaylistRepository.get_by_id(db, playlist_id)
+
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+
+        # TODO: Quand l'auth sera en place, vérifier que l'utilisateur est le propriétaire :
+        # if playlist.idOwner != user_id:
+        #     raise HTTPException(status_code=403, detail="You are not the owner of this playlist")
+
+        PlaylistRepository.delete(db, playlist)
+
+        return {"message": f"Playlist '{playlist.name}' successfully deleted"}
+
+    @staticmethod
+    def update_playlist(db: Session, playlist_id: int, update_data: dict):
+        # TODO: Quand l'auth sera en place, ajouter user_id en paramètre :
+        # def update_playlist(db: Session, playlist_id: int, update_data: dict, user_id: int):
+
+        playlist = PlaylistRepository.get_by_id(db, playlist_id)
+
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+
+        # TODO: Quand l'auth sera en place, vérifier que l'utilisateur est le propriétaire :
+        # if playlist.idOwner != user_id:
+        #     raise HTTPException(status_code=403, detail="You are not the owner of this playlist")
+
+        return PlaylistRepository.update_playlist(db, playlist, update_data)

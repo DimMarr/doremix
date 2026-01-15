@@ -1,5 +1,23 @@
 import yt_dlp
-from typing import Optional
+from typing import Optional, Tuple
+
+
+def get_youtube_video_info(url: str) -> Tuple[Optional[int], Optional[str]]:
+    ydl_opts = {
+        "quiet": True,
+        "no_warnings": True,
+    }
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            duration = int(info.get("duration")) if info.get("duration") else None
+            author = info.get("uploader")
+            return duration, author
+
+    except Exception as e:
+        print(f"Error fetching YouTube info: {e}")
+        return None, None
 
 
 def get_youtube_video_duration(url: str) -> Optional[int]:

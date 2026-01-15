@@ -5,7 +5,7 @@ from typing import List
 from pydantic import BaseModel
 
 from controllers import PlaylistController
-from schemas import PlaylistSchema, PlaylistCreate, TrackSchema
+from schemas import PlaylistSchema, TrackSchema, PlaylistCreate, PlaylistUpdate
 from database import get_db
 import os
 
@@ -107,8 +107,40 @@ def get_cover_image(filename: str):
     return FileResponse(filepath)
 
 
+@router.delete(
+    "/{playlist_id}",
+    response_model=dict,
+    summary="Delete a playlist",
+    description="Deletes a playlist by its ID.",
+)
+def delete_playlist(playlist_id: int, db: Session = Depends(get_db)):
+    # TODO: Quand l'auth sera en place :
+    # def delete_playlist(playlist_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    #     return PlaylistController.delete_playlist(db, playlist_id, current_user.id)
+
+    return PlaylistController.delete_playlist(db, playlist_id)
+
+
 @router.delete("/{playlist_id}/track/{track_id}", response_model=PlaylistSchema)
 def remove_track(playlist_id: int, track_id: int, db: Session = Depends(get_db)):
     updated_playlist = PlaylistController.remove_track(db, playlist_id, track_id)
 
     return updated_playlist
+
+
+@router.patch(
+    "/{playlist_id}",
+    response_model=PlaylistSchema,
+    summary="Update a playlist",
+    description="Updates a playlist by its ID.",
+)
+def update_playlist(
+    playlist_id: int, playlist_data: PlaylistUpdate, db: Session = Depends(get_db)
+):
+    # TODO: Quand l'auth sera en place :
+    # def update_playlist(playlist_id: int, playlist_data: PlaylistUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    #     return PlaylistController.update_playlist(db, playlist_id, playlist_data.model_dump(exclude_unset=True), current_user.id)
+
+    return PlaylistController.update_playlist(
+        db, playlist_id, playlist_data.model_dump(exclude_unset=True)
+    )

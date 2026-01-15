@@ -6,3 +6,12 @@ from .playlist import Playlist, PlaylistVisibility
 from .track_artist import TrackArtist
 from .track_playlist import TrackPlaylist
 from .user_playlists import UserPlaylist
+
+__all__ = [
+    "Playlist",
+    "Track",
+    "Artist",
+    "User",
+    "TrackPlaylist",
+    "UserPlaylist",
+]
