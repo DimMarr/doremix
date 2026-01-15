@@ -12,6 +12,8 @@ from services.playlist import (
     delete_playlist,
     update_playlist,
     add_track_to_playlist,
+    search_playlists,
+    search_tracks_in_playlist,
 )
 
 app = typer.Typer()
@@ -254,6 +256,77 @@ def add_track(
             tracks_table.add_row(str(t.idTrack), t.title, t_artists)
 
         console.print(tracks_table)
+
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(help="Search playlists by name.")
+def search(
+    query: str = typer.Argument(..., help="Search query (partial match on name)"),
+):
+    try:
+        playlists = search_playlists(query)
+
+        if not playlists:
+            console.print(f"[yellow]No playlists found matching '{query}'[/yellow]")
+            return
+
+        table = Table(title=f"Search results for '{query}'")
+        table.add_column("id", style="cyan")
+        table.add_column("name", style="magenta")
+        table.add_column("genre", style="blue")
+        table.add_column("visibility", style="green")
+        table.add_column("votes", style="yellow")
+
+        for playlist in playlists:
+            table.add_row(
+                str(playlist.idPlaylist),
+                playlist.name,
+                str(playlist.idGenre),
+                playlist.visibility.value,
+                str(playlist.vote),
+            )
+
+        console.print(table)
+        console.print(f"\n[green]{len(playlists)} playlist(s) found[/green]")
+
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(help="Search tracks in a playlist by title.")
+def search_tracks(
+    playlist_id: int = typer.Argument(..., help="Playlist ID"),
+    query: str = typer.Argument(..., help="Search query (partial match on title)"),
+):
+    try:
+        playlist = get_playlist(str(playlist_id))
+        tracks = search_tracks_in_playlist(str(playlist_id), query)
+
+        if not tracks:
+            console.print(
+                f"[yellow]No tracks found matching '{query}' in playlist '{playlist.name}'[/yellow]"
+            )
+            return
+
+        table = Table(title=f"Search results for '{query}' in '{playlist.name}'")
+        table.add_column("id", style="cyan")
+        table.add_column("title", style="magenta")
+        table.add_column("artists", style="blue")
+        table.add_column("duration", style="green")
+
+        for track in tracks:
+            artists = ", ".join([artist.name for artist in track.artists])
+            duration = (
+                f"{track.durationSeconds // 60}:{track.durationSeconds % 60:02d}"
+                if track.durationSeconds
+                else "N/A"
+            )
+            table.add_row(str(track.idTrack), track.title, artists, duration)
+
+        console.print(table)
+        console.print(f"\n[green]{len(tracks)} track(s) found[/green]")
 
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")

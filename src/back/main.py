@@ -6,6 +6,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from middleware.rate_limiter import limiter, rate_limit_exceeded_handler
+import uvicorn
 
 # Import routes
 from routes import (
@@ -50,6 +51,4 @@ app.add_middleware(
 app.add_middleware(SlowAPIMiddleware)
 
 if __name__ == "__main__":
-    import uvicorn
-
     uvicorn.run(app, host="0.0.0.0", port=5000, reload=True)

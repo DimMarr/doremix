@@ -66,3 +66,20 @@ def stop_track():
     stop_process(pid)
     PID_FILE.unlink()
     return "Track stopped."
+
+
+def search_tracks(query: str) -> list[TrackSchema]:
+    res = requests.get(f"{API_BASE_URL}/tracks")
+
+    if res.status_code != 200:
+        raise Exception(f"Error while fetching tracks: {res.text}")
+
+    data = res.json()
+    all_tracks = [TrackSchema(**item) for item in data]
+
+    query_lower = query.lower()
+    filtered_tracks = [
+        track for track in all_tracks if query_lower in track.title.lower()
+    ]
+
+    return filtered_tracks
