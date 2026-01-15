@@ -37,14 +37,16 @@ async function HomePage(container, trackPlayer) {
       {/* Conteneur flex pour Search + Button */}
       <div class="flex items-center justify-between mb-8 gap-4">
         <div id="searchSection" class="flex-1"></div>
-        <div id="addPlaylistSection"></div>
       </div>
 
       {
         Card({
           children: (
             <div>
-              <h2 class="text-lg font-semibold leading-none tracking-tight mb-4">Top Tracks</h2>
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold leading-none tracking-tight">Top Playlists</h2>
+                <div id="addPlaylistSection"></div>
+              </div>
               <div class="flex p-0! gap-10 mt-4 mb-2 overflow-auto">
                 {playlistCards as 'safe'}
               </div>

@@ -20,13 +20,11 @@ class PlaylistRepository:
         return db.query(Playlist).filter(Playlist.idPlaylist == playlist_id).first()
 
     @staticmethod
-    def create(db: Session, playlist_data: dict) -> Playlist:
-        new_playlist = Playlist(**playlist_data)
-        db.add(new_playlist)
+    def create(db: Session, playlist: Playlist) -> Playlist:
+        db.add(playlist)
         db.commit()
-        db.refresh(new_playlist)
-
-        return new_playlist
+        db.refresh(playlist)
+        return playlist
 
     @staticmethod
     def update(db: Session, playlist: Playlist) -> Playlist:

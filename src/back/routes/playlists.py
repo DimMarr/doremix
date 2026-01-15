@@ -5,7 +5,7 @@ from typing import List
 from pydantic import BaseModel
 
 from controllers import PlaylistController
-from schemas import PlaylistSchema, PlaylistSchemaCreate, TrackSchema
+from schemas import PlaylistSchema, PlaylistCreate, TrackSchema
 from database import get_db
 import os
 
@@ -15,6 +15,19 @@ router = APIRouter(prefix="/playlists", tags=["Playlists"])
 class AddTrackBody(BaseModel):
     url: str
     title: str
+
+
+@router.post(
+    "/",
+    response_model=PlaylistSchema,
+    summary="Créer une playlist",
+    description="Crée une nouvelle playlist avec les informations fournies.",
+)
+def create_playlist(playlist: PlaylistCreate, db: Session = Depends(get_db)):
+    # TODO: Quand l'auth sera en place :
+    # def create_playlist(playlist: PlaylistCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    #     return PlaylistController.create_playlist(db, playlist.model_dump(), current_user)
+    return PlaylistController.create_playlist(db, playlist.model_dump())
 
 
 @router.get(
@@ -43,19 +56,6 @@ def get_playlist(idPlaylist: int, db: Session = Depends(get_db)):
 def get_playlist_tracks(playlist_id: int, db: Session = Depends(get_db)):
     tracks = PlaylistController.get_playlist_tracks(db, playlist_id)
     return tracks
-
-
-@router.post(
-    "/",
-    response_model=PlaylistSchema,
-    summary="Créer une playlist",
-)
-def create_playlist(
-    playlist: PlaylistSchemaCreate,
-    db: Session = Depends(get_db),
-):
-    playlist = PlaylistController.create_playlist(db, playlist.model_dump())
-    return playlist
 
 
 @router.post(
