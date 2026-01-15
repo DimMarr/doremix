@@ -138,3 +138,39 @@ def add_track_to_playlist(
 
     data = res.json()
     return TrackSchema(**data)
+
+
+def search_playlists(query: str) -> list[PlaylistSchema]:
+    res = requests.get(f"{API_BASE_URL}/playlists")
+
+    if res.status_code != 200:
+        raise Exception(f"Error while fetching playlists: {res.text}")
+
+    data = res.json()
+    all_playlists = [PlaylistSchema(**item) for item in data]
+
+    query_lower = query.lower()
+    filtered_playlists = [
+        playlist for playlist in all_playlists if query_lower in playlist.name.lower()
+    ]
+
+    return filtered_playlists
+
+
+def search_tracks_in_playlist(playlist_id: str, query: str) -> list[TrackSchema]:
+    res = requests.get(f"{API_BASE_URL}/playlists/{playlist_id}/tracks")
+
+    if res.status_code == 404:
+        raise Exception("Playlist not found")
+    if res.status_code != 200:
+        raise Exception(f"Error while fetching tracks: {res.text}")
+
+    data = res.json()
+    all_tracks = [TrackSchema(**item) for item in data]
+
+    query_lower = query.lower()
+    filtered_tracks = [
+        track for track in all_tracks if query_lower in track.title.lower()
+    ]
+
+    return filtered_tracks
