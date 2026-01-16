@@ -56,28 +56,6 @@ export async function fetchPlaylistTracks(playlistId) {
   }
 }
 
-export async function removeTrackFromPlaylist(playlistId, trackId) {
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/playlists/${playlistId}/track/${trackId}`,
-      {
-        method: "DELETE",
-      },
-    );
-    if (!response.ok) {
-      handleHttpError(response, "Remove track");
-      throw new Error("Failed to remove track from playlist");
-    }
-    return response.json();
-  } catch (error) {
-    if (error instanceof TypeError) {
-      new AlertManager().error("Network error. Check your connection.");
-    }
-    console.error("Error removing track:", error);
-    throw error;
-  }
-}
-
 export async function uploadPlaylistCover(playlistId, imageFile) {
   try {
     const formData = new FormData();

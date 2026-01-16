@@ -7,6 +7,7 @@ import { Card } from "@components/generics/index";
 import { SearchBar, SearchResults } from "@components/generics/index";
 import SearchRepository from "@repositories/searchRepository";
 import { AddPlaylistButton, AddPlaylistModal, setupModalAddPlaylist } from "@components/playlists/add-playlist-modal";
+import { NoInternetPage } from "@pages/noInternet";
 
 async function HomePage(container, trackPlayer) {
   container.innerHTML = "";
@@ -23,9 +24,7 @@ async function HomePage(container, trackPlayer) {
       icon: svg1,
       className: "px-0! max-w-[200px] md:max-w-[300px] shrink-0",
       onClickPlay: () => {
-        if (trackPlayer.playlist.idPlaylist !== p.idPlaylist) {
-          trackPlayer.setPlaylist(p);
-        }
+        trackPlayer.setPlaylist(p);
         trackPlayer.playTrack(0);
       },
     });
@@ -171,6 +170,11 @@ async function HomePage(container, trackPlayer) {
 }
 
 export default async function init() {
+  if(!navigator.onLine){
+    document.getElementById("app").innerHTML = NoInternetPage();
+    return;
+  }
+
   const { mainContent, trackPlayer } = await createMainLayout();
   const router = new Router(mainContent, trackPlayer);
 

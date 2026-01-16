@@ -2,7 +2,7 @@ export class AlertManager {
   private container: HTMLElement;
   private timeout: number;
 
-  constructor(timeout = 100000) {
+  constructor(timeout = 5000) {
     this.timeout = timeout;
     this.container = this.createContainer();
   }

@@ -1,5 +1,6 @@
 import { TrackRepository } from "@repositories/trackRepository";
 import { Button } from "@components/generics";
+import { AlertManager } from "@utils/AlertManager";
 
 export function AddTrackModal({ playlistId, onClose, onTrackAdded }) {
   const modalHtml = (
@@ -91,8 +92,6 @@ export function AddTrackModal({ playlistId, onClose, onTrackAdded }) {
               onTrackAdded(newTrack);
             })
             .catch(err => {
-              console.error("Failed to add track", err);
-              // Here you could show an error message to the user
             })
             .finally(() => {
               submitButton.disabled = false;
