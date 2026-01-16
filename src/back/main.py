@@ -15,9 +15,17 @@ from routes import (
     tracksRouter,
     artistsRouter,
     searchRouter,
+    genresRouter,
 )
 
-routers = [usersRouter, playlistsRouter, tracksRouter, artistsRouter, searchRouter]
+routers = [
+    usersRouter,
+    playlistsRouter,
+    tracksRouter,
+    artistsRouter,
+    searchRouter,
+    genresRouter,
+]
 
 app = FastAPI()
 
