@@ -24,7 +24,12 @@ export function AddPlaylistModal() {
         <form id="add-playlist-form" class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-400 mb-1">Playlist name</label>
-            <input type="text" name="name" id="playlist-name-input" required class="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"/>
+            <input type="text" name="name" id="playlist-name-input" required class="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Cover image (optional)</label>
+            <input type="file" id="playlist-cover-input" accept="image/*" class="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-500 file:text-white hover:file:bg-blue-700" />
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-400 mb-1">Genre</label>
@@ -59,6 +64,7 @@ export async function setupModalAddPlaylist() {
   const openBtn = document.getElementById("btn-open-add-playlist");
   const closeBtn = document.getElementById("close-modal");
   const form = document.getElementById("add-playlist-form") as HTMLFormElement;
+  const imageInput = document.getElementById("playlist-cover-input") as HTMLInputElement;
 
   if (!modal || !openBtn || !closeBtn || !form) return;
 
@@ -86,18 +92,28 @@ export async function setupModalAddPlaylist() {
     const idGenre = formData.get("genreId")?.toString();
 
     if (!name) {
-        alert("Playlist name cannot be empty");
-        return;
+      alert("Playlist name cannot be empty");
+      return;
     }
 
     try {
-        await PlaylistRepository.createPlaylist(name, idGenre);
-        form.reset();
-        toggleModal();
-        window.location.reload();
-    } catch (err) {
+      const playlistresponse = await PlaylistRepository.createPlaylist(name);
+
+      try {
+        if (imageInput.files?.length) {
+          await PlaylistRepository.uploadPlaylistCover(playlistresponse.idPlaylist, imageInput.files[0]);
+        }
+      } catch (err) {
         console.error(err);
-        alert("Impossible to create playlist");
+        alert("Playlist created without image due to an error")
+      }
+      form.reset();
+      toggleModal();
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      alert("Impossible to create playlist");
     }
-    });
+
+  });
 }

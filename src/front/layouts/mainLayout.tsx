@@ -1,9 +1,10 @@
-import { Badge, Button, Header } from "@components/generics/index";
+import { Button, Header } from "@components/generics/index";
 import { initializePlayer, TrackPlayer } from "@components/playlists/track-player";
 import PlaylistRepository from "@repositories/playlistRepository";
 import YoutubePlayer from "@store/track-player";
 import { waitForYouTubeAPI } from "@utils/youtube-api-loader";
 import logo from "@assets/images/logo.png";
+import Playlist from "@models/playlist";
 
 export async function createMainLayout() {
   const root = document.getElementById("app") || document.body;
@@ -36,7 +37,7 @@ export async function createMainLayout() {
 
   // Now create the player AFTER the iframe exists in the DOM
   const trackPlayer = new YoutubePlayer({
-    playlist: playlists[0],
+    playlist: new Playlist({tracks:[]}),
     youtubePlayerHtmlElementId: "youtubePlayer",
   });
 

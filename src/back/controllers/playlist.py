@@ -11,6 +11,10 @@ class PlaylistController:
         return PlaylistRepository.get_all(db)
 
     @staticmethod
+    def get_public_playlists(db: Session):
+        return PlaylistRepository.get_public_playlists(db)
+
+    @staticmethod
     def get_playlist(db: Session, playlist_id: int):
         playlist = PlaylistRepository.get_by_id(db, playlist_id)
         if not playlist:

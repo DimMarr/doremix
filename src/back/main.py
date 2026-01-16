@@ -7,6 +7,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from middleware.rate_limiter import limiter, rate_limit_exceeded_handler
 import uvicorn
+from fastapi.staticfiles import StaticFiles
 
 # Import routes
 from routes import (
@@ -57,6 +58,8 @@ app.add_middleware(
 
 # Add SlowAPI middleware for rate limiting
 app.add_middleware(SlowAPIMiddleware)
+
+app.mount("/covers", StaticFiles(directory="/app/uploads/covers"), name="covers")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=5000, reload=True)
