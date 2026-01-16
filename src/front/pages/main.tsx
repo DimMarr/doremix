@@ -1,16 +1,19 @@
+import "@styles/alert.css";
 import PlaylistRepository from "@repositories/playlistRepository";
 import { PlaylistDetailPage } from "@pages/playlist";
 import { createMainLayout } from "@layouts/mainLayout";
 import { Router } from "../router";
 import { Card } from "@components/generics/index";
-import { SearchInput, SearchResults } from "@components/generics/index";
+import { SearchBar, SearchResults } from "@components/generics/index";
 import SearchRepository from "@repositories/searchRepository";
+import { AddPlaylistButton, AddPlaylistModal, setupModalAddPlaylist } from "@components/playlists/add-playlist-modal";
+import { NoInternetPage } from "@pages/noInternet";
 
 async function HomePage(container, trackPlayer) {
   container.innerHTML = "";
 
   const repo = new PlaylistRepository();
-  const playlists = await repo.getPlaylists();
+  const playlists = await repo.getPublicPlaylists();
   const svg1 = new URL("../assets/icons/play.svg", import.meta.url).href;
 
   const playlistCards = playlists.map((p) => {
@@ -21,9 +24,7 @@ async function HomePage(container, trackPlayer) {
       icon: svg1,
       className: "px-0! max-w-[200px] md:max-w-[300px] shrink-0",
       onClickPlay: () => {
-        if (trackPlayer.playlist.idPlaylist !== p.idPlaylist) {
-          trackPlayer.setPlaylist(p);
-        }
+        trackPlayer.setPlaylist(p);
         trackPlayer.playTrack(0);
       },
     });
@@ -40,14 +41,18 @@ async function HomePage(container, trackPlayer) {
         Card({
           children: (
             <div>
-              <h2 class="text-lg font-semibold leading-none tracking-tight mb-4">Top Tracks</h2>
-              <div class="flex p-0! gap-10 mt-4 mb-2 overflow-scroll">
-                {playlistCards}
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold leading-none tracking-tight">Top Playlists</h2>
+                <div id="addPlaylistSection"></div>
+              </div>
+              <div class="flex p-0! gap-10 mt-4 mb-2 overflow-auto">
+                {playlistCards as 'safe'}
               </div>
             </div>
           )
         })
       }
+      <div id="modal-container"></div>
     </div>
   );
 
@@ -55,20 +60,29 @@ async function HomePage(container, trackPlayer) {
 
   // Add search functionality
   const searchSection = document.getElementById("searchSection");
+  const addPlaylistSection = document.getElementById("addPlaylistSection");
+  const modalContainer = document.getElementById("modal-container");
+  if (addPlaylistSection) {
+    addPlaylistSection.innerHTML = AddPlaylistButton();
+  }
+  if (modalContainer) {
+    modalContainer.innerHTML = AddPlaylistModal();
+  }
+  setupModalAddPlaylist();
   if (searchSection) {
     const searchRepo = new SearchRepository();
     let currentResults: { tracks: any[], playlists: any[] } | null = null;
     let debounceTimer: ReturnType<typeof setTimeout>;
 
     // Render search input
-    searchSection.innerHTML = SearchInput({
+    searchSection.innerHTML = SearchBar({
       placeholder: "Search tracks and playlists..."
     });
 
     // Attach event handler to search input
-    const searchInputElement = document.getElementById("search-input") as HTMLInputElement;
-    if (searchInputElement) {
-      searchInputElement.addEventListener("input", async (e) => {
+    const SearchBarElement = document.getElementById("search-input") as HTMLInputElement;
+    if (SearchBarElement) {
+      SearchBarElement.addEventListener("input", async (e) => {
         const target = e.target as HTMLInputElement;
         const query = target.value.trim();
 
@@ -121,11 +135,9 @@ async function HomePage(container, trackPlayer) {
 
             const playlistItems = searchContainer.querySelectorAll('[data-playlist-index]');
             playlistItems.forEach((item) => {
-              const index = parseInt((item as HTMLElement).dataset.playlistIndex || '0', 10);
               item.addEventListener('click', () => {
-                trackPlayer.setPlaylist(currentResults!.playlists[index]);
-                trackPlayer.playTrack(0);
-
+                // Close search results when navigating to playlist
+                // The actual navigation is handled by the router via data-link attribute
                 const resultsElement = searchSection.querySelector('[class*="absolute top-full"]');
                 if (resultsElement) {
                   resultsElement.remove();
@@ -158,6 +170,11 @@ async function HomePage(container, trackPlayer) {
 }
 
 export default async function init() {
+  if(!navigator.onLine){
+    document.getElementById("app").innerHTML = NoInternetPage();
+    return;
+  }
+
   const { mainContent, trackPlayer } = await createMainLayout();
   const router = new Router(mainContent, trackPlayer);
 

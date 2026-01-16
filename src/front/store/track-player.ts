@@ -1,4 +1,5 @@
 import { Track, Playlist } from '@models/index';
+import { AlertManager } from '@utils/AlertManager';
 
 interface YTPlayer {
     loadVideoById(videoId: string): void;
@@ -58,9 +59,6 @@ export class YoutubePlayer {
     ) {
         this.playlist = playlist;
         this.tracks = this.playlist.tracks;
-        if (this.tracks.length === 0) {
-            throw new Error("Tracks list cannot be empty");
-        }
 
         // Initialise le player youtube avec le player.
         this.audioPlayer = new window.YT.Player(youtubePlayerHtmlElementId, {
@@ -94,10 +92,16 @@ export class YoutubePlayer {
     }
 
     public setPlaylist(playlist: Playlist): void {
-        const currentTrack = this.getCurrentTrack();
         this.playlist = playlist;
         this.tracks = this.playlist.tracks;
-        this.currentPlayingTrackIndex = 0; // Default to 0
+
+        if(this.tracks.length === 0){
+            new AlertManager().error("No track to listen in this playlist");
+            return;
+        }
+
+        this.currentPlayingTrackIndex = 0;
+        const currentTrack = this.getCurrentTrack();
 
         if (currentTrack) {
             const newIndex = this.tracks.findIndex(t => t.idTrack === currentTrack.idTrack);
@@ -114,6 +118,9 @@ export class YoutubePlayer {
             | null;
         if (trackTimer) {
             trackTimer.value = String(videoTime);
+            // Update CSS variable for Chrome progress styling
+            const progress = (videoTime / parseFloat(trackTimer.max)) * 100;
+            trackTimer.style.setProperty('--range-progress', `${progress}%`);
         }
     }
 

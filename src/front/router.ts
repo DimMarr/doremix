@@ -1,3 +1,6 @@
+import { Sanitize } from '@utils/sanitize';
+import { NoInternetPage } from "@pages/noInternet";
+
 export class Router {
   constructor(container, trackPlayer) {
     this.container = container;
@@ -8,7 +11,10 @@ export class Router {
       const anchor = e.target.closest("a");
       if (anchor && anchor.hasAttribute("data-link")) {
         e.preventDefault();
-        this.navigate(anchor.getAttribute("href"));
+        const href = anchor.getAttribute("href");
+        if (href && (new Sanitize()).isValidPath(href)) {
+          this.navigate(href);
+        }
       }
     });
   }
@@ -18,8 +24,21 @@ export class Router {
   }
 
   onRouteChange() {
+    if(navigator.onLine === false){
+      this.container.innerHTML = NoInternetPage();
+      return;
+    }
+
     let path = window.location.pathname;
     if (path === "") path = "/";
+
+    if (!(new Sanitize()).isValidPath(path)) {
+      console.warn('Invalid path detected:', path);
+      if (this.routes["/"]) {
+        this.routes["/"](this.container, {}, this.trackPlayer);
+      }
+      return;
+    }
 
     for (const route in this.routes) {
       const params = this.match(route, path);
@@ -46,16 +65,29 @@ export class Router {
     const params = {};
     for (let i = 0; i < routeParts.length; i++) {
       if (routeParts[i].startsWith(":")) {
-        params[routeParts[i].slice(1)] = pathParts[i];
+        params[routeParts[i].slice(1)] = decodeURIComponent(pathParts[i]);
       } else if (routeParts[i] !== pathParts[i]) {
         return null;
       }
     }
-    return params;
+
+    return (new Sanitize()).sanitizeParams(params);
   }
 
   navigate(path) {
-    window.history.pushState({}, "", path);
+    if (!(new Sanitize()).isValidPath(path)) {
+      console.warn('Invalid navigation path:', path);
+      return;
+    }
+
+    const sanitizedPath = (new Sanitize()).sanitizePath(path);
+
+    if (!(new Sanitize()).isValidPath(sanitizedPath)) {
+      console.warn('Sanitized path is invalid:', sanitizedPath);
+      return;
+    }
+
+    window.history.pushState({}, "", sanitizedPath);
     this.onRouteChange();
   }
 }

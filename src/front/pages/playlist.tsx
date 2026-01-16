@@ -2,6 +2,7 @@ import { TrackRepository } from "@repositories/trackRepository";
 import { Button, AddTrackModal } from "@components/index";
 import { TrackListHeader } from "@components/tracks/header";
 import { TrackRow } from "@components/tracks/row";
+import { AlertManager } from "@utils/AlertManager";
 
 function TrackList(playlist, trackPlayer) {
   const tracks = playlist.tracks || [];
@@ -20,7 +21,7 @@ function TrackList(playlist, trackPlayer) {
           trackPlayer={trackPlayer}
           current_track={current_track}
         />
-      ))}
+      )) as 'safe'}
     </div>
   );
 }
@@ -39,14 +40,14 @@ export function PlaylistDetailPage(container, playlist, trackPlayer, onBack) {
 
       <div class="flex items-start gap-8 my-8">
         <div class="flex flex-col items-center gap-4">
-          <img src={playlist.image} class="w-48 h-48 rounded-md object-cover" alt={playlist.name} />
+          <img src={playlist.image} class="w-48 h-48 rounded-md object-cover" alt={playlist.name}/>
           <Button id="add-track-button" variant="outline" size="md">
             Add Track
           </Button>
         </div>
         <div class="pt-2">
-          <h1 class="font-bold text-4xl">{playlist.name}</h1>
-          <p class="text-muted-foreground text-lg">{playlist.description || ''}</p>
+          <h1 safe class="font-bold text-4xl">{playlist.name}</h1>
+          <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
         </div>
       </div>
 
@@ -119,15 +120,20 @@ export function PlaylistDetailPage(container, playlist, trackPlayer, onBack) {
         e.stopPropagation();
         const trackIndex = Number(deleteButton.getAttribute('data-track-index'));
 
-        TrackRepository.removeTrackFromPlaylist(
-          proxyPlaylist.idPlaylist,
-          proxyPlaylist.tracks[trackIndex].idTrack,
-        ).then(() => {
-        }).catch((err) => {
-          console.error('Failed to remove track from playlist:', err);
-        });
+        try {
+          TrackRepository.removeTrackFromPlaylist(
+            proxyPlaylist.idPlaylist,
+            proxyPlaylist.tracks[trackIndex].idTrack,
+          );
+        } catch (err){
+          console.log(err);
+          new AlertManager().error("Failed to remove track");
+          return;
+        }
 
         proxyPlaylist.tracks = proxyPlaylist.tracks.filter((_, i) => i !== trackIndex);
+        trackPlayer.setPlaylist(proxyPlaylist);
+        return; // Prevent row click handler from executing
       }
 
       if (row) {
