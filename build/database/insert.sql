@@ -3,7 +3,7 @@ TRUNCATE USER_PLAYLIST, TRACK_PLAYLIST, TRACK_ARTIST, PLAYLIST, TRACK, ARTIST, G
 BEGIN;
 
 INSERT INTO GENRE (label) VALUES
-('Sans genre'), ('Rock'), ('Pop'), ('Hip-Hop'), ('Jazz'),
+('No genre'), ('Rock'), ('Pop'), ('Hip-Hop'), ('Jazz'),
 ('Electro'), ('Metal'), ('Classical'), ('Reggae');
 
 INSERT INTO ARTIST (name) VALUES
