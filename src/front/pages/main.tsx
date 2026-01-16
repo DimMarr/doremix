@@ -14,6 +14,8 @@ async function HomePage(container, trackPlayer) {
   const playlists = await repo.getPlaylists();
   const svg1 = new URL("../assets/icons/play.svg", import.meta.url).href;
 
+  console.log(playlists)
+
   const playlistCards = playlists.map((p) => {
     const cardHtml = Card({
       title: p.name || "",
