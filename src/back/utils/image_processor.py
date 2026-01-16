@@ -6,7 +6,6 @@ from typing import Tuple
 from fastapi import UploadFile, HTTPException
 
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 # Configuration
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
@@ -65,4 +64,4 @@ def save_cover_image(file: UploadFile, playlist_id: int) -> str:
     with open(filepath, "wb") as f:
         f.write(webp_bytes)
 
-    return f"{BACKEND_URL}/playlists/covers/{filename}"
+    return f"{filename}"

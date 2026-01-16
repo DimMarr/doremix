@@ -1,6 +1,7 @@
 import { Track } from "@models/track";
 import Playlist from "@models/playlist";
 import { fetchSearch } from "@services/api";
+import PlaylistRepository from "./playlistRepository";
 
 export interface SearchResults {
     tracks: Track[];
@@ -23,7 +24,7 @@ export default class SearchRepository {
 
             const playlists = rawData.playlists.map((data: any) => new Playlist({
                 ...data,
-                image: data.coverImage ?? null,
+                image: data.coverImage ? PlaylistRepository.getCoverImageUrl(data.coverImage) : null,
                 visibility: data.visibility ? data.visibility.toLowerCase() : 'public'
             }));
 
