@@ -40,14 +40,14 @@ export function PlaylistDetailPage(container, playlist, trackPlayer, onBack) {
 
       <div class="flex items-start gap-8 my-8">
         <div class="flex flex-col items-center gap-4">
-          <img src={playlist.image} class="w-48 h-48 rounded-md object-cover" alt={playlist.name} />
+          <img src={playlist.image} class="w-48 h-48 rounded-md object-cover" alt={playlist.name}/>
           <Button id="add-track-button" variant="outline" size="md">
             Add Track
           </Button>
         </div>
         <div class="pt-2">
-          <h1 class="font-bold text-4xl">{playlist.name}</h1>
-          <p class="text-muted-foreground text-lg">{playlist.description || ''}</p>
+          <h1 safe class="font-bold text-4xl">{playlist.name}</h1>
+          <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
         </div>
       </div>
 
