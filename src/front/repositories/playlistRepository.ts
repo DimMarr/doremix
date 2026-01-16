@@ -88,7 +88,7 @@ export default class PlaylistRepository {
                 }
                 return new Playlist({
                     ...item,
-                    image: item.coverImage ?? img1,
+                    image: item.coverImage ? PlaylistRepository.getCoverImageUrl(item.coverImage) : img1,
                     visibility: item.visibility ? item.visibility.toLowerCase() as Visibility : Visibility.public,
                     tracks: tracks,
                 });
@@ -113,7 +113,7 @@ export default class PlaylistRepository {
                 }
                 return new Playlist({
                     ...item,
-                    image: item.coverImage ?? img1,
+                    image: item.coverImage ? PlaylistRepository.getCoverImageUrl(item.coverImage) : img1,
                     visibility: item.visibility ? item.visibility.toLowerCase() as Visibility : Visibility.public,
                     tracks: tracks,
                 });
@@ -136,7 +136,7 @@ export default class PlaylistRepository {
 
         return new Playlist({
             ...rawData,
-            image: rawData.coverImage ?? img1,
+            image: rawData.coverImage ? PlaylistRepository.getCoverImageUrl(rawData.coverImage) : img1,
             visibility: rawData.visibility ? rawData.visibility.toLowerCase() as Visibility : Visibility.public,
             tracks: tracks,
             artists: artists
