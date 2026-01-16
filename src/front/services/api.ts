@@ -1,6 +1,6 @@
 import { AlertManager } from "@utils/AlertManager";
+import { API_BASE_URL } from "@config/index";
 
-const API_BASE_URL = "http://localhost:8000";
 
 function handleHttpError(response: Response, context: string) {
   switch (response.status) {
