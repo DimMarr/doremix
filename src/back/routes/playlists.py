@@ -42,6 +42,17 @@ def get_playlists(db: Session = Depends(get_db)):
 
 
 @router.get(
+    "/public",
+    response_model=List[PlaylistSchema],
+    summary="Lister toutes les playlists public",
+    description="Retourne la liste complète des playlists disponibles.",
+)
+def get_public_playlists(db: Session = Depends(get_db)):
+    playlists = PlaylistController.get_public_playlists(db)
+    return playlists
+
+
+@router.get(
     "/{idPlaylist}",
     response_model=PlaylistSchema,
     summary="Récupérer une playlist",

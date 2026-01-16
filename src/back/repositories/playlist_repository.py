@@ -21,6 +21,14 @@ class PlaylistRepository:
         return db.query(Playlist).all()
 
     @staticmethod
+    def get_public_playlists(db: Session) -> List[Playlist]:
+        return (
+            db.query(Playlist)
+            .filter(Playlist.visibility == PlaylistVisibility.PUBLIC)
+            .all()
+        )
+
+    @staticmethod
     def get_by_id(db: Session, playlist_id: int) -> Optional[Playlist]:
         return db.query(Playlist).filter(Playlist.idPlaylist == playlist_id).first()
 
