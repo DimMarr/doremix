@@ -3,7 +3,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from services.playlist import (
+from src.services.playlist import (
     get_all_playlists,
     get_playlist,
     get_playlist_tracks,
