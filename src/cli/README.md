@@ -1,10 +1,16 @@
 Pré-requis : `uv`, `vlc`
 
 ## Initialisation de la CLI
+#### Pour le dev :
 ``` bash
 # À la racine du projet :
 $ printf "\nAPI_BASE_URL=http://localhost:8000" >> .env
 $ docker compose up
+```
+#### Pour la prod :
+``` bash
+# À la racine du projet :
+$ printf "\nAPI_BASE_URL=http://fornax.dopolytech.fr:8000" >> .env
 ```
 
 ## Gestion du paquet doremix-cli
@@ -12,17 +18,11 @@ $ docker compose up
 ```bash
 # Pour installer le paquet
 $ cd src/cli
-$ uv pip install -e .
-```
-```bash
-# Pour installer l'autocomplétion
-$ doremix --install-completion
-$ source ~/.bashrc
-$ source .venv/bin/activate
+$ uv tool install [-e] . # -e rend le code source éditable
 ```
 ```bash
 # Pour déinstaller le paquet
-$ uv pip uninstall doremix-cli
+$ uv tool uninstall doremix-cli
 ```
 
 ## Commandes
