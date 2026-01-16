@@ -18,11 +18,13 @@ export async function createMainLayout() {
   const appHtml = (
     <div class="min-h-screen bg-background text-foreground px-6">
       <Header className="">
-        <img src={logo} alt="Dorémix" class="h-8" />
-        <div class="flex gap-2">
+        <a href="/">
+          <img src={logo} alt="Dorémix" class="h-8" />
+        </a>
+        {/* <div class="flex gap-2">
           <Button variant="outline" size="sm">Login</Button>
           <Button variant="primary" size="sm">Signup</Button>
-        </div>
+        </div> */}
       </Header>
 
       <main class="" id="mainContent"></main>
