@@ -60,7 +60,7 @@ deploy_beta:
   script:
     - echo "📂 Début du déploiement..."
     - ssh $SSH_USER_BETA@$SSH_HOST_BETA "mkdir -p $DEPLOY_PATH"
-    - rsync -avz --delete --exclude='.git/' --exclude='.gitlab-ci.yml' --exclude='.env' --exclude='__pycache__/' --exclude='node_modules/' . $SSH_USER_BETA@$SSH_HOST_BETA:$DEPLOY_PATH
+    - rsync -avz --delete --exclude='.git/' --exclude='.gitlab-ci.yml' --exclude='.env' --exclude='__pycache__/' --exclude='node_modules/' --exclude='uploads/covers/' . $SSH_USER_PROD@$SSH_HOST_PROD:$DEPLOY_PATH
     - ssh $SSH_USER_BETA@$SSH_HOST_BETA "cd $DEPLOY_PATH && docker compose up -d --build --remove-orphans"
 
 deploy_prod:
@@ -81,5 +81,5 @@ deploy_prod:
   script:
     - echo "📂 Début du déploiement..."
     - ssh $SSH_USER_PROD@$SSH_HOST_PROD "mkdir -p $DEPLOY_PATH"
-    - rsync -avz --delete --exclude='.git/' --exclude='.gitlab-ci.yml' --exclude='.env' --exclude='__pycache__/' --exclude='node_modules/' . $SSH_USER_PROD@$SSH_HOST_PROD:$DEPLOY_PATH
+    - rsync -avz --delete --exclude='.git/' --exclude='.gitlab-ci.yml' --exclude='.env' --exclude='__pycache__/' --exclude='node_modules/' --exclude='uploads/covers/' . $SSH_USER_PROD@$SSH_HOST_PROD:$DEPLOY_PATH
     - ssh $SSH_USER_PROD@$SSH_HOST_PROD "cd $DEPLOY_PATH && docker compose -f docker-compose_prod.yml up -d --build --remove-orphans"
