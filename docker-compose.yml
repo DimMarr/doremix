@@ -54,7 +54,7 @@ services:
       BACKEND_URL: ${BACKEND_URL}
     volumes:
       - ./src/back:/app
-      - ./uploads:/app/uploads
+      - ./uploads/covers:/app/uploads/covers
       - /app/__pycache__
     networks:
       - frontend-network

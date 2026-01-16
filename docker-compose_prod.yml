@@ -67,7 +67,7 @@ services:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
     volumes:
       - ./src/back:/app
-      - ./uploads:/app/uploads
+      - ./uploads/covers:/app/uploads/covers
       - /app/__pycache__
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/docs" ]
