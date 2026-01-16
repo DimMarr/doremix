@@ -1,4 +1,5 @@
 import { Sanitize } from '@utils/sanitize';
+import { NoInternetPage } from "@pages/noInternet";
 
 export class Router {
   constructor(container, trackPlayer) {
@@ -23,6 +24,11 @@ export class Router {
   }
 
   onRouteChange() {
+    if(navigator.onLine === false){
+      this.container.innerHTML = NoInternetPage();
+      return;
+    }
+
     let path = window.location.pathname;
     if (path === "") path = "/";
 

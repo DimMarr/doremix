@@ -1,66 +1,126 @@
 import { API_BASE_URL } from "@config/index";
-import Playlist, { Visibility } from "../models/playlist";
-import { Track } from "../models/track";
-import { Artist } from "../models/artist";
+import Playlist, { Visibility } from "@models/playlist";
+import { Track } from "@models/track";
+import { Artist } from "@models/artist";
+import { AlertManager } from "@utils/AlertManager";
+
+function handleHttpError(response: Response, context: string) {
+    switch (response.status) {
+        case 429:
+            new AlertManager().warning("Too many requests. Please slow down.");
+            break;
+        case 404:
+            new AlertManager().error(`${context} not found.`);
+            break;
+        case 500:
+        case 502:
+        case 503:
+            new AlertManager().error("Server error. Please try again later.");
+            break;
+        default:
+            new AlertManager().error(`Failed to ${context.toLowerCase()}.`);
+    }
+}
 
 export default class PlaylistRepository {
     static async fetchPlaylists() {
-        const response = await fetch(`${API_BASE_URL}/playlists/`);
-        if (!response.ok) {
-            throw new Error("Failed to fetch playlists");
+        try {
+            const response = await fetch(`${API_BASE_URL}/playlists/`);
+            if (!response.ok) {
+                handleHttpError(response, "Fetch playlists");
+                throw new Error("Failed to fetch playlists");
+            }
+            return response.json();
+        } catch (error) {
+            throw error;
         }
-        return response.json();
     }
 
     static async fetchPlaylist(playlistId: number) {
-        const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}`);
-        if (!response.ok) {
-            throw new Error("Failed to fetch playlist");
+        try {
+            const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}`);
+            if (!response.ok) {
+                handleHttpError(response, "Playlist");
+                throw new Error("Failed to fetch playlist");
+            }
+            return response.json();
+        } catch (error) {
+            if (error instanceof TypeError) {
+                new AlertManager().error("Network error. Check your connection.");
+            }
+            console.error("Error fetching playlist:", error);
+            throw error;
         }
-        return response.json();
     }
 
     static async fetchPlaylistTracks(playlistId: number) {
-        const response = await fetch(
-            `${API_BASE_URL}/playlists/${playlistId}/tracks`,
-        );
-        if (!response.ok) {
-            throw new Error("Failed to fetch tracks");
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/playlists/${playlistId}/tracks`,
+            );
+            if (!response.ok) {
+                handleHttpError(response, "Tracks");
+                throw new Error("Failed to fetch tracks");
+            }
+            return response.json();
+        } catch (error) {
+            if (error instanceof TypeError) {
+                new AlertManager().error("Network error. Check your connection.");
+            }
+            console.error("Error fetching tracks:", error);
+            throw error;
         }
-        return response.json();
     }
 
     static async createPlaylist(name: string) {
-        const response = await fetch(`${API_BASE_URL}/playlists/`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ name }),
-        });
+        try {
+            const response = await fetch(`${API_BASE_URL}/playlists/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ name }),
+            });
 
-        if (!response.ok) {
-            throw new Error("Failed to create playlist");
+            if (!response.ok) {
+                handleHttpError(response, "Create playlist");
+                throw new Error("Failed to create playlist");
+            }
+            return response.json();
+        } catch (error) {
+            if (error instanceof TypeError) {
+                new AlertManager().error("Network error. Check your connection.");
+            }
+            console.error("Error creating playlist:", error);
+            throw error;
         }
-        return response.json();
     }
 
     static async uploadPlaylistCover(playlistId: number, imageFile: File) {
-        const formData = new FormData();
-        formData.append("file", imageFile);
+        try {
+            const formData = new FormData();
+            formData.append("file", imageFile);
 
-        const response = await fetch(
-            `${API_BASE_URL}/playlists/${playlistId}/cover`,
-            {
-                method: "POST",
-                body: formData,
-            },
-        );
+            const response = await fetch(
+                `${API_BASE_URL}/playlists/${playlistId}/cover`,
+                {
+                    method: "POST",
+                    body: formData,
+                },
+            );
 
-        if (!response.ok) {
-            throw new Error("Failed to upload cover");
+            if (!response.ok) {
+                handleHttpError(response, "Upload cover");
+                throw new Error("Failed to upload cover");
+            }
+            return response.json();
+        } catch (error) {
+            if (error instanceof TypeError) {
+                new AlertManager().error("Network error. Check your connection.");
+            }
+            console.error("Error uploading cover:", error);
+            throw error;
         }
-        return response.json();
     }
 
     static getCoverImageUrl(coverPath: string) {
