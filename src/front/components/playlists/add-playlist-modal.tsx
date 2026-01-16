@@ -26,6 +26,13 @@ export function AddPlaylistModal() {
             <label class="block text-sm font-medium text-gray-400 mb-1">Playlist name</label>
             <input type="text" name="name" id="playlist-name-input" required class="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none"/>
           </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-400 mb-1">Genre</label>
+            <select
+              name="genreId" id="playlist-genre-select" required class="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none">
+              <option value="">Select genre</option>
+            </select>
+          </div>
 
           <div class="flex justify-end gap-3 mt-8">
             {Button({
@@ -47,7 +54,7 @@ export function AddPlaylistModal() {
 }
 
 // Fonction utilitaire pour gérer les événements de la modale
-export function setupModalAddPlaylist() {
+export async function setupModalAddPlaylist() {
   const modal = document.getElementById("add-playlist-modal");
   const openBtn = document.getElementById("btn-open-add-playlist");
   const closeBtn = document.getElementById("close-modal");
@@ -65,10 +72,18 @@ export function setupModalAddPlaylist() {
     if (e.target === modal) toggleModal();
   });
 
+  const genres = await PlaylistRepository.getGenres();
+  const select = document.getElementById("playlist-genre-select") as HTMLSelectElement;
+  if (select) {
+    select.innerHTML = `<option value="">Select genre</option>` +
+      genres.map(g => `<option value="${g.idGenre}">${g.label}</option>`).join('');
+  }
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
     const name = formData.get("name")?.toString().trim();
+    const idGenre = formData.get("genreId")?.toString();
 
     if (!name) {
         alert("Playlist name cannot be empty");
@@ -76,7 +91,7 @@ export function setupModalAddPlaylist() {
     }
 
     try {
-        await PlaylistRepository.createPlaylist(name);
+        await PlaylistRepository.createPlaylist(name, idGenre);
         form.reset();
         toggleModal();
         window.location.reload();

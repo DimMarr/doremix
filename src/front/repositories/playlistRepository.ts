@@ -2,6 +2,7 @@ import { API_BASE_URL } from "@config/index";
 import Playlist, { Visibility } from "../models/playlist";
 import { Track } from "../models/track";
 import { Artist } from "../models/artist";
+import { Genre } from "@models/genre";
 
 export default class PlaylistRepository {
     static async fetchPlaylists() {
@@ -30,13 +31,13 @@ export default class PlaylistRepository {
         return response.json();
     }
 
-    static async createPlaylist(name: string) {
+    static async createPlaylist(name: string, idGenre?: string) {
         const response = await fetch(`${API_BASE_URL}/playlists/`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ name }),
+            body: JSON.stringify({ name, idGenre}),
         });
 
         if (!response.ok) {
@@ -108,5 +109,13 @@ export default class PlaylistRepository {
             tracks: tracks,
             artists: artists
         });
+    }
+
+    static async getGenres(): Promise<Genre[]> {
+        const response = await fetch(`${API_BASE_URL}/genres/`);
+        if (!response.ok) {
+            throw new Error("Failed to fetch genres");
+        }
+        return response.json();
     }
 }
