@@ -73,7 +73,6 @@ class TestGetAllPlaylists:
         assert isinstance(data, list)
         assert len(data) == 3
 
-        # Vérifier la structure de la réponse
         for playlist in data:
             assert "idPlaylist" in playlist
             assert "name" in playlist
@@ -100,12 +99,10 @@ class TestGetAllPlaylists:
 
         data = response.json()
 
-        # Vérifier la première playlist
         assert data[0]["name"] == "My Favorite Songs"
         assert data[0]["vote"] == 10
         assert data[0]["visibility"] == "PUBLIC"
 
-        # Vérifier la deuxième playlist
         assert data[1]["name"] == "Private Mix"
         assert data[1]["vote"] == 5
         assert data[1]["visibility"] == "PRIVATE"
@@ -129,7 +126,6 @@ class TestGetAllPlaylists:
         data = response.json()
 
         for playlist in data:
-            # Tous les champs doivent être présents
             assert isinstance(playlist["idPlaylist"], int)
             assert isinstance(playlist["name"], str)
             assert isinstance(playlist["idGenre"], int)
@@ -159,11 +155,8 @@ class TestGetPlaylistById:
         """Test la récupération d'une playlist inexistante."""
         try:
             response = client.get("/playlists/999")
-            # Si pas d'exception, vérifier les status codes
             assert response.status_code in [404, 422, 500]
         except Exception as e:
-            # FastAPI lève ResponseValidationError quand None est retourné
-            # C'est attendu avec l'implémentation actuelle
             assert (
                 "ResponseValidationError" in str(type(e))
                 or "validation error" in str(e).lower()
@@ -201,17 +194,14 @@ class TestGetPlaylistById:
         """Test avec un type d'ID de playlist invalide."""
         response = client.get("/playlists/invalid")
 
-        assert response.status_code == 422  # Erreur de validation
+        assert response.status_code == 422
 
     def test_get_playlist_by_id_negative_id(self, client):
         """Test avec un ID de playlist négatif."""
         try:
             response = client.get("/playlists/-1")
-            # If no exception, check status codes
             assert response.status_code in [404, 422, 500]
         except Exception as e:
-            # FastAPI raises ResponseValidationError when None is returned
-            # This is expected given the current implementation
             assert (
                 "ResponseValidationError" in str(type(e))
                 or "validation error" in str(e).lower()
@@ -228,13 +218,13 @@ class TestGetPlaylistById:
         response = client.get(f"/playlists/{original_playlist.idPlaylist}")
         assert response.status_code == 200
 
-        # Vérifier que l'enregistrement en BD n'a pas changé
         db_playlist = (
             db.query(Playlist)
             .filter(Playlist.idPlaylist == original_playlist.idPlaylist)
             .first()
         )
 
+        assert db_playlist is not None
         assert db_playlist.name == original_name
         assert db_playlist.vote == original_vote
 
@@ -280,7 +270,6 @@ class TestPlaylistEdgeCases:
         data = response.json()
         assert len(data) == 5
 
-        # Tous devraient avoir le même propriétaire
         assert all(p["idOwner"] == sample_user.idUser for p in data)
 
     def test_playlist_with_high_vote_count(
@@ -329,7 +318,6 @@ class TestPlaylistEdgeCases:
         returned_names = [p["name"] for p in data]
 
         for name in special_names:
-            # Vérifier que chaque nom spécial est dans les résultats
             assert name in returned_names
 
     def test_all_visibility_types(self, client, db: Session, sample_user, sample_genre):
@@ -359,8 +347,4 @@ class TestPlaylistEdgeCases:
         returned_visibilities = [p["visibility"] for p in data]
 
         for visibility in visibility_types:
-            # Vérifier que chaque type de visibilité est dans les résultats
             assert visibility.value in returned_visibilities
-
-
-# Référence au modèle Playlist pour les tests
