@@ -65,7 +65,6 @@ docker compose up --build
 Si rien ne s'affiche sur l'application web, vérifiez que les cors sont bien configurés dans le .env :
 ```
 CORS_ORIGINS=http://localhost:8080,https://localhost:8080
-BACKEND_URL=http://localhost:8000
 ```
 
 # Processus de test
