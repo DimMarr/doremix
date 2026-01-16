@@ -80,14 +80,14 @@ export default class PlaylistRepository {
         }
     }
 
-    static async createPlaylist(name: string) {
+    static async createPlaylist(name: string, idGenre) {
         try {
             const response = await fetch(`${API_BASE_URL}/playlists/`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ name }),
+                body: JSON.stringify({ name, idGenre }),
             });
 
             if (!response.ok) {
