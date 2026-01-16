@@ -27,7 +27,7 @@ export function Card({
   const cardClasses = cn(getCardClasses(), className);
 
   const cardContent = (
-    <div class="flex flex-col space-y-1.5 relative min-w-[200px]">
+    <div class="flex flex-col space-y-1.5 relative lg:min-w-[250px] min-w-[200px]">
       {image as 'safe' && (
         <div class="relative mb-6">
           <img
