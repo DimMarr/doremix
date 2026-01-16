@@ -1,24 +1,48 @@
-Pré-requis : uv
+Pré-requis : `uv`, `vlc`
 
-À la racine du projet :
->> printf "\nAPI_BASE_URL=http://localhost:8000" >> .env
->> docker compose up
+## Initialisation de la CLI
+``` bash
+# À la racine du projet :
+$ printf "\nAPI_BASE_URL=http://localhost:8000" >> .env
+$ docker compose up
+```
 
->> cd src/cli
->> uv run main.py <arguments>
+## Gestion du paquet doremix-cli
 
+```bash
+# Pour installer le paquet
+$ cd src/cli
+$ uv pip install -e .
+```
+```bash
+# Pour installer l'autocomplétion
+$ doremix --install-completion
+$ source ~/.bashrc
+$ source .venv/bin/activate
+```
+```bash
+# Pour déinstaller le paquet
+$ uv pip uninstall doremix-cli
+```
+
+## Commandes
+```
 doremix
-|- playlist
-    |- list
-    |- get <playlist-id>
-    |- tracks <playlist-id>
-    |- remove <playlist-id> <track-id>
-    |- create --name <playlist-name> [--genre <genre-id>] [--visibility <visibility>]
-    |- delete <playlist-id>
-    |- update <playlist-id> [--name <playlist-name>] [--genre <genre-id>] [--visibility <visibility>]
-    |- add-track <playlist-id> --url <youtube-link> --title <title>
-|- track
-    |- list
-    |- get <track-id>
-    |- play <track-id>
-    |- stop
+    |- playlist
+        |- list
+        |- get <playlist-id>
+        |- tracks <playlist-id>
+        |- remove <playlist-id> <track-id>
+        |- create --name <playlist-name> [--genre <genre-id>] [--visibility <visibility>]
+        |- delete <playlist-id>
+        |- update <playlist-id> [--name <playlist-name>] [--genre <genre-id>] [--visibility <visibility>]
+        |- add-track <playlist-id> --url <youtube-link> --title <title>
+        |- search-tracks <playlist-id> <query>
+        |- search <query>
+    |- track
+        |- list
+        |- get <track-id>
+        |- play <track-id>
+        |- stop
+        |- search <query>
+```

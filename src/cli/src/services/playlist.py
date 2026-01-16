@@ -1,7 +1,7 @@
 from typing import Any, Optional
-from utils.get_env import get_env
-from models.playlist import PlaylistSchema
-from models.track import TrackSchema
+from src.utils.get_env import get_env
+from src.models.playlist import PlaylistSchema
+from src.models.track import TrackSchema
 import requests
 import json
 
