@@ -9,35 +9,15 @@ from models import User, Playlist, Track, Genre
 
 
 @pytest.fixture
-def sample_user(db):
-    """Crée un utilisateur de test"""
-    user = User(
-        username="testuser", email="test@example.com", password="hashed_password"
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
-
-
-@pytest.fixture
-def sample_playlist(db, sample_user):
+def sample_playlist(db, sample_user, sample_genre):
     """Crée une playlist de test"""
-    playlist = Playlist(name="Ma Playlist", idOwner=sample_user.idUser, idGenre=1)
+    playlist = Playlist(
+        name="Ma Playlist", idOwner=sample_user.idUser, idGenre=sample_genre.idGenre
+    )
     db.add(playlist)
     db.commit()
     db.refresh(playlist)
     return playlist
-
-
-@pytest.fixture
-def sample_genre(db):
-    """Crée un genre de test"""
-    genre = Genre(label="Rock")
-    db.add(genre)
-    db.commit()
-    db.refresh(genre)
-    return genre
 
 
 @pytest.fixture
