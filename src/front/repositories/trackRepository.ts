@@ -23,7 +23,8 @@ export class TrackRepository {
       if (!response.ok) {
         throw new Error("Failed to add track by URL");
       }
-    } catch (err){
+      return response.json();
+    } catch (err) {
       new AlertManager().error("Failed to add track");
     }
   }

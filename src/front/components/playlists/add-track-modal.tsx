@@ -90,8 +90,10 @@ export function AddTrackModal({ playlistId, onClose, onTrackAdded }) {
           TrackRepository.addTrackByUrl(playlistId, url, title)
             .then(newTrack => {
               onTrackAdded(newTrack);
+              cleanupAndClose();
             })
             .catch(err => {
+              console.error("Error adding track:", err);
             })
             .finally(() => {
               submitButton.disabled = false;
