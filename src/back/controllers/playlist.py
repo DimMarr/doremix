@@ -38,6 +38,7 @@ class PlaylistController:
         playlist = PlaylistRepository.get_by_id(db, playlist_id)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
+
         # TODO: Quand l'auth sera en place, vérifier les permissions :
         # is_owner = playlist.idOwner == user_id
         # is_editor = PlaylistRepository.is_user_editor(db, playlist.idPlaylist, user_id)
@@ -49,6 +50,9 @@ class PlaylistController:
         track, status = PlaylistRepository.add_track(
             db, title, youtubeLink, playlist_id
         )
+
+        if status == "invalid url":
+            raise HTTPException(status_code=403, detail="Invalid YouTube URL provided")
 
         if track is None:
             raise HTTPException(status_code=400, detail="Failed to add track")
