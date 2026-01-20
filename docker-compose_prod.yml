@@ -1,8 +1,8 @@
 services:
   frontend:
     build:
-      context: ./src/front
-      dockerfile: ../../build/frontend/Dockerfile-prod
+      context: .
+      dockerfile: build/frontend/Dockerfile-prod
     container_name: web
     restart: unless-stopped
     ports:
@@ -61,8 +61,6 @@ services:
       dockerfile: build/backend/Dockerfile
     container_name: backend_python
     restart: unless-stopped
-    ports:
-      - 8000:8000
     environment:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
     volumes:
