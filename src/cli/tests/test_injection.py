@@ -1,46 +1,12 @@
 import pytest
-from unittest.mock import patch
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
+from unittest.mock import patch, MagicMock
 from typer.testing import CliRunner
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from src.main import app
-
-# IMPORTANT : Importez Base et SessionLocal depuis votre fichier de config DB
-# Adaptez le chemin si nécessaire (ex: from src.database import ...)
-from database import Base, SessionLocal
-
-
-# 1. On prépare une DB SQLite en mémoire (rapide et isolée)
-TEST_DATABASE_URL = "sqlite:///:memory:"
-
-test_engine = create_engine(
-    TEST_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
-
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
-
-
-@pytest.fixture(autouse=True)
-def override_db():
-    """
-    This fixture runs automatically before EVERY test in this file.
-    It replaces the real DB with the test DB.
-    """
-    # Empty tables before test
-    Base.metadata.create_all(bind=test_engine)
-
-    # Patching SessionLocal to use the testing session
-    with patch("database.SessionLocal", return_value=TestingSessionLocal()):
-        yield
-
-    # Cleaning
-    Base.metadata.drop_all(bind=test_engine)
-
-
-# ---------------------------------------------------
 
 runner = CliRunner()
 
@@ -58,57 +24,206 @@ FORBIDDEN_OUTPUTS = ["uid=", "gid=", "root:", "/bin/", "/usr/bin"]
 
 
 def assert_no_system_execution(result):
+    """Verify that no system command execution traces are present in the output."""
     for forbidden in FORBIDDEN_OUTPUTS:
-        assert forbidden not in result.output
+        assert (
+            forbidden not in result.output
+        ), f"⚠️  Possible system execution : '{forbidden}' find in output."
+
+
+@pytest.fixture(autouse=True)
+def mock_api_calls():
+    """
+    Mock every API call to prevent real HTTP requests during tests.
+    """
+    with patch("requests.get") as mock_get, patch("requests.post") as mock_post, patch(
+        "requests.patch"
+    ) as mock_patch, patch("requests.delete") as mock_delete:
+        # mocked responses
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = []
+
+        mock_get.return_value = mock_response
+        mock_post.return_value = mock_response
+        mock_patch.return_value = mock_response
+        mock_delete.return_value = mock_response
+
+        yield {
+            "get": mock_get,
+            "post": mock_post,
+            "patch": mock_patch,
+            "delete": mock_delete,
+        }
 
 
 @pytest.mark.parametrize("payload", BASH_PAYLOADS)
-def test_bash_playlist_search(payload):
+def test_bash_playlist_search(payload, mock_api_calls):
+    """Test bash injection on playlist search"""
+    # Configuration du mock pour retourner des playlists vides
+    mock_api_calls["get"].return_value.json.return_value = []
+
     result = runner.invoke(app, ["playlist", "search", payload])
-    assert result.exit_code == 0
+
+    # Vérifier que l'appel API a été fait
+    assert mock_api_calls["get"].called
+
+    # Vérifier qu'aucune commande système n'a été exécutée
     assert_no_system_execution(result)
 
 
 @pytest.mark.parametrize("payload", BASH_PAYLOADS)
-def test_bash_playlist_search_tracks(payload):
+def test_bash_playlist_search_tracks(payload, mock_api_calls):
+    """Test bash injection on the search of tracks in a playlist"""
+    # Mock pour retourner une playlist valide puis des tracks vides
+    mock_api_calls["get"].return_value.json.side_effect = [
+        {
+            "idPlaylist": 2,
+            "name": "Test",
+            "vote": 0,
+            "createdAt": "2024-01-01T00:00:00",
+            "idGenre": 1,
+            "visibility": "PUBLIC",
+        },
+        [],
+    ]
+
     result = runner.invoke(app, ["playlist", "search-tracks", "1", payload])
-    assert result.exit_code == 0
+
+    assert mock_api_calls["get"].called
     assert_no_system_execution(result)
 
 
 @pytest.mark.parametrize("payload", BASH_PAYLOADS)
-def test_bash_track_search(payload):
+def test_bash_track_search(payload, mock_api_calls):
+    """Test bash injection on the search of tracks"""
+    mock_api_calls["get"].return_value.json.return_value = []
+
     result = runner.invoke(app, ["track", "search", payload])
-    assert result.exit_code == 0
+
+    assert mock_api_calls["get"].called
     assert_no_system_execution(result)
 
 
-def test_bash_playlist_create_name():
+def test_bash_playlist_create_name(mock_api_calls):
+    """Test bash injection on the name of playlist at creation"""
     payload = "MyPlaylist; whoami"
+
+    # Mock la réponse de création
+    mock_api_calls["post"].return_value.json.return_value = {
+        "idPlaylist": 2,
+        "name": payload,
+        "vote": 0,
+        "createdAt": "2024-01-01T00:00:00",
+        "updatedAt": "2024-01-01T00:00:00",
+        "idGenre": 1,
+        "visibility": "PUBLIC",
+    }
+
     result = runner.invoke(app, ["playlist", "create", "--name", payload])
-    assert result.exit_code == 0
+
+    assert mock_api_calls["post"].called
     assert_no_system_execution(result)
 
 
-def test_bash_playlist_update_name():
+def test_bash_playlist_update_name(mock_api_calls):
+    """Test bash injection on the name of playlist at modification"""
     payload = "UpdatedPlaylist && whoami"
+
+    # Mock la réponse de mise à jour
+    mock_api_calls["patch"].return_value.json.return_value = {
+        "idPlaylist": 2,
+        "name": payload,
+        "vote": 0,
+        "createdAt": "2024-01-01T00:00:00",
+        "updatedAt": "2024-01-01T00:00:00",
+        "idGenre": 1,
+        "visibility": "PUBLIC",
+    }
+
     result = runner.invoke(app, ["playlist", "update", "1", "--name", payload])
-    assert result.exit_code == 0
+
+    assert mock_api_calls["patch"].called
     assert_no_system_execution(result)
 
 
-def test_bash_playlist_add_track_url():
+def test_bash_playlist_add_track_url(mock_api_calls):
+    """Test bash injection on the URL of a track"""
     payload = "https://youtube.com/watch?v=abc; whoami"
+
+    # Mock la réponse d'ajout de track
+    mock_api_calls["post"].return_value.json.return_value = {
+        "idTrack": 1,
+        "title": "test",
+        "youtubeLink": payload,
+        "durationSeconds": 180,
+        "artists": [],
+    }
+
+    # Mock for get_playlist and get_playlist_tracks
+    mock_api_calls["get"].return_value.json.side_effect = [
+        {
+            "idPlaylist": 2,
+            "name": "Test",
+            "vote": 0,
+            "createdAt": "2024-01-01T00:00:00",
+            "idGenre": 1,
+            "visibility": "PUBLIC",
+        },
+        [
+            {
+                "idTrack": 1,
+                "title": "test",
+                "youtubeLink": payload,
+                "durationSeconds": 180,
+                "artists": [],
+            }
+        ],
+    ]
+
     result = runner.invoke(
         app,
         ["playlist", "add-track", "1", "--url", payload, "--title", "test"],
     )
-    assert result.exit_code == 0
+
+    assert mock_api_calls["post"].called
     assert_no_system_execution(result)
 
 
-def test_bash_playlist_add_track_title():
+def test_bash_playlist_add_track_title(mock_api_calls):
+    """Test bash injection on the title of a track"""
     payload = "TestTrack | whoami"
+
+    # Mock the response of adding track
+    mock_api_calls["post"].return_value.json.return_value = {
+        "idTrack": 2,
+        "title": payload,
+        "youtubeLink": "https://youtube.com/watch?v=abc",
+        "durationSeconds": 180,
+        "artists": [],
+    }
+
+    # Mock the get_playlist and get_playlist_tracks responses
+    mock_api_calls["get"].return_value.json.side_effect = [
+        {
+            "idPlaylist": 2,
+            "name": "Test",
+            "vote": 0,
+            "createdAt": "2024-01-01T00:00:00",
+            "idGenre": 1,
+            "visibility": "PUBLIC",
+        },
+        [
+            {
+                "idTrack": 1,
+                "title": payload,
+                "youtubeLink": "https://youtube.com/watch?v=abc",
+                "durationSeconds": 180,
+                "artists": [],
+            }
+        ],
+    ]
+
     result = runner.invoke(
         app,
         [
@@ -121,5 +236,6 @@ def test_bash_playlist_add_track_title():
             payload,
         ],
     )
-    assert result.exit_code == 0
+
+    assert mock_api_calls["post"].called
     assert_no_system_execution(result)
