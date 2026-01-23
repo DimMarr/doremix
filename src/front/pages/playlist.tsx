@@ -4,7 +4,7 @@ import { TrackListHeader } from "@components/tracks/header";
 import { TrackRow } from "@components/tracks/row";
 import { AlertManager } from "@utils/alertManager";
 import { trackPlayerInstance } from "@layouts/mainLayout";
-import PlaylistRepository from "@repositories/playlistRepository";
+import { PlaylistRepository } from "@repositories/index";
 import type Playlist from "@models/playlist";
 import type { Track } from "@models/track";
 
@@ -40,7 +40,7 @@ export async function PlaylistDetailPage(
   if (!container) return;
 
   const playlistId = parseInt(params.id, 10);
-  const playlist = await PlaylistRepository.getById(playlistId);
+  const playlist = await new PlaylistRepository().getById(playlistId);
 
   // Local state
   let tracks: Track[] = playlist.tracks || [];
@@ -76,7 +76,7 @@ export async function PlaylistDetailPage(
     if (!track) return;
 
     try {
-      await TrackRepository.delete(playlist.idPlaylist, track.idTrack);
+      await new TrackRepository().delete(playlist.idPlaylist, track.idTrack);
       tracks = tracks.filter((_, i) => i !== trackIndex);
       trackPlayerInstance.setPlaylist({ ...playlist, tracks });
       updateTrackListDisplay();

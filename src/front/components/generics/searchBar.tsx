@@ -1,4 +1,4 @@
-import SearchRepository from "@repositories/searchRepository";
+import { SearchRepository } from "@repositories/index";
 import { SearchResults } from "./searchResults";
 import { trackPlayerInstance } from "@layouts/mainLayout";
 
@@ -103,7 +103,7 @@ async function performSearch(
     getCurrentResults: () => { tracks: any[], playlists: any[] } | null,
     clearResults: () => void
 ): Promise<void> {
-    const results = await SearchRepository.search(query);
+    const results = await new SearchRepository().search(query);
     setResults(results);
 
     const searchContainer = searchSection?.querySelector('[class*="relative w-full"]');
