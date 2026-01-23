@@ -1,7 +1,9 @@
 import { Track } from "@models/track";
 import Playlist from "@models/playlist";
-import { fetchSearch } from "@services/api";
 import PlaylistRepository from "./playlistRepository";
+import { API_BASE_URL } from "@config/index";
+import { handleHttpError } from "@utils/errorHandling";
+import { AlertManager } from "@utils/alertManager";
 
 export interface SearchResults {
     tracks: Track[];
@@ -9,13 +11,32 @@ export interface SearchResults {
 }
 
 export default class SearchRepository {
-    async search(query: string): Promise<SearchResults> {
+    private static async _fetch(query: string) {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/search/?q=${encodeURIComponent(query)}`,
+        );
+        if (!response.ok) {
+          handleHttpError(response, "Search");
+          throw new Error("Failed to search");
+        }
+        return response.json();
+      } catch (error) {
+        if (error instanceof TypeError) {
+          new AlertManager().error("Network error. Check your connection.");
+        }
+        console.error("Error searching:", error);
+        throw error;
+      }
+    }
+
+    static async search(query: string): Promise<SearchResults> {
         if (!query) {
             return { tracks: [], playlists: [] };
         }
 
         try {
-            const rawData = await fetchSearch(query);
+            const rawData = await SearchRepository._fetch(query);
 
             const tracks = rawData.tracks.map((data: any) => new Track({
                 ...data,
@@ -24,7 +45,7 @@ export default class SearchRepository {
 
             const playlists = rawData.playlists.map((data: any) => new Playlist({
                 ...data,
-                image: data.coverImage ? PlaylistRepository.getCoverImageUrl(data.coverImage) : null,
+                image: data.coverImage ? PlaylistRepository.getCoverUrl(data.coverImage) : null,
                 visibility: data.visibility ? data.visibility.toLowerCase() : 'public'
             }));
 

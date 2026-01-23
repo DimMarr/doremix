@@ -7,7 +7,7 @@ export function TrackRow({ track, index, current_track }: { track: Track; index:
   return (
     <div
       id={`track-${index}`}
-      class={`group grid grid-cols-[2rem_1fr_1fr_4rem_3rem] items-center gap-4 px-4 py-2 rounded-md transition-colors duration-200 hover:bg-gray-800 cursor-pointer ${current_track?.idTrack === track.idTrack ? "playing" : ""}`}
+      class={`group grid grid-cols-[2rem_1fr_1fr_4rem_3rem] items-center gap-4 px-4 py-2 rounded-md transition-colors duration-200 hover:bg-neutral-800 cursor-pointer ${current_track?.idTrack === track.idTrack ? "playing" : ""}`}
 
       data-track-index={index}
     >
@@ -18,7 +18,7 @@ export function TrackRow({ track, index, current_track }: { track: Track; index:
       <span safe>{artistText}</span>
       <span safe>{secondsToReadableTime(track.durationSeconds)}</span>
       <button
-        class="opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500 flex items-center justify-center cursor-pointer delete-track"
+        class="opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive flex items-center justify-center cursor-pointer delete-track"
         data-track-id={track.idTrack}
         data-track-index={index}
       >

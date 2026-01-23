@@ -1,5 +1,5 @@
 import { Track, Playlist } from '@models/index';
-import { AlertManager } from '@utils/AlertManager';
+import { AlertManager } from '@utils/alertManager';
 
 interface YTPlayer {
     loadVideoById(videoId: string): void;
