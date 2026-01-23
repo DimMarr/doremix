@@ -36,12 +36,11 @@ pre_commit_check:
 
 test:
   stage: test
-  image: python:3.13
+  image: python:3.13-slim
   script:
-    - cd src/back
-    - pip install -r $CI_PROJECT_DIR/build/backend/requirements.txt
-    - pip install -r tests/requirements-test.txt
-    - pytest tests/ -v --cov
+    - pip install uv
+    - uv sync
+    - uv run pytest --cov -v
 
 deploy_beta:
   stage: deploy
@@ -82,4 +81,4 @@ deploy_prod:
     - echo "📂 Début du déploiement..."
     - ssh $SSH_USER_PROD@$SSH_HOST_PROD "mkdir -p $DEPLOY_PATH"
     - rsync -avz --delete --exclude='.git/' --exclude='.gitlab-ci.yml' --exclude='.env' --exclude='__pycache__/' --exclude='node_modules/' --exclude='uploads/covers/' . $SSH_USER_PROD@$SSH_HOST_PROD:$DEPLOY_PATH
-    - ssh $SSH_USER_PROD@$SSH_HOST_PROD "cd $DEPLOY_PATH && docker compose -f docker-compose_prod.yml up -d --build --remove-orphans"
+    - ssh $SSH_USER_PROD@$SSH_HOST_PROD "cd $DEPLOY_PATH && sed -i 's/server_name localhost;/server_name $HOST_FQDN;/' build/frontend/nginx.conf && docker compose -f docker-compose_prod.yml up -d --build --remove-orphans"

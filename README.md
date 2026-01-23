@@ -77,11 +77,11 @@ CORS_ORIGINS=http://localhost:8080,https://localhost:8080
 ## Setup
 
 ```bash
-# Installer les dépendances du projet
-uv pip install -r build/backend/requirements.txt
+# Syncroniser le projet uv
+uv sync
 
-# Installer les dépendances de test
-uv pip install -r src/back/tests/requirements-test.txt
+# Renommer le fichier .env.exemple en .env
+mv .env.exemple .env
 
 # Lancer tous les tests
 uv run pytest -v

@@ -1,18 +1,20 @@
 services:
   frontend:
     build:
-      context: ./src/front
-      dockerfile: ../../build/frontend/Dockerfile-prod
+      context: .
+      dockerfile: build/frontend/Dockerfile-prod
     container_name: web
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "81:80"
     healthcheck:
       test: [ "CMD", "wget", "-qO-", "http://localhost:80" ]
       interval: 1m30s
       timeout: 10s
       retries: 3
       start_period: 30s
+    environment:
+      - NODE_ENV=production
     deploy:
       resources:
         limits:
@@ -61,8 +63,6 @@ services:
       dockerfile: build/backend/Dockerfile
     container_name: backend_python
     restart: unless-stopped
-    ports:
-      - 8000:8000
     environment:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
     volumes:
