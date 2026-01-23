@@ -18,19 +18,24 @@ from utils.youtube_utils import (
 class PlaylistRepository:
     @staticmethod
     def get_all(db: Session) -> List[Playlist]:
-        return db.query(Playlist).all()
+        playlists: List[Playlist] = db.query(Playlist).all()
+        return playlists
 
     @staticmethod
     def get_public_playlists(db: Session) -> List[Playlist]:
-        return (
+        playlists: List[Playlist] = (
             db.query(Playlist)
             .filter(Playlist.visibility == PlaylistVisibility.PUBLIC)
             .all()
         )
+        return playlists
 
     @staticmethod
     def get_by_id(db: Session, playlist_id: int) -> Optional[Playlist]:
-        return db.query(Playlist).filter(Playlist.idPlaylist == playlist_id).first()
+        playlist: Optional[Playlist] = (
+            db.query(Playlist).filter(Playlist.idPlaylist == playlist_id).first()
+        )
+        return playlist
 
     @staticmethod
     def create(db: Session, playlist: Playlist) -> Playlist:
@@ -54,7 +59,9 @@ class PlaylistRepository:
     def update_cover_image(
         db: Session, playlist_id: int, cover_path: str
     ) -> Optional[Playlist]:
-        playlist = db.query(Playlist).filter(Playlist.idPlaylist == playlist_id).first()
+        playlist: Optional[Playlist] = (
+            db.query(Playlist).filter(Playlist.idPlaylist == playlist_id).first()
+        )
         if playlist:
             playlist.coverImage = cover_path
             db.commit()
@@ -124,7 +131,10 @@ class PlaylistRepository:
 
     @staticmethod
     def get_by_name(db: Session, name: str) -> List[Playlist]:
-        return db.query(Playlist).filter(Playlist.name == name).all()
+        playlists: List[Playlist] = (
+            db.query(Playlist).filter(Playlist.name == name).all()
+        )
+        return playlists
 
     @staticmethod
     def update_playlist(db: Session, playlist: Playlist, update_data: dict) -> Playlist:
@@ -137,7 +147,7 @@ class PlaylistRepository:
 
     @staticmethod
     def search_playlists(db: Session, query: str, limit: int = 10) -> List[Playlist]:
-        playlists = (
+        playlists: List[Playlist] = (
             db.query(Playlist)
             .options(joinedload(Playlist.owner))
             .filter(

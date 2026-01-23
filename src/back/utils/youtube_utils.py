@@ -45,7 +45,8 @@ def get_youtube_video_author(url: str) -> Optional[str]:
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            return info.get("uploader")
+            uploader: Optional[str] = info.get("uploader")
+            return uploader
 
     except Exception as e:
         print(f"Erreur lors de la récupération de l'auteur : {e}")

@@ -20,6 +20,16 @@ repos:
     -   id: ruff-format
         verbose: true
 
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.2
+    hooks:
+        -   id: mypy
+            verbose: true
+            files: ^src/(back|cli)/
+            additional_dependencies:
+                - types-requests
+                - pydantic
+
 -   repo: https://github.com/pre-commit/mirrors-prettier
     rev: v4.0.0-alpha.8
     hooks:
