@@ -1,36 +1,35 @@
 import { TrackRepository } from "@repositories/trackRepository";
 import { Button } from "@components/generics";
-import { AlertManager } from "@utils/AlertManager";
 
 export function AddTrackModal({ playlistId, onClose, onTrackAdded }) {
   const modalHtml = (
-    <div id="add-track-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md w-full">
-        <h2 class="text-2xl font-bold mb-4">Add New Track</h2>
+    <div id="add-track-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+      <div class="bg-neutral-900 border border-border rounded-lg p-8 max-w-md w-full">
+        <h2 class="text-2xl font-bold text-foreground mb-4">Add New Track</h2>
         <form id="add-track-form">
           <div class="mb-4">
-            <label for="youtube-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="youtube-url" class="block text-sm font-medium text-muted-foreground mb-1">
               YouTube URL
             </label>
             <input
               type="text"
               id="youtube-url"
               name="youtube-url"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              class="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
               placeholder="https://www.youtube.com/watch?v=..."
             />
           </div>
           <div id="track-info" class="mb-4" style="display: none;">
-            <label for="track-title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="track-title" class="block text-sm font-medium text-muted-foreground mb-1">
               Track Title
             </label>
             <input
               type="text"
               id="track-title"
               name="track-title"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              class="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground"
             />
-            <p id="track-exists-message" class="text-sm text-gray-500 mt-1" style="display: none;">
+            <p id="track-exists-message" class="text-sm text-muted-foreground mt-1" style="display: none;">
               This track already exists. The title cannot be changed.
             </p>
           </div>
@@ -87,7 +86,7 @@ export function AddTrackModal({ playlistId, onClose, onTrackAdded }) {
             </svg>
             Adding...`;
 
-          TrackRepository.addTrackByUrl(playlistId, url, title)
+          TrackRepository.create(playlistId, url, title)
             .then(newTrack => {
               onTrackAdded(newTrack);
               cleanupAndClose();
@@ -119,7 +118,7 @@ export function AddTrackModal({ playlistId, onClose, onTrackAdded }) {
 
       try {
         // First, check if the track exists in our DB
-        const existingTrack = await TrackRepository.getTrackByUrl(url);
+        const existingTrack = await TrackRepository.getByUrl(url);
         trackInfo.style.display = 'block';
         trackTitleInput.value = existingTrack.title;
         trackTitleInput.disabled = true;

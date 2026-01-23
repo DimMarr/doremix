@@ -1,6 +1,6 @@
 import { Button } from '@components/generics/button';
 import { Text } from '@components/generics/text';
-import { WifiOffIcon } from '@components/generics/wifi-off-icon';
+import { WifiOffIcon } from '@components/icons/wifiOffIcon';
 
 export function NoInternetPage() {
   return (
