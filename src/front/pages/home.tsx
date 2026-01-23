@@ -1,12 +1,12 @@
 import { initSearchBar, SearchBar } from "@components/generics";
 import { buildCardsFromPlaylists, Card, initCardsElements } from "@components/generics/card";
 import { setupPlaylistAndTrackModals } from "@components/playlists";
-import PlaylistRepository from "@repositories/playlistRepository";
+import { PlaylistRepository } from "@repositories/index";
 
 export async function HomePage(container) {
   container.innerHTML = "";
 
-  const playlists = await PlaylistRepository.getPublic();
+  const playlists = await new PlaylistRepository().getPublic();
 
   const playlistCards = buildCardsFromPlaylists(playlists);
 

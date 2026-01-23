@@ -1,5 +1,5 @@
 import { Button } from "@components/generics/button";
-import PlaylistRepository from "@repositories/playlistRepository";
+import { PlaylistRepository } from "@repositories/index";
 
 // Le bouton que nous allons exporter pour main.tsx
 export function AddPlaylistButton() {
@@ -82,11 +82,11 @@ export function setupModalAddPlaylist() {
     }
 
     try {
-      const playlistresponse = await PlaylistRepository.create(name);
+      const playlistresponse = await new PlaylistRepository().create(name);
 
       try {
         if (imageInput.files?.length) {
-          await PlaylistRepository.uploadCover(playlistresponse.idPlaylist, imageInput.files[0]);
+          await new PlaylistRepository().uploadCover(playlistresponse.idPlaylist, imageInput.files[0]);
         }
       } catch (err) {
         console.error(err);

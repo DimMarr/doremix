@@ -1,4 +1,4 @@
-import { TrackRepository } from "@repositories/trackRepository";
+import { TrackRepository } from "@repositories/index";
 import { Button } from "@components/generics";
 
 export function AddTrackModal({ playlistId, onClose, onTrackAdded }) {
@@ -86,7 +86,7 @@ export function AddTrackModal({ playlistId, onClose, onTrackAdded }) {
             </svg>
             Adding...`;
 
-          TrackRepository.create(playlistId, url, title)
+          new TrackRepository().create(playlistId, url, title)
             .then(newTrack => {
               onTrackAdded(newTrack);
               cleanupAndClose();
@@ -118,7 +118,7 @@ export function AddTrackModal({ playlistId, onClose, onTrackAdded }) {
 
       try {
         // First, check if the track exists in our DB
-        const existingTrack = await TrackRepository.getByUrl(url);
+        const existingTrack = await new TrackRepository().getByUrl(url);
         trackInfo.style.display = 'block';
         trackTitleInput.value = existingTrack.title;
         trackTitleInput.disabled = true;

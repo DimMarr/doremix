@@ -5,8 +5,8 @@ import { Artist } from "@models/artist";
 import { AlertManager } from "@utils/alertManager";
 import { handleHttpError } from "@utils/errorHandling";
 
-export default class PlaylistRepository {
-    private static async _fetchAll() {
+export class PlaylistRepository {
+    private async _fetchAll() {
         try {
             const response = await fetch(`${API_BASE_URL}/playlists/`);
             if (!response.ok) {
@@ -19,7 +19,7 @@ export default class PlaylistRepository {
         }
     }
 
-    private static async _fetchPublic() {
+    private async _fetchPublic() {
         const response = await fetch(`${API_BASE_URL}/playlists/public`);
         if (!response.ok) {
             throw new Error("Failed to fetch public playlists");
@@ -27,7 +27,7 @@ export default class PlaylistRepository {
         return response.json();
     }
 
-    private static async _fetchById(playlistId: number) {
+    private async _fetchById(playlistId: number) {
         try {
             const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}`);
             if (!response.ok) {
@@ -44,7 +44,7 @@ export default class PlaylistRepository {
         }
     }
 
-    private static async _fetchTracks(playlistId: number) {
+    private async _fetchTracks(playlistId: number) {
         try {
             const response = await fetch(
                 `${API_BASE_URL}/playlists/${playlistId}/tracks`,
@@ -63,7 +63,7 @@ export default class PlaylistRepository {
         }
     }
 
-    static async create(name: string) {
+    async create(name: string) {
         try {
             const response = await fetch(`${API_BASE_URL}/playlists/`, {
                 method: "POST",
@@ -87,7 +87,7 @@ export default class PlaylistRepository {
         }
     }
 
-    static async uploadCover(playlistId: number, imageFile: File) {
+    async uploadCover(playlistId: number, imageFile: File) {
         try {
             const formData = new FormData();
             formData.append("file", imageFile);
@@ -114,24 +114,24 @@ export default class PlaylistRepository {
         }
     }
 
-    static getCoverUrl(coverPath: string) {
+    getCoverUrl(coverPath: string) {
         if (!coverPath) return null;
         return `${API_BASE_URL}/covers/${coverPath}`;
     }
 
-    static async getAll(): Promise<Playlist[]> {
+    async getAll(): Promise<Playlist[]> {
         const img1 = new URL("../assets/images/playlist1.jpg", import.meta.url).href;
         try {
-            const rawDataPlaylists = await PlaylistRepository._fetchAll();
+            const rawDataPlaylists = await this._fetchAll();
             const playlistPromises = rawDataPlaylists.map(async (item: any) => {
-                const rawDatatracks = await PlaylistRepository._fetchTracks(item.idPlaylist);
+                const rawDatatracks = await this._fetchTracks(item.idPlaylist);
                 const tracks = [];
                 for (const data of rawDatatracks) {
                     tracks.push(new Track(data));
                 }
                 return new Playlist({
                     ...item,
-                    image: item.coverImage ? PlaylistRepository.getCoverUrl(item.coverImage) : img1,
+                    image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
                     visibility: item.visibility ? item.visibility.toLowerCase() as Visibility : Visibility.public,
                     tracks: tracks,
                 });
@@ -144,19 +144,19 @@ export default class PlaylistRepository {
         }
     }
 
-    static async getPublic(): Promise<Playlist[]> {
+    async getPublic(): Promise<Playlist[]> {
         const img1 = new URL("../assets/images/playlist1.jpg", import.meta.url).href;
         try {
-            const rawDataPlaylists = await PlaylistRepository._fetchPublic();
+            const rawDataPlaylists = await this._fetchPublic();
             const playlistPromises = rawDataPlaylists.map(async (item: any) => {
-                const rawDatatracks = await PlaylistRepository._fetchTracks(item.idPlaylist);
+                const rawDatatracks = await this._fetchTracks(item.idPlaylist);
                 const tracks = [];
                 for (const data of rawDatatracks) {
                     tracks.push(new Track(data));
                 }
                 return new Playlist({
                     ...item,
-                    image: item.coverImage ? PlaylistRepository.getCoverUrl(item.coverImage) : img1,
+                    image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
                     visibility: item.visibility ? item.visibility.toLowerCase() as Visibility : Visibility.public,
                     tracks: tracks,
                 });
@@ -169,9 +169,9 @@ export default class PlaylistRepository {
         }
     }
 
-    static async getById(id: number): Promise<Playlist> {
-        const rawData = await PlaylistRepository._fetchById(id);
-        const rawDataTracks = await PlaylistRepository._fetchTracks(id);
+    async getById(id: number): Promise<Playlist> {
+        const rawData = await this._fetchById(id);
+        const rawDataTracks = await this._fetchTracks(id);
         const tracks = rawDataTracks.map((data: any) => new Track(data));
         const artists = rawDataTracks.map((data: any) => new Artist(data.artist));
 
@@ -179,7 +179,7 @@ export default class PlaylistRepository {
 
         return new Playlist({
             ...rawData,
-            image: rawData.coverImage ? PlaylistRepository.getCoverUrl(rawData.coverImage) : img1,
+            image: rawData.coverImage ? this.getCoverUrl(rawData.coverImage) : img1,
             visibility: rawData.visibility ? rawData.visibility.toLowerCase() as Visibility : Visibility.public,
             tracks: tracks,
             artists: artists

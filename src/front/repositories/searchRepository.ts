@@ -1,6 +1,6 @@
 import { Track } from "@models/track";
 import Playlist from "@models/playlist";
-import PlaylistRepository from "./playlistRepository";
+import { PlaylistRepository } from "./playlistRepository";
 import { API_BASE_URL } from "@config/index";
 import { handleHttpError } from "@utils/errorHandling";
 import { AlertManager } from "@utils/alertManager";
@@ -10,8 +10,8 @@ export interface SearchResults {
     playlists: Playlist[];
 }
 
-export default class SearchRepository {
-    private static async _fetch(query: string) {
+export class SearchRepository {
+    private async _fetch(query: string) {
       try {
         const response = await fetch(
           `${API_BASE_URL}/search/?q=${encodeURIComponent(query)}`,
@@ -30,13 +30,13 @@ export default class SearchRepository {
       }
     }
 
-    static async search(query: string): Promise<SearchResults> {
+    async search(query: string): Promise<SearchResults> {
         if (!query) {
             return { tracks: [], playlists: [] };
         }
 
         try {
-            const rawData = await SearchRepository._fetch(query);
+            const rawData = await this._fetch(query);
 
             const tracks = rawData.tracks.map((data: any) => new Track({
                 ...data,
@@ -45,7 +45,7 @@ export default class SearchRepository {
 
             const playlists = rawData.playlists.map((data: any) => new Playlist({
                 ...data,
-                image: data.coverImage ? PlaylistRepository.getCoverUrl(data.coverImage) : null,
+                image: data.coverImage ? new PlaylistRepository().getCoverUrl(data.coverImage) : null,
                 visibility: data.visibility ? data.visibility.toLowerCase() : 'public'
             }));
 
