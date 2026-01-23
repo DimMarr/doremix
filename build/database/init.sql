@@ -8,11 +8,9 @@ DROP TABLE IF EXISTS TRACK CASCADE;
 DROP TABLE IF EXISTS ARTIST CASCADE;
 DROP TABLE IF EXISTS GENRE CASCADE;
 DROP TABLE IF EXISTS USERS CASCADE;
-DROP TYPE IF EXISTS user_role;
 DROP TYPE IF EXISTS playlist_visibility;
 
-CREATE TYPE user_role AS ENUM ('USER', 'MODERATOR', 'ADMIN');
-CREATE TYPE playlist_visibility AS ENUM ('PUBLIC', 'PRIVATE', 'OPEN', 'SHARED');
+CREATE TYPE playlist_visibility AS ENUM ('PUBLIC', 'PRIVATE', 'SHARED');
 
 CREATE TABLE GENRE (
     idGenre SERIAL PRIMARY KEY,
@@ -24,18 +22,37 @@ CREATE TABLE ARTIST (
     name VARCHAR(255) NOT NULL
 );
 
+CREATE TABLE ROLE (
+    idRole SERIAL PRIMARY KEY,
+    roleName VARCHAR(255) UNIQUE NOT NULL
+    CHECK (roleName IN ('USER', 'MODERATOR', 'ADMIN'))
+);
+
+CREATE TABLE RIGHTS (
+    idRight SERIAL PRIMARY KEY,
+    rightName VARCHAR(255) UNIQUE NOT NULL
+    CHECK (rightName IN ('CREATE', 'READ', 'EDIT', 'DELETE', 'BAN_USER'))
+);
+
+CREATE TABLE USER_GROUP (
+    idGroup SERIAL PRIMARY KEY,
+    groupName VARCHAR(255) UNIQUE NOT NULL
+);
+
+
 CREATE TABLE USERS (
     idUser SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     username VARCHAR(255) NOT NULL,
-    role user_role DEFAULT 'USER',
-    banned BOOLEAN DEFAULT FALSE
+    banned BOOLEAN DEFAULT FALSE,
+    idRole INTEGER NOT NULL DEFAULT 1,
+    CONSTRAINT fk_users_role FOREIGN KEY (idRole) REFERENCES ROLE(idRole)
 );
 
 CREATE TABLE TRACK (
     idTrack SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
+    titleFromYoutube VARCHAR(255) NOT NULL,
     youtubeLink VARCHAR(2048),
     listeningCount INTEGER DEFAULT 0,
     durationSeconds INTEGER,
@@ -56,6 +73,39 @@ CREATE TABLE PLAYLIST (
     CONSTRAINT fk_playlist_owner FOREIGN KEY (idOwner) REFERENCES USERS(idUser) ON DELETE CASCADE
 );
 
+CREATE TABLE GROUP_PLAYLIST (
+    idGroup INTEGER NOT NULL,
+    idPlaylist INTEGER NOT NULL,
+    PRIMARY KEY (idGroup, idPlaylist),
+    CONSTRAINT fk_grouppplaylist_group FOREIGN KEY (idGroup) REFERENCES USER_GROUP(idGroup) ON DELETE CASCADE,
+    CONSTRAINT fk_grouppplaylist_playlist FOREIGN KEY (idPlaylist) REFERENCES PLAYLIST(idPlaylist) ON DELETE CASCADE
+);
+
+CREATE TABLE GROUP_USER (
+    idUser INTEGER NOT NULL,
+    idGroup INTEGER NOT NULL,
+    PRIMARY KEY (idUser, idGroup),
+    CONSTRAINT fk_usergroup_user FOREIGN KEY (idUser) REFERENCES USERS(idUser) ON DELETE CASCADE,
+    CONSTRAINT fk_usergroup_group FOREIGN KEY (idGroup) REFERENCES USER_GROUP(idGroup) ON DELETE CASCADE
+);
+
+CREATE TABLE ROLE_RIGHTS (
+    idRole INTEGER NOT NULL,
+    idRight INTEGER NOT NULL,
+    PRIMARY KEY (idRole, idRight),
+    CONSTRAINT fk_rolerights_role FOREIGN KEY (idRole) REFERENCES ROLE(idRole) ON DELETE CASCADE,
+    CONSTRAINT fk_rolerights_right FOREIGN KEY (idRight) REFERENCES RIGHTS(idRight) ON DELETE CASCADE
+);
+
+
+CREATE TABLE PLAYLIST_RIGHTS (
+    idPlaylist INTEGER NOT NULL,
+    idRight INTEGER NOT NULL,
+    PRIMARY KEY (idPlaylist, idRight),
+    CONSTRAINT fk_playlistrights_playlist FOREIGN KEY (idPlaylist) REFERENCES PLAYLIST(idPlaylist) ON DELETE CASCADE,
+    CONSTRAINT fk_playlistrights_right FOREIGN KEY (idRight) REFERENCES RIGHTS(idRight) ON DELETE CASCADE
+);
+
 CREATE TABLE TRACK_ARTIST (
     idTrack INTEGER NOT NULL,
     idArtist INTEGER NOT NULL,
@@ -67,6 +117,7 @@ CREATE TABLE TRACK_ARTIST (
 CREATE TABLE TRACK_PLAYLIST (
     idTrack INTEGER NOT NULL,
     idPlaylist INTEGER NOT NULL,
+    nameInPlaylist VARCHAR(255),
     PRIMARY KEY (idTrack, idPlaylist),
     CONSTRAINT fk_trackplaylist_track FOREIGN KEY (idTrack) REFERENCES TRACK(idTrack) ON DELETE CASCADE,
     CONSTRAINT fk_trackplaylist_playlist FOREIGN KEY (idPlaylist) REFERENCES PLAYLIST(idPlaylist) ON DELETE CASCADE
@@ -94,6 +145,6 @@ CREATE TRIGGER update_playlist_updated_at
     FOR EACH ROW
     EXECUTE PROCEDURE update_updated_at_column();
 
-CREATE INDEX IF NOT EXISTS idx_track_title ON track(title);
+CREATE INDEX IF NOT EXISTS idx_track_title ON track(titleFromYoutube);
 CREATE INDEX IF NOT EXISTS idx_playlist_name ON playlist(name);
 CREATE INDEX IF NOT EXISTS idx_artist_name ON artist(name);
