@@ -77,13 +77,16 @@ CORS_ORIGINS=http://localhost:8080,https://localhost:8080
 ## Setup
 
 ```bash
+# Initisaliser le projet uv
+uv init
+
 # Installer les dépendances du projet
 uv add -r build/backend/requirements.txt
 uv add -r src/back/tests/requirements-test.txt
 uv add -r src/cli/tests/requirements-test.txt
 
 # Renommer le fichier .env.exemple en .env
-mv .env.example .env
+mv .env.exemple .env
 
 # Lancer tous les tests
 uv run pytest -v
