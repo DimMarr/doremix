@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_
+from re import findall as regex_match
 from models.playlist import Playlist, PlaylistVisibility
 from models.track_playlist import TrackPlaylist
 from models.track import Track
@@ -85,8 +86,23 @@ class PlaylistRepository:
     ):
         track = TrackRepository.get_by_youtube_link(db, youtubeLink)
 
+        # Search for https://www.youtube.com/watch?=***** or https://youtu.be/***** URL format
+        match = regex_match(
+            "(https://www\.youtube\.com/watch\?v=[^&|\s]+|https://youtu\.be/[^?|\s]+)",
+            youtubeLink,
+        )
+        if not match:
+            return track, "invalid url"
+        else:
+            clean_url = match[0]
+
+        # If track doesn't already exists in DB, get infos
         if not track:
-            durationSeconds, author_name = get_youtube_video_info(youtubeLink)
+            durationSeconds, author_name = get_youtube_video_info(clean_url)
+
+            # Checks if Youtube video exists
+            if durationSeconds == "Video unavailable":
+                return track, "invalid url"
 
             if durationSeconds is None:
                 durationSeconds = 0
@@ -99,7 +115,7 @@ class PlaylistRepository:
                 db,
                 Track(
                     title=title,
-                    youtubeLink=youtubeLink,
+                    youtubeLink=clean_url,
                     durationSeconds=durationSeconds,
                     artists=[artist],
                 ),

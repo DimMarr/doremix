@@ -85,21 +85,6 @@ def add_playlist_track_by_url(
     return track
 
 
-@router.post(
-    "/{playlist_id}/track",
-    response_model=TrackSchema,
-    summary="Ajoute un track à une playlist",
-)
-def add_playlist_track(
-    playlist_id: int,
-    title: str,
-    youtubeLink: str,
-    db: Session = Depends(get_db),
-):
-    tracks = PlaylistController.add_playlist_track(db, title, youtubeLink, playlist_id)
-    return tracks
-
-
 @router.post("/{playlist_id}/cover", response_model=PlaylistSchema)
 def upload_playlist_cover(
     playlist_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)

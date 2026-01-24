@@ -120,15 +120,19 @@ def add_track_to_playlist(
 ) -> TrackSchema:
     # TODO: Quand l'auth sera en place, ajouter le token dans les headers
 
+    body = {"title": title, "url": youtube_link}
+
     res = requests.post(
-        f"{API_BASE_URL}/playlists/{playlist_id}/track",
-        params={"title": title, "youtubeLink": youtube_link},
+        f"{API_BASE_URL}/playlists/{playlist_id}/tracks/by-url",
+        json=body,
     )
 
     if res.status_code == 404:
         raise Exception("Playlist not found")
     if res.status_code == 409:
         raise Exception("Track already exists in this playlist")
+    if res.status_code == 403:
+        raise Exception("Invalid YouTube URL provided")
     if res.status_code != 200:
         raise Exception(f"Error while adding track: {res.text}")
 

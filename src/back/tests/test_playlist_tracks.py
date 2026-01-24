@@ -9,35 +9,15 @@ from models import User, Playlist, Track, Genre
 
 
 @pytest.fixture
-def sample_user(db):
-    """Crée un utilisateur de test"""
-    user = User(
-        username="testuser", email="test@example.com", password="hashed_password"
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
-
-
-@pytest.fixture
-def sample_playlist(db, sample_user):
+def sample_playlist(db, sample_user, sample_genre):
     """Crée une playlist de test"""
-    playlist = Playlist(name="Ma Playlist", idOwner=sample_user.idUser, idGenre=1)
+    playlist = Playlist(
+        name="Ma Playlist", idOwner=sample_user.idUser, idGenre=sample_genre.idGenre
+    )
     db.add(playlist)
     db.commit()
     db.refresh(playlist)
     return playlist
-
-
-@pytest.fixture
-def sample_genre(db):
-    """Crée un genre de test"""
-    genre = Genre(label="Rock")
-    db.add(genre)
-    db.commit()
-    db.refresh(genre)
-    return genre
 
 
 @pytest.fixture
@@ -72,12 +52,13 @@ class TestPlaylistTrackOperations:
     def test_add_track_to_playlist_success(self, client, sample_playlist, sample_track):
         """Test l'ajout d'un track à une playlist avec succès"""
         response = client.post(
-            f"/playlists/{sample_playlist.idPlaylist}/track",
-            params={
+            f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
+            json={
                 "title": sample_track.title,
-                "youtubeLink": sample_track.youtubeLink,
+                "url": sample_track.youtubeLink,
             },
         )
+        print(response)
 
         assert response.status_code == 200
         data = response.json()
@@ -88,19 +69,19 @@ class TestPlaylistTrackOperations:
     ):
         """Test l'ajout de plusieurs tracks à une playlist"""
         response1 = client.post(
-            f"/playlists/{sample_playlist.idPlaylist}/track",
-            params={
+            f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
+            json={
                 "title": sample_track.title,
-                "youtubeLink": sample_track.youtubeLink,
+                "url": sample_track.youtubeLink,
             },
         )
         assert response1.status_code == 200
 
         response2 = client.post(
-            f"/playlists/{sample_playlist.idPlaylist}/track",
-            params={
+            f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
+            json={
                 "title": sample_track_2.title,
-                "youtubeLink": sample_track_2.youtubeLink,
+                "url": sample_track_2.youtubeLink,
             },
         )
         assert response2.status_code == 200
@@ -127,10 +108,10 @@ class TestPlaylistTrackOperations:
     ):
         """Test la suppression d'un track d'une playlist avec succès"""
         add_response = client.post(
-            f"/playlists/{sample_playlist.idPlaylist}/track",
-            params={
+            f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
+            json={
                 "title": sample_track.title,
-                "youtubeLink": sample_track.youtubeLink,
+                "url": sample_track.youtubeLink,
             },
         )
         assert add_response.status_code == 200
@@ -175,17 +156,17 @@ class TestPlaylistTrackOperations:
     ):
         """Test la récupération des tracks d'une playlist avec plusieurs tracks"""
         client.post(
-            f"/playlists/{sample_playlist.idPlaylist}/track",
-            params={
+            f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
+            json={
                 "title": sample_track.title,
-                "youtubeLink": sample_track.youtubeLink,
+                "url": sample_track.youtubeLink,
             },
         )
         client.post(
-            f"/playlists/{sample_playlist.idPlaylist}/track",
-            params={
+            f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
+            json={
                 "title": sample_track_2.title,
-                "youtubeLink": sample_track_2.youtubeLink,
+                "url": sample_track_2.youtubeLink,
             },
         )
 
@@ -203,10 +184,10 @@ class TestPlaylistTrackOperations:
         assert len(response.json()) == 0
 
         add_response = client.post(
-            f"/playlists/{sample_playlist.idPlaylist}/track",
-            params={
+            f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
+            json={
                 "title": sample_track.title,
-                "youtubeLink": sample_track.youtubeLink,
+                "url": sample_track.youtubeLink,
             },
         )
         assert add_response.status_code == 200
@@ -228,19 +209,19 @@ class TestPlaylistTrackOperations:
     ):
         """Test que l'ordre des tracks est maintenu après ajout/suppression"""
         add1 = client.post(
-            f"/playlists/{sample_playlist.idPlaylist}/track",
-            params={
+            f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
+            json={
                 "title": sample_track.title,
-                "youtubeLink": sample_track.youtubeLink,
+                "url": sample_track.youtubeLink,
             },
         )
         track1_id = add1.json().get("idTrack") or add1.json().get("id")
 
         add2 = client.post(
-            f"/playlists/{sample_playlist.idPlaylist}/track",
-            params={
+            f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
+            json={
                 "title": sample_track_2.title,
-                "youtubeLink": sample_track_2.youtubeLink,
+                "url": sample_track_2.youtubeLink,
             },
         )
         track2_id = add2.json().get("idTrack") or add2.json().get("id")
