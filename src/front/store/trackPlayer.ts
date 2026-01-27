@@ -17,7 +17,7 @@ interface YoutubePlayerProps {
     youtubePlayerHtmlElementId: string;
 }
 
-enum YoutubePlayerState {
+export enum YoutubePlayerState {
     UNSTARTED = -1,
     ENDED = 0,
     PLAYING = 1,
@@ -36,6 +36,25 @@ declare global {
                 ENDED: number;
             };
         };
+    }
+}
+
+export const getYoutubePlayerStateFromCode = (code: number) => {
+    switch(code){
+        case -1:
+            return 'UNSTARTED'
+        case 0:
+            return 'ENDED'
+        case 1:
+            return 'PLAYING'
+        case 2:
+            return 'PAUSED'
+        case 3:
+            return 'BUFFERING'
+        case 5:
+            return 'CUED'
+        default:
+            return code
     }
 }
 
@@ -96,7 +115,7 @@ export class YoutubePlayer {
         this.tracks = this.playlist.tracks;
 
         if(this.tracks.length === 0){
-            new AlertManager().error("No track to listen in this playlist");
+            this.hide();
             return;
         }
 
@@ -235,6 +254,10 @@ export class YoutubePlayer {
             return;
         }
 
+        if(this.tracks.length === 0){
+            new AlertManager().error("No track to listen in this playlist");
+        }
+
         // Re-enable next/prev buttons if they were disabled in single track mode
         const nextBtn = document.getElementById("nextBtn");
         const prevBtn = document.getElementById("previousBtn");
@@ -272,11 +295,7 @@ export class YoutubePlayer {
             currentTrackDisplay.textContent = track.title;
         }
 
-        const playerContainer = document.getElementById("playerContainer");
-        if (playerContainer) {
-            playerContainer.classList.remove("hidden");
-            playerContainer.classList.add("flex");
-        }
+        this.show();
 
         const loadAndPlay = () => {
             if (this.audioPlayer && this.audioPlayer.loadVideoById) {
@@ -375,8 +394,24 @@ export class YoutubePlayer {
         }
     }
 
+    show(): void {
+        const playerContainer = document.getElementById("playerContainer");
+        if (playerContainer) {
+            playerContainer.classList.remove("hidden");
+            playerContainer.classList.add("flex");
+        }
+    }
+
+    hide(): void {
+        const playerContainer = document.getElementById("playerContainer");
+        if (playerContainer) {
+            playerContainer.classList.remove("flex");
+            playerContainer.classList.add("hidden");
+        }
+    }
+
     getPlayerState(): number {
-        return this.audioPlayer ? this.audioPlayer.getPlayerState() : -1;
+        return this?.audioPlayer?.getPlayerState ? this.audioPlayer.getPlayerState() : -1;
     }
 
     getPlayer(): YTPlayer | null {

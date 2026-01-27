@@ -2,6 +2,7 @@ import YoutubePlayer from '@store/trackPlayer';
 import playlist1 from '@assets/images/playlist1.jpg';
 import playIcon from '@assets/icons/play.svg';
 import pauseIcon from '@assets/icons/pause.svg';
+import { routerInstance } from '../../main';
 
 let currentTrackIndex = 0;
 let overlayTrackRows: HTMLElement[] = [];
@@ -48,7 +49,7 @@ const setupControlButtons = (container: HTMLElement, playerStore: YoutubePlayer)
   const previousBtn = container.querySelector('#previousBtn');
   const nextBtn = container.querySelector('#nextBtn');
   const trackTimer = container.querySelector('#trackTimer');
-  const playlistDetailsTrigger = container.querySelector('#openPlaylistDetails');
+  const playlistInfo = container.querySelector('#playerContainer .playlist-info');
 
   if (!playBtn || !trackTimer) {
     throw new Error('Some buttons were not found');
@@ -123,8 +124,9 @@ const setupControlButtons = (container: HTMLElement, playerStore: YoutubePlayer)
     }, 100);
   });
 
-  if (playlistDetailsTrigger) {
-    playlistDetailsTrigger.addEventListener('click', () => {
+  if (playlistInfo && routerInstance) {
+    routerInstance.navigate("Router");
+    playlistInfo.addEventListener('click', () => {
       openOverlay(container);
     });
   }
@@ -176,8 +178,7 @@ export function TrackPlayer() {
         id="playerContainer"
       >
         <div
-          class="flex items-center justify-between w-full md:w-[420px] gap-4 cursor-pointer"
-          id="openPlaylistDetails"
+          class="flex items-center justify-between w-full md:w-[420px] gap-4 cursor-pointer playlist-info"
         >
           <img
             id="playerCover"
