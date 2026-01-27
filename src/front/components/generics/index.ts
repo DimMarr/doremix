@@ -5,10 +5,7 @@ export { Header, type HeaderProps } from './header';
 export { Text, type TextProps } from './text';
 export { Badge } from './badge';
 export { Footer } from './footer';
-export { PlayIcon } from './play-icon';
-export { PauseIcon } from './pause-icon';
-export { WifiOffIcon } from './wifi-off-icon';
 
 // Search components
-export * from '@components/generics/SearchBar';
-export * from '@components/generics/SearchResults';
+export * from '@components/generics/searchBar';
+export * from '@components/generics/searchResults';

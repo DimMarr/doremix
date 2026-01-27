@@ -25,7 +25,6 @@ export function SearchResults({
 
     return (
         <div class={`absolute top-full left-0 right-0 mt-2 rounded-md border border-border bg-neutral-900 shadow-md max-h-96 overflow-y-auto z-50 ${className}`}>
-            {/* Tracks section */}
             {tracks.length > 0 && (
                 <div class="p-2">
                     <div class="px-2 py-1.5 text-xs font-medium text-muted-foreground">Tracks</div>
@@ -55,12 +54,10 @@ export function SearchResults({
                 </div>
             )}
 
-            {/* Separator */}
             {tracks.length > 0 && playlists.length > 0 && (
                 <div class="-mx-1 h-px bg-border" />
             )}
 
-            {/* Playlists section */}
             {playlists.length > 0 && (
                 <div class="p-2">
                     <div class="px-2 py-1.5 text-xs font-medium text-muted-foreground">Playlists</div>

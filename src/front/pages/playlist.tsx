@@ -2,14 +2,20 @@ import { TrackRepository } from "@repositories/trackRepository";
 import { Button, AddTrackModal } from "@components/index";
 import { TrackListHeader } from "@components/tracks/header";
 import { TrackRow } from "@components/tracks/row";
-import { AlertManager } from "@utils/AlertManager";
+import { AlertManager } from "@utils/alertManager";
+import { trackPlayerInstance } from "@layouts/mainLayout";
+import { PlaylistRepository } from "@repositories/index";
+import type Playlist from "@models/playlist";
+import type { Track } from "@models/track";
 
-function TrackList(playlist, trackPlayer) {
+interface PageParams {
+  id: string;
+}
+
+function renderTrackList(playlist: Playlist): string {
   const tracks = playlist.tracks || [];
+  const currentTrack = trackPlayerInstance.getCurrentTrack();
 
-  const current_track = trackPlayer.getCurrentTrack();
-
-  // Return the JSX block; previously missing return caused nothing to render
   return (
     <div>
       <TrackListHeader />
@@ -18,32 +24,92 @@ function TrackList(playlist, trackPlayer) {
           track={track}
           index={index}
           playlist={playlist}
-          trackPlayer={trackPlayer}
-          current_track={current_track}
+          trackPlayer={trackPlayerInstance}
+          current_track={currentTrack}
         />
       )) as 'safe'}
     </div>
   );
 }
 
-export function PlaylistDetailPage(container, playlist, trackPlayer, onBack) {
+export async function PlaylistDetailPage(
+  container: HTMLElement | null,
+  onBack: () => void,
+  params: PageParams
+) {
   if (!container) return;
 
-  const pageHtml = (
+  const playlistId = parseInt(params.id, 10);
+  const playlist = await new PlaylistRepository().getById(playlistId);
+
+  // Local state
+  let tracks: Track[] = playlist.tracks || [];
+
+  const updateTrackListDisplay = () => {
+    const trackListContainer = container.querySelector('#track-list-container');
+    if (trackListContainer) {
+      trackListContainer.innerHTML = renderTrackList({ ...playlist, tracks });
+    }
+  };
+
+  const handleAddTrack = () => {
+    const modalContainer = container.querySelector('#modal-container');
+    if (!modalContainer) return;
+
+    const { render } = AddTrackModal({
+      playlistId: playlist.idPlaylist,
+      onClose: () => {
+        modalContainer.innerHTML = '';
+      },
+      onTrackAdded: (newTrack: Track) => {
+        tracks = [...tracks, newTrack];
+        trackPlayerInstance.setPlaylist({ ...playlist, tracks });
+        updateTrackListDisplay();
+        modalContainer.innerHTML = '';
+      }
+    });
+    render(modalContainer);
+  };
+
+  const handleDeleteTrack = async (trackIndex: number) => {
+    const track = tracks[trackIndex];
+    if (!track) return;
+
+    try {
+      await new TrackRepository().delete(playlist.idPlaylist, track.idTrack);
+      tracks = tracks.filter((_, i) => i !== trackIndex);
+      trackPlayerInstance.setPlaylist({ ...playlist, tracks });
+      updateTrackListDisplay();
+    } catch (err) {
+      console.error(err);
+      new AlertManager().error("Failed to remove track");
+    }
+  };
+
+  const handlePlayTrack = (index: number) => {
+    if (trackPlayerInstance.playlist?.idPlaylist !== playlist.idPlaylist) {
+      trackPlayerInstance.setPlaylist({ ...playlist, tracks });
+    }
+    trackPlayerInstance.playTrack(index);
+  };
+
+  // Render page
+  container.innerHTML = (
     <div>
       <div id="modal-container"></div>
+
       <div class="mb-8">
-        <Button id="back-button" variant="ghost" size="sm">
-          ← Back
-        </Button>
+        <Button id="back-button" variant="ghost" size="sm">← Back</Button>
       </div>
 
       <div class="flex items-start gap-8 my-8">
         <div class="flex flex-col items-center gap-4">
-          <img src={playlist.image} class="w-48 h-48 rounded-md object-cover" alt={playlist.name}/>
-          <Button id="add-track-button" variant="outline" size="md">
-            Add Track
-          </Button>
+          <img
+            src={playlist.image}
+            class="w-48 h-48 rounded-md object-cover"
+            alt={playlist.name}
+          />
+          <Button id="add-track-button" variant="outline" size="md">Add Track</Button>
         </div>
         <div class="pt-2">
           <h1 safe class="font-bold text-4xl">{playlist.name}</h1>
@@ -51,99 +117,42 @@ export function PlaylistDetailPage(container, playlist, trackPlayer, onBack) {
         </div>
       </div>
 
-      <div id="track-list-container" class="flex flex-col gap-4">{TrackList(playlist, trackPlayer)}</div>
+      <div id="track-list-container" class="flex flex-col gap-4">
+        {renderTrackList({ ...playlist, tracks }) as 'safe'}
+      </div>
     </div>
   );
 
+  // Event delegation
+  container.onclick = (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
 
-  const proxyPlaylist = new Proxy(playlist, {
-    set(target, prop, value) {
-      target[prop] = value;
-      Reflect.set(target, prop, value);
-
-      // Re-render the track list when the playlist is updated
-      const trackListContainer = container.querySelector('#track-list-container');
-      if (trackListContainer) {
-        trackListContainer.innerHTML = '';
-        trackListContainer.innerHTML = TrackList(proxyPlaylist, trackPlayer);
-      }
-
-      return true;
-    }
-
-  });
-
-  container.innerHTML = pageHtml;
-
-  const modalContainer = container.querySelector('#modal-container');
-
-  function openAddTrackModal() {
-    const { render } = AddTrackModal({
-      playlistId: proxyPlaylist.idPlaylist,
-      onClose: () => {
-        modalContainer.innerHTML = '';
-      },
-      onTrackAdded: (newTrack) => {
-        proxyPlaylist.tracks = [...proxyPlaylist.tracks, newTrack];
-        trackPlayer.setPlaylist(proxyPlaylist);
-        modalContainer.innerHTML = '';
-      }
-    });
-    render(modalContainer);
-  }
-
-  const trackListContainer = container.querySelector('#track-list-container');
-
-  // Use event delegation on container
-  container.onclick = (e) => {
-    const backButton = e.target.closest('#back-button');
-    if (backButton) {
+    if (target.closest('#back-button')) {
       onBack();
       return;
     }
 
-    const addTrackButton = e.target.closest('#add-track-button');
-    if (addTrackButton) {
-      openAddTrackModal();
+    if (target.closest('#add-track-button')) {
+      handleAddTrack();
       return;
     }
+
+    const deleteButton = target.closest('.delete-track') as HTMLElement | null;
+    if (deleteButton) {
+      e.stopPropagation();
+      const trackIndex = Number(deleteButton.getAttribute('data-track-index'));
+      if (!Number.isNaN(trackIndex)) {
+        handleDeleteTrack(trackIndex);
+      }
+      return;
+    }
+
+    const row = target.closest('[data-track-index]') as HTMLElement | null;
+    if (row) {
+      const index = Number(row.getAttribute('data-track-index'));
+      if (!Number.isNaN(index)) {
+        handlePlayTrack(index);
+      }
+    }
   };
-
-  // Handle track interactions (play/delete) via delegation on the list container
-  if (trackListContainer) {
-    trackListContainer.onclick = (e) => {
-      const target = e.target as HTMLElement;
-      const deleteButton = target.closest('.delete-track') as HTMLElement | null;
-      const row = target.closest('[data-track-index]') as HTMLElement | null;
-
-      if (deleteButton) {
-        e.stopPropagation();
-        const trackIndex = Number(deleteButton.getAttribute('data-track-index'));
-
-        try {
-          TrackRepository.removeTrackFromPlaylist(
-            proxyPlaylist.idPlaylist,
-            proxyPlaylist.tracks[trackIndex].idTrack,
-          );
-        } catch (err){
-          console.log(err);
-          new AlertManager().error("Failed to remove track");
-          return;
-        }
-
-        proxyPlaylist.tracks = proxyPlaylist.tracks.filter((_, i) => i !== trackIndex);
-        trackPlayer.setPlaylist(proxyPlaylist);
-        return; // Prevent row click handler from executing
-      }
-
-      if (row) {
-        const index = Number(row.getAttribute('data-track-index'));
-        if (Number.isNaN(index)) return;
-        if (trackPlayer.playlist?.idPlaylist !== playlist.idPlaylist) {
-          trackPlayer.setPlaylist(playlist);
-        }
-        trackPlayer.playTrack(index);
-      }
-    };
-  }
 }

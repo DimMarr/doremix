@@ -1,30 +1,23 @@
-import { Button, Header } from "@components/generics/index";
-import { initializePlayer, TrackPlayer } from "@components/playlists/track-player";
-import PlaylistRepository from "@repositories/playlistRepository";
-import YoutubePlayer from "@store/track-player";
-import { waitForYouTubeAPI } from "@utils/youtube-api-loader";
+import { Header } from "@components/generics/index";
+import { initializePlayer, TrackPlayer } from "@components/playlists/trackPlayer";
+import YoutubePlayer from "@store/trackPlayer";
+import { waitForYouTubeAPI } from "@utils/youtubeApiLoader";
 import logo from "@assets/images/logo.png";
 import Playlist from "@models/playlist";
+
+export let trackPlayerInstance = null;
 
 export async function createMainLayout() {
   const root = document.getElementById("app") || document.body;
 
-  const repo = new PlaylistRepository();
-  const playlists = await repo.getPlaylists();
-
   await waitForYouTubeAPI();
 
-  // First, render the HTML to the DOM
   const appHtml = (
     <div class="min-h-screen bg-background text-foreground px-6">
       <Header className="">
         <a href="/">
           <img src={logo} alt="Dorémix" class="h-8" />
         </a>
-        {/* <div class="flex gap-2">
-          <Button variant="outline" size="sm">Login</Button>
-          <Button variant="primary" size="sm">Signup</Button>
-        </div> */}
       </Header>
 
       <main class="" id="mainContent"></main>
@@ -37,13 +30,15 @@ export async function createMainLayout() {
   root.innerHTML = appHtml;
   const mainContent = document.getElementById("mainContent");
 
-  // Now create the player AFTER the iframe exists in the DOM
+  // Initialisation du TrackPlayer
   const trackPlayer = new YoutubePlayer({
     playlist: new Playlist({tracks:[]}),
     youtubePlayerHtmlElementId: "youtubePlayer",
   });
 
-  // Render the track player component
+  trackPlayerInstance = trackPlayer;
+
+  // Rendering du track player.
   const trackPlayerContainer = document.getElementById("trackPlayerContainer");
   if (trackPlayerContainer) {
     initializePlayer(trackPlayerContainer!, trackPlayer);

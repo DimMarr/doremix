@@ -1,4 +1,6 @@
 import { cn, getCardClasses } from '@components/index';
+import { trackPlayerInstance } from '@layouts/mainLayout';
+import Playlist from '@models/playlist';
 
 export interface CardProps {
   image?: string;
@@ -41,7 +43,7 @@ export function Card({
               safe
               src={icon}
               alt="Play icon"
-              class="absolute bottom-2 right-2 w-[40px] h-[40px] bg-[#2b7fff] p-2 rounded-[999px] cursor-pointer"
+              class="absolute bottom-2 right-2 w-[40px] h-[40px] bg-primary p-2 rounded-[999px] cursor-pointer"
               onclick={`(e) => { e.preventDefault(); e.stopPropagation(); ${onClickPlay?.toString() || ''} }`}
             />
           )}
@@ -75,4 +77,45 @@ export function Card({
       {cardContent}
     </div>
   );
+}
+
+export function buildCardsFromPlaylists(playlists: Playlist[]){
+  const svg1 = new URL("../../assets/icons/play.svg", import.meta.url).href;
+
+  return playlists.map((p) => {
+    const cardHtml = Card({
+      title: p.name || "",
+      image: p.image,
+      content: p.description || "",
+      icon: svg1,
+      className: "px-0! max-w-[200px] md:max-w-[300px] shrink-0",
+      onClickPlay: () => {
+        if (trackPlayerInstance.playlist.idPlaylist !== p.idPlaylist) {
+          trackPlayerInstance.setPlaylist(p);
+        }
+        trackPlayerInstance.playTrack(0);
+      },
+    });
+
+    return `<a href="/playlist/${p.idPlaylist}" data-link>${cardHtml}</a>`;
+  }).join('');
+
+}
+
+export function initCardsElements(container: HTMLElement, playlists: Playlist[]){
+  const cardElements = container.querySelectorAll('[data-link]');
+  cardElements.forEach((link, index) => {
+    const p = playlists[index];
+    const iconElement = link.querySelector('img[alt="Play icon"]');
+    if (iconElement) {
+      iconElement.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (trackPlayerInstance.playlist.idPlaylist !== p.idPlaylist) {
+          trackPlayerInstance.setPlaylist(p);
+        }
+        trackPlayerInstance.playTrack(0);
+      });
+    }
+  });
 }

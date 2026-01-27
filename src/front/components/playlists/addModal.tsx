@@ -1,5 +1,5 @@
 import { Button } from "@components/generics/button";
-import PlaylistRepository from "@repositories/playlistRepository";
+import { PlaylistRepository } from "@repositories/index";
 
 // Le bouton que nous allons exporter pour main.tsx
 export function AddPlaylistButton() {
@@ -18,18 +18,18 @@ export function AddPlaylistButton() {
 export function AddPlaylistModal() {
   return (
     <div id="add-playlist-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
-      <div class="bg-gray-900 border border-gray-800 p-8 rounded-xl w-full max-w-md shadow-2xl">
-        <h2 class="text-2xl font-bold text-white mb-6">Create new playlist</h2>
+      <div class="bg-neutral-900 border border-border p-8 rounded-xl w-full max-w-md shadow-2xl">
+        <h2 class="text-2xl font-bold text-foreground mb-6">Create new playlist</h2>
 
         <form id="add-playlist-form" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-400 mb-1">Playlist name</label>
-            <input type="text" name="name" id="playlist-name-input" required class="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:ring-2 focus:ring-blue-500 outline-none" />
+            <label class="block text-sm font-medium text-muted-foreground mb-1">Playlist name</label>
+            <input type="text" name="name" id="playlist-name-input" required class="w-full px-4 py-2 rounded-lg bg-input border border-border text-foreground focus:ring-2 focus:ring-ring outline-none" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-400 mb-1">Cover image (optional)</label>
-            <input type="file" id="playlist-cover-input" accept="image/*" class="w-full px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-500 file:text-white hover:file:bg-blue-700" />
+            <label class="block text-sm font-medium text-muted-foreground mb-1">Cover image (optional)</label>
+            <input type="file" id="playlist-cover-input" accept="image/*" class="w-full px-4 py-2 rounded-lg bg-input border border-border text-foreground file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-primary file:text-primary-foreground hover:file:bg-primary/80" />
           </div>
 
           <div class="flex justify-end gap-3 mt-8">
@@ -82,11 +82,11 @@ export function setupModalAddPlaylist() {
     }
 
     try {
-      const playlistresponse = await PlaylistRepository.createPlaylist(name);
+      const playlistresponse = await new PlaylistRepository().create(name);
 
       try {
         if (imageInput.files?.length) {
-          await PlaylistRepository.uploadPlaylistCover(playlistresponse.idPlaylist, imageInput.files[0]);
+          await new PlaylistRepository().uploadCover(playlistresponse.idPlaylist, imageInput.files[0]);
         }
       } catch (err) {
         console.error(err);
@@ -101,4 +101,17 @@ export function setupModalAddPlaylist() {
     }
 
   });
+}
+
+export function setupPlaylistAndTrackModals(){
+  const addPlaylistSection = document.getElementById("addPlaylistSection");
+
+  const modalContainer = document.getElementById("modal-container");
+  if (addPlaylistSection) {
+    addPlaylistSection.innerHTML = AddPlaylistButton();
+  }
+  if (modalContainer) {
+    modalContainer.innerHTML = AddPlaylistModal();
+  }
+  setupModalAddPlaylist();
 }
