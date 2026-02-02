@@ -40,6 +40,7 @@ export function AddPlaylistModal() {
               type: 'button'
             })}
             {Button({
+              id: 'create-playlist-submit',
               variant: 'primary',
               children: 'Create playlist',
               type: 'submit'
@@ -73,11 +74,23 @@ export function setupModalAddPlaylist() {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    const submitButton = document.getElementById("create-playlist-submit") as HTMLButtonElement;
+    if (!submitButton) return;
+
+    // Disable button to prevent multiple submissions
+    submitButton.disabled = true;
+    const originalText = submitButton.textContent;
+    submitButton.textContent = "Creating...";
+
     const formData = new FormData(form);
     const name = formData.get("name")?.toString().trim();
 
     if (!name) {
       alert("Playlist name cannot be empty");
+      // Re-enable button on validation error
+      submitButton.disabled = false;
+      submitButton.textContent = originalText;
       return;
     }
 
@@ -98,6 +111,9 @@ export function setupModalAddPlaylist() {
     } catch (err) {
       console.error(err);
       alert("Impossible to create playlist");
+      // Re-enable button on error
+      submitButton.disabled = false;
+      submitButton.textContent = originalText;
     }
 
   });
