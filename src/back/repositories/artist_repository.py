@@ -17,12 +17,19 @@ class ArtistRepository:
 
     @staticmethod
     def get_all(db: Session) -> List[Artist]:
-        return db.query(Artist).all()
+        artists: List[Artist] = db.query(Artist).all()
+        return artists
 
     @staticmethod
     def get_by_id(db: Session, artist_id: int) -> Optional[Artist]:
-        return db.query(Artist).filter(Artist.idArtist == artist_id).first()
+        artists: Optional[Artist] = (
+            db.query(Artist).filter(Artist.idArtist == artist_id).first()
+        )
+        return artists
 
     @staticmethod
     def get_by_name(db: Session, artist_name: str) -> Optional[Artist]:
-        return db.query(Artist).filter(Artist.name == artist_name).first()
+        artists: Optional[Artist] = (
+            db.query(Artist).filter(Artist.name == artist_name).first()
+        )
+        return artists
