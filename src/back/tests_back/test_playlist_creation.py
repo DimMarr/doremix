@@ -5,7 +5,7 @@ Tests pour la création de playlists
 import pytest
 from sqlalchemy.orm import Session
 
-from models import User, Playlist, Genre, PlaylistVisibility
+from back.models import User, Playlist, Genre, PlaylistVisibility
 
 
 @pytest.fixture

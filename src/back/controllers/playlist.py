@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
-from repositories import PlaylistRepository
+from back.repositories import PlaylistRepository
 from fastapi import HTTPException, UploadFile, Response
-from utils.image_processor import save_cover_image
-from models.playlist import Playlist
+from back.utils.image_processor import save_cover_image
+from back.models.playlist import Playlist
 
 
 class PlaylistController:

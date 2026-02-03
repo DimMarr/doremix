@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, TIMESTAMP
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from database import Base
+from back.database import Base
 
 
 class Track(Base):

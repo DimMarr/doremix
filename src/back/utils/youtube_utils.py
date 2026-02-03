@@ -17,7 +17,7 @@ def get_youtube_video_info(url: str) -> Tuple[Optional[int], Optional[str]]:
 
     # Return an error if the video doesn't exists
     except yt_dlp.utils.DownloadError:
-        return "Video unavailable", None
+        return None, "Video unavailable"
     except Exception as e:
         print(f"Error fetching YouTube info: {e}")
         return None, None

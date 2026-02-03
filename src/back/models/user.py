@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, Enum
 from sqlalchemy.orm import relationship
-from database import Base
+from back.database import Base
 import enum
 
 

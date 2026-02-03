@@ -12,3 +12,5 @@ uv.lock
 
 uploads/
 .coverage
+
+src/doremix.egg-info

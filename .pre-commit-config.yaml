@@ -25,7 +25,10 @@ repos:
     hooks:
         -   id: mypy
             verbose: true
-            files: ^src/(back|cli)/
+            pass_filenames: false
+            args:
+                - --package=back
+                - --package=cli
             additional_dependencies:
                 - types-requests
                 - pydantic

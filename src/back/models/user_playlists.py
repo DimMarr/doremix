@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, ForeignKey, Boolean
-from database import Base
+from back.database import Base
 
 
 class UserPlaylist(Base):

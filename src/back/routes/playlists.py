@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 from typing import List
 from pydantic import BaseModel
 
-from controllers import PlaylistController
-from schemas import PlaylistSchema, TrackSchema, PlaylistCreate, PlaylistUpdate
-from database import get_db
+from back.controllers import PlaylistController
+from back.schemas import PlaylistSchema, TrackSchema, PlaylistCreate, PlaylistUpdate
+from back.database import get_db
 import os
 
 router = APIRouter(prefix="/playlists", tags=["Playlists"])

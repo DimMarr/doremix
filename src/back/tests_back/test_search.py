@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime
-from models import Playlist, PlaylistVisibility, User, Genre, Track, Artist
+from back.models import Playlist, PlaylistVisibility, User, Genre, Track, Artist
 from sqlalchemy.orm import Session
 
 
