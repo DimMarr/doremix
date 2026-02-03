@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from back.repositories.artist_repository import ArtistRepository
+from repositories.artist_repository import ArtistRepository
 from fastapi import HTTPException
 
 

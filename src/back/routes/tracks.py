@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from back.controllers import TrackController
-from back.schemas import TrackSchema
-from back.database import get_db
+from controllers import TrackController
+from schemas import TrackSchema
+from database import get_db
 
 router = APIRouter(prefix="/tracks", tags=["Tracks"])
 

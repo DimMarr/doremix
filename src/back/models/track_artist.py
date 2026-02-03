@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, ForeignKey
-from back.database import Base
+from database import Base
 
 
 class TrackArtist(Base):

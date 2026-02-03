@@ -4,11 +4,11 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from back.database import Base, get_db
-from back.routes.playlists import router as playlists_router
-from back.routes.users import router as users_router
-from back.routes.search_router import router as search_router
-from back.models import User, Genre
+from database import Base, get_db
+from routes.playlists import router as playlists_router
+from routes.users import router as users_router
+from routes.search_router import router as search_router
+from models import User, Genre
 
 # Crée une base de données SQLite en mémoire pour les tests
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"

@@ -52,7 +52,9 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS}
       RATE_LIMIT: ${RATE_LIMIT:-100/minute}
     volumes:
+      - ./src/back:/app
       - ./uploads/covers:/app/uploads/covers
+      - /app/__pycache__
     networks:
       - frontend-network
       - backend-network

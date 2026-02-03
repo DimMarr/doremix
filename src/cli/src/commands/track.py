@@ -3,7 +3,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from cli.src.services.track import (
+from src.services.track import (
     get_track,
     get_all_tracks,
     play_track,

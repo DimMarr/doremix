@@ -5,7 +5,7 @@ Tests pour l'ajout et la suppression de tracks dans une playlist
 import pytest
 from sqlalchemy.orm import Session
 
-from back.models import User, Playlist, Track, Genre
+from models import User, Playlist, Track, Genre
 
 
 @pytest.fixture

@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
-from back.models.track import Track
-from back.models.artist import Artist
+from models.track import Track
+from models.artist import Artist
 from typing import Optional, List
 
 

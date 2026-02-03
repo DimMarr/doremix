@@ -10,7 +10,7 @@ import shutil
 import os
 from PIL import Image
 
-from back.models import User, Playlist, Genre, PlaylistVisibility
+from models import User, Playlist, Genre, PlaylistVisibility
 
 
 def create_test_image(format="JPEG", size=(100, 100), color="red"):
@@ -28,7 +28,7 @@ def temp_upload_dir(monkeypatch):
     temp_dir = tempfile.mkdtemp()
 
     # Patch le UPLOAD_DIR dans le module image_processor
-    import back.utils.image_processor as image_processor
+    import utils.image_processor as image_processor
 
     monkeypatch.setattr(image_processor, "UPLOAD_DIR", temp_dir)
 

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from back.controllers import PlaylistController, TrackController
-from back.database import get_db
+from controllers import PlaylistController, TrackController
+from database import get_db
 
 router = APIRouter(prefix="/search", tags=["Search"])
 

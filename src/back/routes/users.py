@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
 
-from back.controllers import UserController
-from back.schemas import UserSchema, PlaylistSchema
-from back.database import get_db
+from controllers import UserController
+from schemas import UserSchema, PlaylistSchema
+from database import get_db
 
 router = APIRouter(prefix="/users", tags=["Users"])
 

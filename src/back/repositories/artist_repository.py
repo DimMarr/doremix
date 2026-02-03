@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from back.models.artist import Artist
+from models.artist import Artist
 from typing import Optional, List
 
 

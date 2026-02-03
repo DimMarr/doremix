@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from back.models.user import User
+from models.user import User
 
 
 class UserController:

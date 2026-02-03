@@ -1,16 +1,16 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from back.database import engine, Base
+from database import engine, Base
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from back.middleware.rate_limiter import limiter, rate_limit_exceeded_handler
+from middleware.rate_limiter import limiter, rate_limit_exceeded_handler
 import uvicorn
 from fastapi.staticfiles import StaticFiles
 
 # Import routes
-from back.routes import (
+from routes import (
     usersRouter,
     playlistsRouter,
     tracksRouter,

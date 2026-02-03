@@ -1,16 +1,15 @@
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_
 from re import findall as regex_match
-from back.schemas import track
-from back.models.playlist import Playlist, PlaylistVisibility
-from back.models.track_playlist import TrackPlaylist
-from back.models.track import Track
-from back.models.artist import Artist
-from back.models.user_playlists import UserPlaylist
+from models.playlist import Playlist, PlaylistVisibility
+from models.track_playlist import TrackPlaylist
+from models.track import Track
+from models.artist import Artist
+from models.user_playlists import UserPlaylist
 from typing import Optional, List
-from back.repositories.track_repository import TrackRepository
-from back.repositories.artist_repository import ArtistRepository
-from back.utils.youtube_utils import (
+from repositories.track_repository import TrackRepository
+from repositories.artist_repository import ArtistRepository
+from utils.youtube_utils import (
     get_youtube_video_duration,
     get_youtube_video_author,
     get_youtube_video_info,
@@ -72,14 +71,15 @@ class PlaylistRepository:
 
     @staticmethod
     def remove_track(db: Session, playlist_id: int, track_id: int) -> bool:
-        track_playlist = (
+        track = (
             db.query(TrackPlaylist)
             .filter(TrackPlaylist.idPlaylist == playlist_id)
             .filter(TrackPlaylist.idTrack == track_id)
             .first()
         )
-        if track_playlist:
-            db.delete(track_playlist)
+
+        if track:
+            db.delete(track)
             db.commit()
             return True
         return False
@@ -91,25 +91,26 @@ class PlaylistRepository:
         youtubeLink: str,
         playlist_id: int,
     ):
-        existing_track = TrackRepository.get_by_youtube_link(db, youtubeLink)
+        track = TrackRepository.get_by_youtube_link(db, youtubeLink)
 
         # Search for https://www.youtube.com/watch?=***** or https://youtu.be/***** URL format
         match = regex_match(
-            r"(https://www\.youtube\.com/watch\?v=[^&|\s]+|https://youtu\.be/[^?|\s]+)",
+            "(https://www\.youtube\.com/watch\?v=[^&|\s]+|https://youtu\.be/[^?|\s]+)",
             youtubeLink,
         )
         if not match:
-            return existing_track, "invalid url"
+            return track, "invalid url"
         else:
             clean_url = match[0]
 
         # If track doesn't already exists in DB, get infos
-        if not existing_track:
+        if not track:
             durationSeconds, author_name = get_youtube_video_info(clean_url)
 
             # Checks if Youtube video exists
-            if durationSeconds is None:
-                return existing_track, "invalid url"
+            if durationSeconds == "Video unavailable":
+                return track, "invalid url"
+
             if durationSeconds is None:
                 durationSeconds = 0
             if author_name is None:

@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from back.repositories import TrackRepository
+from repositories import TrackRepository
 from fastapi import HTTPException
 
 
