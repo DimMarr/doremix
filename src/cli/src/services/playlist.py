@@ -81,7 +81,8 @@ def delete_playlist(identifier: str) -> dict:
     # if res.status_code == 403:
     #     raise Exception("You are not the owner of this playlist")
 
-    return res.json()
+    data: dict[Any, Any] = res.json()
+    return data
 
 
 def update_playlist(
