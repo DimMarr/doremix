@@ -1,115 +1,87 @@
-# DoRéMix
+# DoRéMix 🎵
 
-Application et CLI de gestion de playlists Youtube.
+**DoRéMix** is a collaborative music ecosystem developed for the **Python Web Agile (PWA)** project (DO3, 2025-2026). The platform allows users to curate and share community-driven playlists powered by YouTube, offering both a **Web Experience** and a **CLI tool**.
 
-# Application web
+---
 
-### Prérequis :
-- NPM
-- Docker
+## 🌟 Features
 
-## Setup en mode développement
+* **Social Playlists:** Create, share, and discover playlists curated by the community.
+* **YouTube Integration:** Seamlessly add tracks via YouTube URLs and listen via the integrated embedded player.
+* **Dual-Interface:** Full control through a responsive Web App or a developer-friendly Command Line Interface.
+* **Real-time Discovery:** Add new sounds and share them instantly with the community.
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+| :--- | :--- |
+| **Backend** | Python / FastAPI |
+| **Frontend** | Modern JS (PWA Architecture) |
+| **CLI** | Python / Typer |
+| **Database** | PostgreSQL |
+| **DevOps** | Docker & Docker Compose |
+| **Package Management** | `uv` (Python), `npm` (Node.js) |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+* **Docker & Docker Compose**
+* **Node.js** (for frontend development)
+* **Python 3.10+** (with `uv` installed for local testing/CLI)
+
+### Local Development Setup
+To launch the development environment with hot-reloading:
 
 ```bash
-# Déplacez vous dans le bon répértoire
-cd src/frontend
+# 1. Initialize environment variables
+cp .env.exemple .env
 
-# Il faut installer les dépendances
-npm install
-
-# Ensuite il faut exécuter l'application
-npm run dev
+# 2. Build and launch infrastructure
+docker compose up -d --build
 ```
 
-## Setup en mode production
+Access Points:
+- **Frontend**: http://localhost:8080
+- **Backend API** (Swagger): http://localhost:8000/docs
 
-Mettre en place un fichier .env dans la racine du projet :
+---
 
-```
-DB_USER=<DB_USERNAME>
-DB_PASSWORD=<DB_PASSWORD>
-DB_NAME=<DB_NAME>
-DATABASE_URL=postgresql://<DB_USERNAME>:<DB_PASSWORD>@db:5432/<DB_NAME>
+## ⚙️ Configuration (Production Mode)
 
-CORS_ORIGINS=http://localhost:8080,https://localhost:8080
+For production deployments, ensure your .env file at the root is properly configured:
+
+```bash
+# Database Configuration
+DB_USER=your_username
+DB_PASSWORD=your_password
+DB_NAME=doremix_db
+DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+
+# Security & Performance
 RATE_LIMIT=50/minute
 ```
 
-Démarrer l'infrastructure docker avec la commande suivante :
+Then, run the infrastructure in production mode:
 
 ```bash
-docker compose up
+docker compose up -f docker-compose_prod.yml -d --build
 ```
 
-## Troubleshooting
+---
 
-En cas de problème en mode développement essayez de réinstaller les dépendences à zéro.
-
+## 🧪 Testing & Quality Assurance
+We use uv for lightning-fast dependency management and pytest for our test suite.
 ```bash
-rm -rf node_modules package-lock.json
-npm install
-```
-
-En cas de problème avec l'infrastructure docker essayez de désactiver docker buildkit :
-
-```
-export DOCKER_BUILDKIT=0
-```
-
-Sinon essayez de rebuild l'infrastructure docker depuis le début :
-
-```
-docker compose up --build
-```
-
-Si rien ne s'affiche sur l'application web, vérifiez que les cors sont bien configurés dans le .env :
-```
-CORS_ORIGINS=http://localhost:8080,https://localhost:8080
-```
-
-# Processus de test
-
-
-### Prérequis :
-- uv
-- pip
-
-## Setup
-
-```bash
-# Syncroniser le projet uv
+# Synchronize environment
 uv sync
 
-# Renommer le fichier .env.exemple en .env
-mv .env.exemple .env
-
-# Lancer tous les tests
+# Run all tests
 uv run pytest -v
 
-# Avec couverture
+# Run tests with coverage report
 uv run pytest --cov -v
-```
-
-# Sécurité
-
-## Frontend
-
-### Injections xss
-
-Vérifier s'il y a des injections xss possibles :
-
-```bash
-npx run xss-scan
-```
-
-Pour indiquer au système de templating qu'il faut échapper des caractères, on ajoute l'attribut `safe` :
-
-```html
-<span safe class="font-medium track-title">{track.title}</span>
-```
-
-Parfois, certaines données dynamiques sont considérées comme sûres car elles sont générées par le script lui-même et ne proviennent pas de l'utilisateur ; dans ce cas, il n'est pas nécessaire de les échapper.
-
-```html
-<div>{playlistCards as 'safe'}</div>
 ```
