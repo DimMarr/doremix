@@ -31,7 +31,7 @@ def list():
     table = Table(title="All Playlists")
 
     table.add_column("id", style="cyan")
-    table.add_column("title", style="magenta")
+    table.add_column("titleFromYoutube", style="magenta")
 
     for playlist in playlists:
         id = str(playlist.idPlaylist)
@@ -74,12 +74,11 @@ def tracks(id: str):
     table = Table(title="All tracks")
 
     table.add_column("id", style="cyan")
-    table.add_column("title", style="magenta")
+    table.add_column("titleFromYoutube", style="magenta")
 
     for track in tracks:
         id = str(track.idTrack)
-        title = track.title
-
+        title = track.titleFromYoutube
         table.add_row(id, title)
 
     console.print(table)
@@ -107,7 +106,7 @@ def create(
         "PUBLIC",
         "--visibility",
         "-v",
-        help="Visibility (PUBLIC, PRIVATE, OPEN, SHARED)",
+        help="Visibility (PUBLIC, PRIVATE, SHARED)",
     ),
     # owner: int = typer.Option(..., "--owner", "-o", help="Owner ID")  # TODO: À supprimer quand l'auth sera en place (récupéré depuis le token)
 ):
@@ -174,7 +173,7 @@ def update(
         None,
         "--visibility",
         "-v",
-        help="New visibility (PUBLIC, PRIVATE, OPEN, SHARED)",
+        help="New visibility (PUBLIC, PRIVATE, SHARED)",
     ),
     # TODO: Quand l'auth sera en place, l'utilisateur sera automatiquement identifié via le token
 ):
@@ -222,7 +221,9 @@ def add_track(
     try:
         track = add_track_to_playlist(str(playlist_id), title, youtube_link)
 
-        console.print(f"[green]✓ Track '{track.title}' successfully added![/green]")
+        console.print(
+            f"[green]✓ Track '{track.titleFromYoutube}' successfully added![/green]"
+        )
 
         table = Table(show_header=False)
         table.add_column("Field", style="cyan")
@@ -236,7 +237,7 @@ def add_track(
         )
 
         table.add_row("id", str(track.idTrack))
-        table.add_row("title", track.title)
+        table.add_row("title", track.titleFromYoutube)
         table.add_row("artists", artists)
         table.add_row("duration", duration)
         table.add_row("youtube", track.youtubeLink or "N/A")
@@ -248,12 +249,12 @@ def add_track(
 
         tracks_table = Table(title=f"All tracks in '{playlist.name}'")
         tracks_table.add_column("id", style="cyan")
-        tracks_table.add_column("title", style="magenta")
+        tracks_table.add_column("titleFromYoutube", style="magenta")
         tracks_table.add_column("artists", style="blue")
 
         for t in tracks:
             t_artists = ", ".join([artist.name for artist in t.artists])
-            tracks_table.add_row(str(t.idTrack), t.title, t_artists)
+            tracks_table.add_row(str(t.idTrack), t.titleFromYoutube, t_artists)
 
         console.print(tracks_table)
 
@@ -312,7 +313,7 @@ def search_tracks(
 
         table = Table(title=f"Search results for '{query}' in '{playlist.name}'")
         table.add_column("id", style="cyan")
-        table.add_column("title", style="magenta")
+        table.add_column("titleFromYoutube", style="magenta")
         table.add_column("artists", style="blue")
         table.add_column("duration", style="green")
 
@@ -323,7 +324,7 @@ def search_tracks(
                 if track.durationSeconds
                 else "N/A"
             )
-            table.add_row(str(track.idTrack), track.title, artists, duration)
+            table.add_row(str(track.idTrack), track.titleFromYoutube, artists, duration)
 
         console.print(table)
         console.print(f"\n[green]{len(tracks)} track(s) found[/green]")

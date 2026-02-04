@@ -24,7 +24,7 @@ def sample_playlist(db, sample_user, sample_genre):
 def sample_track(db):
     """Crée un track de test"""
     track = Track(
-        title="Imagine",
+        titleFromYoutube="Imagine",
         youtubeLink="https://www.youtube.com/watch?v=voJzf0P6YPE",
     )
     db.add(track)
@@ -37,7 +37,7 @@ def sample_track(db):
 def sample_track_2(db):
     """Crée un deuxième track de test"""
     track = Track(
-        title="Bohemian Rhapsody",
+        titleFromYoutube="Bohemian Rhapsody",
         youtubeLink="https://www.youtube.com/watch?v=fJ9rUzIMt7o",
     )
     db.add(track)
@@ -54,7 +54,7 @@ class TestPlaylistTrackOperations:
         response = client.post(
             f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
             json={
-                "title": sample_track.title,
+                "title": sample_track.titleFromYoutube,
                 "url": sample_track.youtubeLink,
             },
         )
@@ -62,7 +62,7 @@ class TestPlaylistTrackOperations:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["title"] == sample_track.title
+        assert data["titleFromYoutube"] == sample_track.titleFromYoutube
 
     def test_add_multiple_tracks_to_playlist(
         self, client, sample_playlist, sample_track, sample_track_2
@@ -71,7 +71,7 @@ class TestPlaylistTrackOperations:
         response1 = client.post(
             f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
             json={
-                "title": sample_track.title,
+                "title": sample_track.titleFromYoutube,
                 "url": sample_track.youtubeLink,
             },
         )
@@ -80,7 +80,7 @@ class TestPlaylistTrackOperations:
         response2 = client.post(
             f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
             json={
-                "title": sample_track_2.title,
+                "title": sample_track_2.titleFromYoutube,
                 "url": sample_track_2.youtubeLink,
             },
         )
@@ -95,9 +95,9 @@ class TestPlaylistTrackOperations:
         """Test l'ajout d'un track à une playlist inexistante"""
         response = client.post(
             "/playlists/9999/track",
-            params={
-                "title": sample_track.title,
-                "youtubeLink": sample_track.youtubeLink,
+            json={
+                "title": sample_track.titleFromYoutube,
+                "url": sample_track.youtubeLink,
             },
         )
 
@@ -110,7 +110,7 @@ class TestPlaylistTrackOperations:
         add_response = client.post(
             f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
             json={
-                "title": sample_track.title,
+                "title": sample_track.titleFromYoutube,
                 "url": sample_track.youtubeLink,
             },
         )
@@ -158,14 +158,14 @@ class TestPlaylistTrackOperations:
         client.post(
             f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
             json={
-                "title": sample_track.title,
+                "title": sample_track.titleFromYoutube,
                 "url": sample_track.youtubeLink,
             },
         )
         client.post(
             f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
             json={
-                "title": sample_track_2.title,
+                "title": sample_track_2.titleFromYoutube,
                 "url": sample_track_2.youtubeLink,
             },
         )
@@ -186,7 +186,7 @@ class TestPlaylistTrackOperations:
         add_response = client.post(
             f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
             json={
-                "title": sample_track.title,
+                "title": sample_track.titleFromYoutube,
                 "url": sample_track.youtubeLink,
             },
         )
@@ -211,7 +211,7 @@ class TestPlaylistTrackOperations:
         add1 = client.post(
             f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
             json={
-                "title": sample_track.title,
+                "title": sample_track.titleFromYoutube,
                 "url": sample_track.youtubeLink,
             },
         )
@@ -220,7 +220,7 @@ class TestPlaylistTrackOperations:
         add2 = client.post(
             f"/playlists/{sample_playlist.idPlaylist}/tracks/by-url",
             json={
-                "title": sample_track_2.title,
+                "title": sample_track_2.titleFromYoutube,
                 "url": sample_track_2.youtubeLink,
             },
         )
