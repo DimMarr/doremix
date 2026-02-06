@@ -22,7 +22,7 @@ def list():
 
         table = Table(title="All Tracks")
         table.add_column("id", style="cyan")
-        table.add_column("title", style="magenta")
+        table.add_column("titleFromYoutube", style="magenta")
         table.add_column("artists", style="blue")
         table.add_column("duration", style="green")
         table.add_column("plays", style="yellow")
@@ -36,7 +36,7 @@ def list():
             )
             table.add_row(
                 str(track.idTrack),
-                track.title,
+                track.titleFromYoutube,
                 artists,
                 duration,
                 str(track.listeningCount),
@@ -65,7 +65,7 @@ def get(id: int = typer.Argument(..., help="Track ID")):
         )
 
         table.add_row("id", str(track.idTrack))
-        table.add_row("title", track.title)
+        table.add_row("title", track.titleFromYoutube)
         table.add_row("artists", artists)
         table.add_row("duration", duration)
         table.add_row("plays", str(track.listeningCount))
@@ -101,7 +101,7 @@ def search(
 
         table = Table(title=f"Search results for '{query}'")
         table.add_column("id", style="cyan")
-        table.add_column("title", style="magenta")
+        table.add_column("titleFromYoutube", style="magenta")
         table.add_column("artists", style="blue")
         table.add_column("duration", style="green")
 
@@ -112,7 +112,7 @@ def search(
                 if track.durationSeconds
                 else "N/A"
             )
-            table.add_row(str(track.idTrack), track.title, artists, duration)
+            table.add_row(str(track.idTrack), track.titleFromYoutube, artists, duration)
 
         console.print(table)
         console.print(f"\n[green]{len(tracks)} track(s) found[/green]")

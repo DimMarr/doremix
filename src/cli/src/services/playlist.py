@@ -175,7 +175,7 @@ def search_tracks_in_playlist(playlist_id: str, query: str) -> list[TrackSchema]
 
     query_lower = query.lower()
     filtered_tracks = [
-        track for track in all_tracks if query_lower in track.title.lower()
+        track for track in all_tracks if query_lower in track.titleFromYoutube.lower()
     ]
 
     return filtered_tracks

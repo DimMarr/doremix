@@ -6,7 +6,7 @@ from .artist import ArtistSchema
 
 class TrackSchema(BaseModel):
     idTrack: int
-    title: str
+    titleFromYoutube: str
     youtubeLink: str | None = None
     listeningCount: int
     durationSeconds: int | None = None
