@@ -120,7 +120,7 @@ class PlaylistRepository:
             track = TrackRepository.create(
                 db,
                 Track(
-                    titleFromYoutube=title,
+                    title=title,
                     youtubeLink=clean_url,
                     durationSeconds=durationSeconds,
                     artists=[artist],

@@ -92,7 +92,7 @@ def search_tracks(query: str) -> list[TrackSchema]:
 
     query_lower = query.lower()
     filtered_tracks = [
-        track for track in all_tracks if query_lower in track.titleFromYoutube.lower()
+        track for track in all_tracks if query_lower in track.title.lower()
     ]
 
     return filtered_tracks

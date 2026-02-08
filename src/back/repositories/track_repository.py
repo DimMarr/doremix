@@ -40,7 +40,7 @@ class TrackRepository:
             .options(joinedload(Track.artists))
             .filter(
                 or_(
-                    Track.titleFromYoutube.ilike(f"%{query}%"),
+                    Track.title.ilike(f"%{query}%"),
                     Artist.name.ilike(f"%{query}%"),
                 )
             )

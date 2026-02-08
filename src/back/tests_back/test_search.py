@@ -61,7 +61,7 @@ def sample_playlists(db: Session, sample_user, sample_genre):
 def sample_track(db, sample_artist):
     """Crée un track de test avec un artiste"""
     track = Track(
-        titleFromYoutube="Imagine",
+        title="Imagine",
         youtubeLink="https://www.youtube.com/watch?v=voJzf0P6YPE",
     )
     track.artists.append(sample_artist)
@@ -91,7 +91,7 @@ class TestSearch:
 
         data = response.json()
         assert len(data["tracks"]) == 1
-        assert data["tracks"][0]["titleFromYoutube"] == "Imagine"
+        assert data["tracks"][0]["title"] == "Imagine"
         assert len(data["playlists"]) == 0
 
     def test_search_finds_both_playlists_and_tracks(
@@ -99,7 +99,7 @@ class TestSearch:
     ):
         """Test la recherche qui trouve à la fois des playlists et des tracks."""
         track = Track(
-            titleFromYoutube="Rock67 Song",
+            title="Rock67 Song",
             youtubeLink="https://www.youtube.com/watch?v=test",
         )
         track.artists.append(sample_artist)
