@@ -4,6 +4,7 @@ import { TrackListHeader } from "@components/tracks/header";
 import { TrackRow } from "@components/tracks/row";
 import { AlertManager } from "@utils/alertManager";
 import { trackPlayerInstance } from "@layouts/mainLayout";
+import { YoutubePlayerState } from "@store/trackPlayer";
 import { PlaylistRepository } from "@repositories/index";
 import type Playlist from "@models/playlist";
 import type { Track } from "@models/track";
@@ -15,6 +16,7 @@ interface PageParams {
 function renderTrackList(playlist: Playlist): string {
   const tracks = playlist.tracks || [];
   const currentTrack = trackPlayerInstance.getCurrentTrack();
+  const playerState = trackPlayerInstance.getPlayerState();
 
   return (
     <div>
@@ -25,7 +27,7 @@ function renderTrackList(playlist: Playlist): string {
           index={index}
           playlist={playlist}
           trackPlayer={trackPlayerInstance}
-          current_track={currentTrack}
+          current_track={[YoutubePlayerState.UNSTARTED, YoutubePlayerState.CUED].includes(playerState)  ? null : currentTrack}
         />
       )) as 'safe'}
     </div>
@@ -75,14 +77,34 @@ export async function PlaylistDetailPage(
     const track = tracks[trackIndex];
     if (!track) return;
 
+    const wasPlaying = trackPlayerInstance.getCurrentTrack()?.idTrack === track.idTrack;
+
+    // On supprime la playlist du track store.
+    tracks = tracks.filter((_, i) => i !== trackIndex);
+    playlist.tracks = tracks;
+    trackPlayerInstance.setPlaylist({ ...playlist });
+
+    // Si la track supprimée était en cours on la stoppe et on passe à la track suivante (s'il reste des tracks)
+    if (wasPlaying) {
+      trackPlayerInstance.stopVideo();
+      if (tracks.length > 0) {
+        trackPlayerInstance.nextTrack();
+      }
+    }
+
+    updateTrackListDisplay();
+
     try {
       await new TrackRepository().delete(playlist.idPlaylist, track.idTrack);
-      tracks = tracks.filter((_, i) => i !== trackIndex);
-      trackPlayerInstance.setPlaylist({ ...playlist, tracks });
-      updateTrackListDisplay();
     } catch (err) {
       console.error(err);
       new AlertManager().error("Failed to remove track");
+
+      // S'il y a une erreur lors de la suppression du track, on revient en arrière en affichant la track qui n'a pas pu être supprimé.
+      tracks.splice(trackIndex, 0, track);
+      playlist.tracks = tracks;
+      trackPlayerInstance.setPlaylist({ ...playlist });
+      updateTrackListDisplay();
     }
   };
 

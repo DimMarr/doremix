@@ -4,6 +4,8 @@ import { createMainLayout, trackPlayerInstance } from "@layouts/mainLayout";
 import { Router } from "./router";
 import { NoInternetPage } from "@pages/noInternet";
 
+export let routerInstance = null;
+
 export default async function init() {
   if(!navigator.onLine){
     document.getElementById("app").innerHTML = NoInternetPage();
@@ -22,6 +24,7 @@ export default async function init() {
   });
 
   router.onRouteChange();
+  routerInstance = router;
 }
 
 init();
