@@ -17,7 +17,7 @@ export class TrackRepository {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url, title: title }),
+        body: JSON.stringify({ url, title }),
       });
 
       if (!response.ok) {

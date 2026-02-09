@@ -225,9 +225,9 @@ export function TrackPlayer() {
 
 
               <button
-                class="control-btn w-12 h-12 rounded-full relative flex items-center justify-center font-bold shadow-lg hover:shadow-xl hidden"
+                class="control-btn w-12 h-12 rounded-full relative flex items-center justify-center font-bold shadow-lg hover:shadow-xl"
                 id="pauseBtn"
-                title="Pause"
+                title="Play"
               >
                 <img
                   src={pauseIcon}
