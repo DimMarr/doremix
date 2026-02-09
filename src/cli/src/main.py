@@ -1,7 +1,7 @@
 import typer
 
-from cli.src.commands.playlist import app as playlist_app
-from cli.src.commands.track import app as track_app
+from src.commands.playlist import app as playlist_app
+from src.commands.track import app as track_app
 
 app = typer.Typer()
 
