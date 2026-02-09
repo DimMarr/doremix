@@ -13,7 +13,7 @@ pre_commit_check:
     paths:
       - .cache/pre-commit
   before_script:
-    - apt-get update && apt-get install -y git
+    - apt-get update && apt-get install -y git libatomic1
     - pip install pre-commit
   script:
     - echo "🔍 Exécution des hooks pre-commit sur l'ensemble des fichiers..."
