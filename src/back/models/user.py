@@ -19,6 +19,7 @@ class User(Base):
     username = Column("username", String(255), nullable=False)
     role = Column("role", Enum(UserRole), default=UserRole.USER)
     banned = Column("banned", Boolean, default=False)
+    isVerified = Column("isVerified", Boolean, default=False)  # for email verification
 
     playlists = relationship(
         "Playlist", secondary="user_playlist", back_populates="users"

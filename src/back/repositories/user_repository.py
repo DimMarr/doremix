@@ -34,6 +34,7 @@ class UserRepository:
             email=email,
             username=username,
             password=password_hash,
+            isVerified=False,  # for email verification
             role=UserRole.USER,  # default role
             banned=False,
         )
@@ -43,6 +44,15 @@ class UserRepository:
         db.refresh(db_user)
 
         return db_user
+
+    @staticmethod
+    def mark_as_verified(db: Session, userId: int):
+        user = db.query(User).filter(User.idUser == userId).first()
+        if user:
+            user.is_verified = True
+            db.commit()
+            db.refresh(user)
+        return user
 
     @staticmethod
     def search_users(db: Session, query: str, limit: int = 10):

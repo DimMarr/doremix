@@ -17,6 +17,7 @@ class UserSchema(BaseModel):
     username: str
     role: UserRole
     banned: bool
+    isVerified: bool
     playlists: Optional[List[PlaylistSchema]] = None
 
     model_config = ConfigDict(from_attributes=True)
