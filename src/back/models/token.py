@@ -17,11 +17,18 @@ class Token(Base):
 
     idToken = Column("idtoken", Integer, primary_key=True)
     token = Column("token", String(255), unique=True, nullable=False)
-    type = Column("type", Enum(TokenTypes), name='token_type', nullable=False)
-    idUser = Column("userid", Integer, ForeignKey("users.iduser", ondelete="CASCADE"), nullable=False)
-    createdAt = Column("createdat", DateTime, default=datetime.now(timezone.utc), nullable=False)
+    type = Column("type", Enum(TokenTypes), name="token_type", nullable=False)
+    idUser = Column(
+        "userid",
+        Integer,
+        ForeignKey("users.iduser", ondelete="CASCADE"),
+        nullable=False,
+    )
+    createdAt = Column(
+        "createdat", DateTime, default=datetime.now(timezone.utc), nullable=False
+    )
     expiresAt = Column("expiresat", DateTime, nullable=False)
-    
+
     user = relationship("User", back_populates="tokens")
 
     @property
