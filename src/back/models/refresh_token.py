@@ -7,20 +7,20 @@ from datetime import datetime, timezone
 class RefreshToken(Base):
     __tablename__ = "refresh_token"
 
-    idToken = Column("idtoken", Integer, primary_key=True)
+    idToken = Column("idToken", Integer, primary_key=True)
     token = Column("token", String(255), unique=True, nullable=False)
     idUser = Column(
-        "userid",
+        "idUser",
         Integer,
-        ForeignKey("users.iduser", ondelete="CASCADE"),
+        ForeignKey("users.idUser", ondelete="CASCADE"),
         nullable=False,
     )
     createdAt = Column(
-        "createdat", DateTime, default=datetime.now(timezone.utc), nullable=False
+        "createdAt", DateTime, default=datetime.now(timezone.utc), nullable=False
     )
-    expiresAt = Column("expiresat", DateTime, nullable=False)
+    expiresAt = Column("expiresAt", DateTime, nullable=False)
 
-    user = relationship("User", back_populates="tokens")
+    user = relationship("Users", back_populates="refresh_token")
 
     @property
     def is_valid(self):
