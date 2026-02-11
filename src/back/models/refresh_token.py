@@ -7,18 +7,18 @@ from datetime import datetime, timezone
 class RefreshToken(Base):
     __tablename__ = "refresh_token"
 
-    idToken = Column("idToken", Integer, primary_key=True)
+    idToken = Column("idtoken", Integer, primary_key=True)
     token = Column("token", String(255), unique=True, nullable=False)
     idUser = Column(
-        "idUser",
+        "iduser",
         Integer,
-        ForeignKey("users.idUser", ondelete="CASCADE"),
+        ForeignKey("users.iduser", ondelete="CASCADE"),
         nullable=False,
     )
     createdAt = Column(
-        "createdAt", DateTime, default=datetime.now(timezone.utc), nullable=False
+        "createdat", DateTime, default=datetime.now(timezone.utc), nullable=False
     )
-    expiresAt = Column("expiresAt", DateTime, nullable=False)
+    expiresAt = Column("expiresat", DateTime, nullable=False)
 
     user = relationship("Users", back_populates="refresh_token")
 
