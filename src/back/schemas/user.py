@@ -25,7 +25,6 @@ class UserSchema(BaseModel):
 
 class UserRegisterSchema(BaseModel):
     email: str
-    username: str
     password: str
 
     @field_validator("email")
@@ -35,11 +34,3 @@ class UserRegisterSchema(BaseModel):
         ):  # name.lastname@[et].umontpellier.fr
             raise ValueError("Invalid email format")
         return email
-
-    @field_validator("username")
-    def validate_username(cls, username):
-        if not re.match(r"^[a-zA-Z0-9_.]+$", username):  # name.lastname
-            raise ValueError(
-                "Username can only contain letters, numbers, and underscores"
-            )
-        return username

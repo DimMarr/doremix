@@ -21,20 +21,22 @@ class UserRepository:
         return db.query(User).filter(User.idUser == user_id).first()
 
     @staticmethod
-    def get_by_email_or_username(db: Session, email: str, username: str):
-        return (
-            db.query(User)
-            .filter(or_(User.email == email, User.username == username))
-            .first()
-        )
+    def get_by_email(db: Session, email: str):
+        return db.query(User).filter(User.email == email).first()
 
     @staticmethod
-    def create_user(db: Session, email: str, username: str, password_hash: str):
+    def get_by_username(db: Session, username: str):
+        return db.query(User).filter(User.username == username).first()
+
+    @staticmethod
+    def create_user(
+        db: Session, email: str, username: str, password_hash: str, is_verified: bool
+    ):
         db_user = User(
             email=email,
             username=username,
             password=password_hash,
-            isVerified=False,  # for email verification
+            isVerified=is_verified,  # for email verification
             role=UserRole.USER,  # default role
             banned=False,
         )
