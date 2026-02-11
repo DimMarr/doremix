@@ -3,6 +3,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 
+
 class RefreshToken(Base):
     __tablename__ = "refresh_token"
 

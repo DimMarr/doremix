@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 
+
 class RefreshTokenSchema(BaseModel):
     idToken: int
     token: str
