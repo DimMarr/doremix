@@ -16,11 +16,21 @@ from routes import (
     tracksRouter,
     artistsRouter,
     searchRouter,
+    registerRouter,
 )
 
-routers = [usersRouter, playlistsRouter, tracksRouter, artistsRouter, searchRouter]
+routers = [
+    usersRouter,
+    playlistsRouter,
+    tracksRouter,
+    artistsRouter,
+    searchRouter,
+    registerRouter,
+]
 
 app = FastAPI()
+
+pepper = os.getenv("PEPPER_KEY")
 
 # Setup du rate limiter
 print("Setting up rate limiter with limit:", os.getenv("RATE_LIMIT", "100/minute"))

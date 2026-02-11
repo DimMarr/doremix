@@ -31,9 +31,9 @@ class User(Base):
             return UserRole.MODERATOR
         elif self.idRole == 3:
             return UserRole.ADMIN
-        # Default : 
+        # Default :
         return UserRole.USER
-    
+
     # To be able to do user.role = UserRole.ADMIN
     @role.setter
     def role(self, role_enum: UserRole):
