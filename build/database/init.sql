@@ -152,6 +152,15 @@ CREATE TABLE REFRESH_TOKEN (
     CONSTRAINT fk_token_user FOREIGN KEY (idUser) REFERENCES USERS(idUser) ON DELETE CASCADE
 );
 
+CREATE TABLE VERIFICATION_TOKEN (
+    idVerificationToken SERIAL PRIMARY KEY,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    idUser INTEGER NOT NULL,
+    expiresAt TIMESTAMP NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_verification_user FOREIGN KEY (idUser) REFERENCES USERS(idUser) ON DELETE CASCADE
+);
+
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -170,3 +179,4 @@ CREATE INDEX IF NOT EXISTS idx_playlist_name ON playlist(name);
 CREATE INDEX IF NOT EXISTS idx_artist_name ON artist(name);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_access_token_string ON access_token(token);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_refresh_token_string ON refresh_token(token);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_verification_token_string ON verification_token(token);
