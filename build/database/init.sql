@@ -11,7 +11,6 @@ DROP TABLE IF EXISTS USERS CASCADE;
 DROP TYPE IF EXISTS playlist_visibility;
 
 CREATE TYPE playlist_visibility AS ENUM ('PUBLIC', 'PRIVATE', 'SHARED');
-CREATE TYPE token_type AS ENUM ('ACCESS', 'REFRESH', 'VERIFICATION', 'RESET');
 
 CREATE TABLE GENRE (
     idGenre SERIAL PRIMARY KEY,
@@ -135,10 +134,18 @@ CREATE TABLE USER_PLAYLIST (
 );
 
 
-CREATE TABLE TOKEN (
+CREATE TABLE ACCESS_TOKEN (
     idToken SERIAL PRIMARY KEY,
     token VARCHAR(255) NOT NULL,
-    type token_type NOT NULL,
+    idUser INTEGER NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expiresAt TIMESTAMP NOT NULL,
+    CONSTRAINT fk_token_user FOREIGN KEY (idUser) REFERENCES USERS(idUser) ON DELETE CASCADE
+);
+
+CREATE TABLE REFRESH_TOKEN (
+    idToken SERIAL PRIMARY KEY,
+    token VARCHAR(255) NOT NULL,
     idUser INTEGER NOT NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     expiresAt TIMESTAMP NOT NULL,
@@ -161,4 +168,5 @@ CREATE TRIGGER update_playlist_updated_at
 CREATE INDEX IF NOT EXISTS idx_track_title ON track(title);
 CREATE INDEX IF NOT EXISTS idx_playlist_name ON playlist(name);
 CREATE INDEX IF NOT EXISTS idx_artist_name ON artist(name);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_token_string ON tokens(token);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_access_token_string ON access_token(token);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_refresh_token_string ON refresh_token(token);

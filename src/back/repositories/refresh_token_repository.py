@@ -3,11 +3,11 @@ import secrets
 import hashlib
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
-from models.token import Token, TokenTypes
+from back.models.acces_token import Token, TokenTypes
 from typing import cast
 
 
-class TokenRepository:
+class RefreshTokenRepository:
     @staticmethod
     def hash_token(cookieToken: str) -> str:
         secret_key = os.getenv("TOKEN_SECRET_KEY")
@@ -22,7 +22,7 @@ class TokenRepository:
         db: Session, userId: int, token_type: TokenTypes, durationMinutes: int
     ) -> Token:
         cookieToken = secrets.token_urlsafe(64)  # not stored in DB
-        hashedToken = TokenRepository.hash_token(cookieToken)
+        hashedToken = RefreshTokenRepository.hash_token(cookieToken)
         expiresAt = datetime.now(timezone.utc) + timedelta(minutes=durationMinutes)
 
         dbToken = Token(
@@ -41,7 +41,7 @@ class TokenRepository:
     def get_valid_token(
         db: Session, cookieTokenStr: str, required_type: TokenTypes
     ) -> Token | None:
-        hashedTokenToCheck = TokenRepository.hash_token(cookieTokenStr)
+        hashedTokenToCheck = RefreshTokenRepository.hash_token(cookieTokenStr)
 
         result = (
             db.query(Token)
@@ -56,7 +56,7 @@ class TokenRepository:
 
     @staticmethod
     def revoke_token(db: Session, cookieTokenStr: str):
-        hashedToken = TokenRepository.hash_token(cookieTokenStr)
+        hashedToken = RefreshTokenRepository.hash_token(cookieTokenStr)
         db.query(Token).filter(Token.token == hashedToken).delete()
         db.commit()
 
