@@ -4,8 +4,8 @@ from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 
 
-class RefreshToken(Base):
-    __tablename__ = "refresh_token"
+class VerificationToken(Base):
+    __tablename__ = "verification_token"
 
     idToken = Column("idtoken", Integer, primary_key=True)
     token = Column("token", String(255), unique=True, nullable=False)

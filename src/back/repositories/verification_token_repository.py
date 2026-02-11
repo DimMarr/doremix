@@ -3,7 +3,7 @@ import secrets
 import hashlib
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
-from back.models.verification_token import RefreshToken
+from back.models.verification_token import VerificationToken
 from typing import cast
 
 
@@ -18,12 +18,16 @@ class VerificationTokenRepository:
         return hashlib.sha256(combined.encode("utf-8")).hexdigest()
 
     @staticmethod
-    def create_token(db: Session, userId: int, durationMinutes: int) -> VerificationToken:
+    def create_token(
+        db: Session, userId: int, durationMinutes: int
+    ) -> VerificationToken:
         cookieToken = secrets.token_urlsafe(64)  # not stored in DB
         hashedToken = VerificationTokenRepository.hash_token(cookieToken)
         expiresAt = datetime.now(timezone.utc) + timedelta(minutes=durationMinutes)
 
-        dbToken = VerificationToken(token=hashedToken, idUser=userId, expiresAt=expiresAt)
+        dbToken = VerificationToken(
+            token=hashedToken, idUser=userId, expiresAt=expiresAt
+        )
 
         db.add(dbToken)
         db.commit()
@@ -53,7 +57,9 @@ class VerificationTokenRepository:
     @staticmethod
     def revoke_token(db: Session, cookieTokenStr: str):
         hashedToken = VerificationTokenRepository.hash_token(cookieTokenStr)
-        db.query(VerificationToken).filter(VerificationToken.token == hashedToken).delete()
+        db.query(VerificationToken).filter(
+            VerificationToken.token == hashedToken
+        ).delete()
         db.commit()
 
     @staticmethod
