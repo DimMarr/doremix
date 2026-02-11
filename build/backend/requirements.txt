@@ -8,3 +8,5 @@ Pillow
 python-multipart
 yt_dlp
 slowapi
+passlib
+bcrypt==3.2.2

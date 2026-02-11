@@ -51,6 +51,8 @@ services:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       CORS_ORIGINS: ${CORS_ORIGINS}
       RATE_LIMIT: ${RATE_LIMIT:-100/minute}
+      TOKEN_SECRET_KEY: ${TOKEN_SECRET_KEY}
+      PEPPER_KEY: ${PEPPER_KEY}
     volumes:
       - ./src/back:/app
       - ./uploads/covers:/app/uploads/covers
