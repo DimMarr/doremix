@@ -3,7 +3,7 @@ import secrets
 import hashlib
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
-from back.models.acces_token import Token, TokenTypes
+from back.models.acces_token import AccessToken
 from typing import cast
 
 
@@ -18,16 +18,12 @@ class AccessTokenRepository:
         return hashlib.sha256(combined.encode("utf-8")).hexdigest()
 
     @staticmethod
-    def create_token(
-        db: Session, userId: int, token_type: TokenTypes, durationMinutes: int
-    ) -> Token:
+    def create_token(db: Session, userId: int, durationMinutes: int) -> AccessToken:
         cookieToken = secrets.token_urlsafe(64)  # not stored in DB
         hashedToken = AccessTokenRepository.hash_token(cookieToken)
         expiresAt = datetime.now(timezone.utc) + timedelta(minutes=durationMinutes)
 
-        dbToken = Token(
-            token=hashedToken, type=token_type, idUser=userId, expiresAt=expiresAt
-        )
+        dbToken = AccessToken(token=hashedToken, idUser=userId, expiresAt=expiresAt)
 
         db.add(dbToken)
         db.commit()
@@ -39,34 +35,34 @@ class AccessTokenRepository:
 
     @staticmethod
     def get_valid_token(
-        db: Session, cookieTokenStr: str, required_type: TokenTypes
-    ) -> Token | None:
+        db: Session,
+        cookieTokenStr: str,
+    ) -> AccessToken | None:
         hashedTokenToCheck = AccessTokenRepository.hash_token(cookieTokenStr)
 
         result = (
-            db.query(Token)
+            db.query(AccessToken)
             .filter(
-                Token.token == hashedTokenToCheck,
-                Token.type == required_type,
-                Token.expiresAt > datetime.now(timezone.utc),
+                AccessToken.token == hashedTokenToCheck,
+                AccessToken.expiresAt > datetime.now(timezone.utc),
             )
             .first()
         )
-        return cast(Token, result) if result else None
+        return cast(AccessToken, result) if result else None
 
     @staticmethod
     def revoke_token(db: Session, cookieTokenStr: str):
         hashedToken = AccessTokenRepository.hash_token(cookieTokenStr)
-        db.query(Token).filter(Token.token == hashedToken).delete()
+        db.query(AccessToken).filter(AccessToken.token == hashedToken).delete()
         db.commit()
 
     @staticmethod
     def revoke_all_user_tokens(db: Session, userId: int):
-        db.query(Token).filter(Token.idUser == userId).delete()
+        db.query(AccessToken).filter(AccessToken.idUser == userId).delete()
         db.commit()
 
     @staticmethod
     def clean_expired_tokens(db: Session):
         now = datetime.now(timezone.utc)
-        db.query(Token).filter(Token.expiresAt < now).delete()
+        db.query(AccessToken).filter(AccessToken.expiresAt < now).delete()
         db.commit()
