@@ -1,7 +1,7 @@
 ```mermaid
 
 erDiagram
-    %% --- AUTHENTICATION ---
+    %% --- AUTHENTICATION & USERS ---
     USERS {
         int idUser PK
         string email "Unique"
@@ -14,10 +14,21 @@ erDiagram
 
     ROLE {
         int idRole PK
-        string roleName "Unique (USER, ADMIN, etc)"
+        string roleName "USER, MODERATOR, ADMIN"
     }
 
-    VERIFICATION_TOKEN {
+    RIGHTS {
+        int idRight PK
+        string rightName "CREATE, READ, EDIT, DELETE, BAN_USER"
+    }
+
+    ROLE_RIGHTS {
+        int idRole PK, FK
+        int idRight PK, FK
+    }
+
+    %% --- TOKENS ---
+    ACCESS_TOKEN {
         int idToken PK
         string token "Unique"
         int idUser FK
@@ -33,17 +44,34 @@ erDiagram
         datetime createdAt
     }
 
-    %% --- MUSIC CONTENT ---
-    PLAYLIST {
-        int idPlaylist PK
-        string name
-        string visibility "Enum: PUBLIC, PRIVATE, SHARED"
-        int vote
-        string coverImage
-        int idGenre FK
-        int idOwner FK
+    VERIFICATION_TOKEN {
+        int idToken PK
+        string token "Unique"
+        int idUser FK
+        datetime expiresAt
         datetime createdAt
-        datetime updatedAt
+    }
+
+    %% --- GROUPS ---
+    USER_GROUP {
+        int idGroup PK
+        string groupName "Unique"
+    }
+
+    GROUP_USER {
+        int idUser PK, FK
+        int idGroup PK, FK
+    }
+
+    %% --- MUSIC CORE ---
+    GENRE {
+        int idGenre PK
+        string label
+    }
+
+    ARTIST {
+        int idArtist PK
+        string name
     }
 
     TRACK {
@@ -55,57 +83,60 @@ erDiagram
         datetime createdAt
     }
 
-    ARTIST {
-        int idArtist PK
+    PLAYLIST {
+        int idPlaylist PK
         string name
+        int idGenre FK
+        int idOwner FK
+        int vote
+        string visibility "PUBLIC, PRIVATE, SHARED"
+        string coverImage
+        datetime createdAt
+        datetime updatedAt
     }
 
-    GENRE {
-        int idGenre PK
-        string label
-    }
-
-    %% --- SOCIAL & GROUPS ---
-    USER_GROUP {
-        int idGroup PK
-        string groupName
-    }
-
-    %% --- PIVOT TABLES (MANY-TO-MANY) ---
+    %% --- RELATIONS & PIVOTS ---
     TRACK_ARTIST {
-        int idTrack FK
-        int idArtist FK
+        int idTrack PK, FK
+        int idArtist PK, FK
     }
 
     TRACK_PLAYLIST {
-        int idTrack FK
-        int idPlaylist FK
+        int idTrack PK, FK
+        int idPlaylist PK, FK
         string nameInPlaylist
     }
 
     USER_PLAYLIST {
-        int idUser FK
-        int idPlaylist FK
+        int idUser PK, FK
+        int idPlaylist PK, FK
         boolean editor
     }
 
-    GROUP_USER {
-        int idUser FK
-        int idGroup FK
-    }
-
     GROUP_PLAYLIST {
-        int idGroup FK
-        int idPlaylist FK
+        int idGroup PK, FK
+        int idPlaylist PK, FK
     }
 
-    %% --- RELATIONSHIPS ---
-    USERS }|--|| ROLE : "has role"
-    USERS ||--o{ VERIFICATION_TOKEN : "has"
-    USERS ||--o{ REFRESH_TOKEN : "has"
+    PLAYLIST_RIGHTS {
+        int idPlaylist PK, FK
+        int idRight PK, FK
+    }
 
-    USERS ||--o{ PLAYLIST : "owns (idOwner)"
-    PLAYLIST }|--|| GENRE : "has genre"
+    %% --- LINKS ---
+    USERS }|--|| ROLE : "has"
+    ROLE ||--|{ ROLE_RIGHTS : "defines"
+    RIGHTS ||--|{ ROLE_RIGHTS : "included in"
+
+    USERS ||--o{ ACCESS_TOKEN : "owns"
+    USERS ||--o{ REFRESH_TOKEN : "owns"
+    USERS ||--o{ VERIFICATION_TOKEN : "owns"
+
+    USERS }|--|{ GROUP_USER : "member of"
+    USER_GROUP ||--|{ GROUP_USER : "contains"
+
+    USERS ||--o{ PLAYLIST : "creates (Owner)"
+    GENRE ||--o{ PLAYLIST : "categorizes"
 
     PLAYLIST ||--|{ TRACK_PLAYLIST : "contains"
     TRACK ||--|{ TRACK_PLAYLIST : "is in"
@@ -113,13 +144,13 @@ erDiagram
     TRACK ||--|{ TRACK_ARTIST : "performed by"
     ARTIST ||--|{ TRACK_ARTIST : "performs"
 
-    USERS ||--|{ USER_PLAYLIST : "can edit/view"
-    PLAYLIST ||--|{ USER_PLAYLIST : "shared with"
+    USERS ||--|{ USER_PLAYLIST : "access/edit"
+    PLAYLIST ||--|{ USER_PLAYLIST : "shared with user"
 
-    USERS ||--|{ GROUP_USER : "member of"
-    USER_GROUP ||--|{ GROUP_USER : "contains users"
+    USER_GROUP ||--|{ GROUP_PLAYLIST : "access"
+    PLAYLIST ||--|{ GROUP_PLAYLIST : "shared with group"
 
-    USER_GROUP ||--|{ GROUP_PLAYLIST : "accesses"
-    PLAYLIST ||--|{ GROUP_PLAYLIST : "available to group"
+    PLAYLIST ||--|{ PLAYLIST_RIGHTS : "has specific rights"
+    RIGHTS ||--|{ PLAYLIST_RIGHTS : "applied to"
 
 ```
