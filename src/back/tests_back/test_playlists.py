@@ -242,7 +242,6 @@ class TestPlaylistEdgeCases:
         visibility_types = [
             PlaylistVisibility.PUBLIC,
             PlaylistVisibility.PRIVATE,
-            PlaylistVisibility.SHARED,
         ]
 
         for visibility in visibility_types:

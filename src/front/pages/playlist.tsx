@@ -45,7 +45,9 @@ function getIconForVisibility(visibility: Visibility) {
 }
 
 function getVisibilityElement(visibility: Visibility) {
-  const containerClass = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border uppercase tracking-wider cursor-pointer transition-all duration-200 relative group shadow-sm hover:shadow-md";
+  const badgeBase = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border uppercase tracking-wider transition-all duration-200 shadow-sm whitespace-nowrap";
+  const interactable = "cursor-pointer hover:shadow-md relative select-none";
+  const locked = "cursor-not-allowed opacity-80";
 
   let colorClass = "";
   switch (visibility.toLowerCase()) {
@@ -65,7 +67,7 @@ function getVisibilityElement(visibility: Visibility) {
 
   if (visibility === Visibility.open) {
     return (
-      <div class={`${containerClass} ${colorClass} cursor-not-allowed opacity-80`}>
+      <div class={`${badgeBase} ${colorClass} ${locked} w-fit`}>
         <div class="flex items-center gap-2">
           {getIconForVisibility(visibility) as 'safe'}
           <span>{visibility}</span>
@@ -74,30 +76,38 @@ function getVisibilityElement(visibility: Visibility) {
           </svg>
         </div>
       </div>
-    )
+    );
   }
 
-  return (
-    <div class={`${containerClass} ${colorClass}`}>
-      <select id="visibility-select" class="appearance-none bg-transparent border-none outline-none cursor-pointer absolute inset-0 w-full h-full opacity-0 z-10">
-        <option value={visibility} selected class="hidden">{visibility}</option>
-        {visibility === Visibility.public && <option value={Visibility.private} class="bg-gray-900 text-white">Private</option>}
-        {visibility === Visibility.private && <option value={Visibility.public} class="bg-gray-900 text-white">Public</option>}
-        {visibility === Visibility.shared && (
-          <>
-            <option value={Visibility.private} class="bg-gray-900 text-white">Private</option>
-            <option value={Visibility.public} class="bg-gray-900 text-white">Public</option>
-          </>
-        )}
-      </select>
+  const menuOptionClass = "w-full text-left px-4 py-3 text-sm font-medium text-white hover:bg-white/10 flex items-center gap-2 transition-colors active:bg-white/20";
 
-      <div class="flex items-center gap-2 pointer-events-none">
-        {getIconForVisibility(visibility) as 'safe'}
-        <span>{visibility}</span>
-        {/* Dropdown arrow */}
-        <svg class="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
+  return (
+    <div class="relative z-20 w-fit">
+      <div id="visibility-trigger" class={`${badgeBase} ${colorClass} ${interactable}`} data-visibility-trigger>
+        <div class="flex items-center gap-2 pointer-events-none">
+          {getIconForVisibility(visibility) as 'safe'}
+          <span>{visibility}</span>
+          <svg class="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+
+      <div id="visibility-menu" class="hidden absolute top-full left-0 mt-2 w-48 bg-neutral-900 border border-white/10 rounded-xl shadow-xl overflow-hidden backdrop-blur-md origin-top-left transition-all z-50 animate-in fade-in zoom-in-95 duration-200">
+        <div class="flex flex-col py-1">
+          {visibility === Visibility.public && (
+            <button class={menuOptionClass} data-visibility-option={Visibility.private}>
+              {getIconForVisibility(Visibility.private) as 'safe'}
+              <span>Private</span>
+            </button>
+          )}
+          {visibility === Visibility.private && (
+            <button class={menuOptionClass} data-visibility-option={Visibility.public}>
+              {getIconForVisibility(Visibility.public) as 'safe'}
+              <span>Public</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -149,21 +159,10 @@ export async function PlaylistDetailPage(
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
         </>
       );
-      bindVisibilityChange();
     }
   }
 
-  const bindVisibilityChange = () => {
-    const select = container.querySelector('#visibility-select');
-    if (select) {
-      select.addEventListener('change', handleVisibilityChange);
-    }
-  }
-
-  const handleVisibilityChange = async (e: Event) => {
-    const target = e.target as HTMLSelectElement;
-    const newVis = target.value as Visibility; // "public" or "private"
-
+  const handleVisibilityChange = async (newVis: Visibility) => {
     // Optimistic update
     const oldVis = playlist.visibility;
     playlist.visibility = newVis;
@@ -270,7 +269,7 @@ export async function PlaylistDetailPage(
           />
           <Button id="add-track-button" variant="outline" size="md">Add Track</Button>
         </div>
-        <div id="playlist-header-info" class="pt-2 flex flex-col gap-2">
+        <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
           {getVisibilityElement(playlist.visibility) as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
@@ -285,11 +284,42 @@ export async function PlaylistDetailPage(
 
   // Initialize functionality
   updateTrackListDisplay();
-  bindVisibilityChange();
 
   // Event delegation
   container.onclick = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
+
+    // Visibility Dropdown Logic
+    const menu = container.querySelector('#visibility-menu');
+    const trigger = target.closest('[data-visibility-trigger]');
+
+    // Toggle Menu
+    if (trigger) {
+      e.stopPropagation();
+      menu?.classList.toggle('hidden');
+      // Close other menus if any? (we assume only one here)
+      return;
+    }
+
+    // Handle Option Selection
+    const option = target.closest('[data-visibility-option]') as HTMLElement | null;
+    if (option) {
+      e.stopPropagation();
+      const newVis = option.getAttribute('data-visibility-option') as Visibility;
+      if (newVis) {
+        handleVisibilityChange(newVis);
+      }
+      menu?.classList.add('hidden');
+      return;
+    }
+
+    // Close menu when clicking outside (since we used stopPropagation on trigger/option, any bubbling click here is "outside" for them)
+    // But wait, if we click somewhere else inside `container`, this handler fires.
+    // If we click inside the menu but not on an option (e.g. padding), we should probably not close?
+    // Let's refine:
+    if (menu && !menu.classList.contains('hidden') && !menu.contains(target)) {
+      menu.classList.add('hidden');
+    }
 
     if (target.closest('#back-button')) {
       onBack();
