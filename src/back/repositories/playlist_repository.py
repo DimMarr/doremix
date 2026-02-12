@@ -82,7 +82,22 @@ class PlaylistRepository:
             db.delete(track)
             db.commit()
             return True
+        if track:
+            db.delete(track)
+            db.commit()
+            return True
         return False
+
+    @staticmethod
+    def get_playlist_tracks(db: Session, playlist_id: int) -> List[Track]:
+        tracks: List[Track] = (
+            db.query(Track)
+            .join(TrackPlaylist)
+            .filter(TrackPlaylist.idPlaylist == playlist_id)
+            .order_by(TrackPlaylist.idTrack)
+            .all()
+        )
+        return tracks
 
     @staticmethod
     def add_track(
