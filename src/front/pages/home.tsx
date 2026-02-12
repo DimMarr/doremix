@@ -30,7 +30,8 @@ export async function HomePage(container) {
                 {playlistCards as 'safe'}
               </div>
             </div>
-          )
+          ),
+          className: "rounded-lg"
         })
       }
       <div id="modal-container"></div>
