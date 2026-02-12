@@ -95,7 +95,7 @@ class PlaylistRepository:
 
         # Search for https://www.youtube.com/watch?=***** or https://youtu.be/***** URL format
         match = regex_match(
-            "(https://www\.youtube\.com/watch\?v=[^&|\s]+|https://youtu\.be/[^?|\s]+)",
+            r"(https://www\.youtube\.com/watch\?v=[^&|\s]+|https://youtu\.be/[^?|\s]+)",
             youtubeLink,
         )
         if not match:
@@ -108,7 +108,7 @@ class PlaylistRepository:
             durationSeconds, author_name = get_youtube_video_info(clean_url)
 
             # Checks if Youtube video exists
-            if durationSeconds == "Video unavailable":
+            if durationSeconds is None:
                 return track, "invalid url"
 
             if durationSeconds is None:
@@ -169,10 +169,7 @@ class PlaylistRepository:
             .filter(
                 and_(
                     Playlist.name.ilike(f"%{query}%"),
-                    or_(
-                        Playlist.visibility == PlaylistVisibility.PUBLIC,
-                        Playlist.visibility == PlaylistVisibility.OPEN,
-                    ),
+                    Playlist.visibility == PlaylistVisibility.PUBLIC,
                 )
             )
             .limit(limit)
