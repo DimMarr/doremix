@@ -105,6 +105,7 @@ class AuthService {
 
     async logout() {
         this.accessToken = null;
+        document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
         // const response = await fetch(`${API_BASE_URL}/auth/logout`, {
         //     method: 'POST',
         //     credentials: 'same-origin' // or include ?
