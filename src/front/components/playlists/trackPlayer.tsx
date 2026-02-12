@@ -174,7 +174,7 @@ export function TrackPlayer() {
     >
       {/* Player controls */}
       <div
-        class="fixed bottom-0 left-0 right-0 bg-neutral-900 border-t border-border shadow-2xl backdrop-blur-sm flex items-start md:items-center justify-between md:flex-row flex-col px-6 py-4 hidden"
+        class="fixed bottom-0 left-0 right-0 z-50 bg-neutral-900 border-t border-border shadow-2xl backdrop-blur-sm flex items-start md:items-center justify-between md:flex-row flex-col px-6 py-4 hidden"
         id="playerContainer"
       >
         <div
