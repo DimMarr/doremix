@@ -121,7 +121,7 @@ def create(
         "PUBLIC",
         "--visibility",
         "-v",
-        help="Visibility (PUBLIC, PRIVATE, OPEN)",
+        help="Visibility (PUBLIC, PRIVATE, SHARED, OPEN)",
     ),
     # owner: int = typer.Option(..., "--owner", "-o", help="Owner ID")  # TODO: À supprimer quand l'auth sera en place (récupéré depuis le token)
 ):

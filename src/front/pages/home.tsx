@@ -16,9 +16,11 @@ export async function HomePage(container) {
 
   const personalPlaylists = allPlaylists.filter(p => p.idOwner === currentUserId);
   const publicPlaylists = allPlaylists.filter(p => p.visibility === Visibility.public && p.idOwner !== currentUserId);
+  const openPlaylists = allPlaylists.filter(p => p.visibility === Visibility.open);
 
   const personalCards = buildCardsFromPlaylists(personalPlaylists);
   const publicCards = buildCardsFromPlaylists(publicPlaylists);
+  const openCards = buildCardsFromPlaylists(openPlaylists);
 
   const pageHtml = (
     <div class="px-4 py-6 md:px-8 space-y-12">
@@ -36,15 +38,12 @@ export async function HomePage(container) {
         </div>
 
         {personalPlaylists.length > 0 ? (
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6">
             {personalCards as 'safe'}
           </div>
         ) : (
           <div class="bg-white/5 rounded-lg p-8 text-center border border-white/10">
             <p class="text-white/60 mb-4">You haven't created any playlists yet.</p>
-            <button id="create-first-playlist-btn" class="px-6 py-2 bg-primary/20 hover:bg-primary/30 text-primary rounded-full transition-colors font-medium">
-              Create your first playlist
-            </button>
           </div>
         )}
       </section>
@@ -57,13 +56,26 @@ export async function HomePage(container) {
         </div>
 
         {publicPlaylists.length > 0 ? (
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6">
             {publicCards as 'safe'}
           </div>
         ) : (
           <p class="text-white/60">No public playlists available at the moment.</p>
         )}
       </section>
+
+      {/* Official/Open Playlists Section */}
+      {openPlaylists.length > 0 && (
+        <section>
+          <div class="mb-6">
+            <h2 class="text-3xl font-bold tracking-tight text-white/90">Official Playlists</h2>
+            <p class="text-white/60 mt-1 text-sm">Curated by Doremix</p>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6">
+            {openCards as 'safe'}
+          </div>
+        </section>
+      )}
 
       <div id="modal-container"></div>
     </div>
@@ -88,7 +100,7 @@ export async function HomePage(container) {
   }
 
   // Initialize card interactions
-  initCardsElements(container, [...personalPlaylists, ...publicPlaylists]);
+  initCardsElements(container, [...openPlaylists, ...personalPlaylists, ...publicPlaylists]);
 
   // Specific handler for empty state button if present
   const createFirstBtn = document.getElementById('create-first-playlist-btn');

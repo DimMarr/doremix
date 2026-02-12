@@ -130,10 +130,20 @@ export class PlaylistRepository {
                 for (const data of rawDatatracks) {
                     tracks.push(new Track(data));
                 }
+
+                // Ensure visibility is correctly mapped, handling case-insensitivity
+                let visibility: Visibility = Visibility.public;
+                if (item.visibility) {
+                    const vizLower = item.visibility.toLowerCase();
+                    if (Object.values(Visibility).includes(vizLower as Visibility)) {
+                        visibility = vizLower as Visibility;
+                    }
+                }
+
                 return new Playlist({
                     ...item,
                     image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
-                    visibility: item.visibility ? item.visibility.toLowerCase() as Visibility : Visibility.public,
+                    visibility: visibility,
                     tracks: tracks,
                 });
             });
@@ -155,10 +165,20 @@ export class PlaylistRepository {
                 for (const data of rawDatatracks) {
                     tracks.push(new Track(data));
                 }
+
+                // Ensure visibility is correctly mapped, handling case-insensitivity
+                let visibility: Visibility = Visibility.public;
+                if (item.visibility) {
+                    const vizLower = item.visibility.toLowerCase();
+                    if (Object.values(Visibility).includes(vizLower as Visibility)) {
+                        visibility = vizLower as Visibility;
+                    }
+                }
+
                 return new Playlist({
                     ...item,
                     image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
-                    visibility: item.visibility ? item.visibility.toLowerCase() as Visibility : Visibility.public,
+                    visibility: visibility,
                     tracks: tracks,
                 });
             });
@@ -185,5 +205,29 @@ export class PlaylistRepository {
             tracks: tracks,
             artists: artists
         });
+    }
+
+    async update(id: number, data: Partial<Playlist>) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/playlists/${id}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            });
+
+            if (!response.ok) {
+                handleHttpError(response, "Update playlist");
+                throw new Error("Failed to update playlist");
+            }
+            return response.json();
+        } catch (error) {
+            if (error instanceof TypeError) {
+                new AlertManager().error("Network error. Check your connection.");
+            }
+            console.error("Error updating playlist:", error);
+            throw error;
+        }
     }
 }
