@@ -100,7 +100,7 @@ export async function HomePage(container) {
   }
 
   // Initialize card interactions
-  initCardsElements(container, [...openPlaylists, ...personalPlaylists, ...publicPlaylists]);
+  initCardsElements(container, [...personalPlaylists, ...publicPlaylists, ...openPlaylists]);
 
   // Specific handler for empty state button if present
   const createFirstBtn = document.getElementById('create-first-playlist-btn');
