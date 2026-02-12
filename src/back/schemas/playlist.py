@@ -8,6 +8,7 @@ class PlaylistVisibility(str, Enum):
     PUBLIC = "PUBLIC"
     PRIVATE = "PRIVATE"
     SHARED = "SHARED"
+    OPEN = "OPEN"
 
 
 class PlaylistSchema(BaseModel):

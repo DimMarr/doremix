@@ -9,6 +9,7 @@ class PlaylistVisibility(enum.Enum):
     PUBLIC = "PUBLIC"
     PRIVATE = "PRIVATE"
     SHARED = "SHARED"
+    OPEN = "OPEN"
 
 
 class Playlist(Base):
