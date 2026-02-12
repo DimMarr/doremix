@@ -22,5 +22,4 @@ export enum Visibility {
     public = "public",
     private = "private",
     open = "open",
-    shared = "shared",
 }
