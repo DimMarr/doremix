@@ -14,7 +14,7 @@ export function SearchBar({
     inputClassName = ""
 }: SearchBarProps) {
     return (
-        <div class={`relative w-full max-w-2xl mx-auto flex items-center group transition-all duration-200 ${className}`}>
+        <div class={`relative w-full max-w-2xl mx-auto flex items-center group transition-all duration-200 z-50 ${className}`}>
             <svg
                 class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-current opacity-70 pointer-events-none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -176,4 +176,13 @@ export function initSearchBar() {
             )
         );
     }
+    document.addEventListener('click', (e) => {
+        const searchContainer = searchSection?.querySelector('[class*="relative w-full"]');
+        const target = e.target as Node;
+
+        if (searchContainer && !searchContainer.contains(target)) {
+            removeExistingResults(searchSection);
+            setResults(null);
+        }
+    });
 }

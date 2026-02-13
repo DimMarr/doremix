@@ -26,7 +26,7 @@ class PlaylistController:
         playlist = PlaylistRepository.get_by_id(db, playlist_id)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
-        return playlist.tracks
+        return PlaylistRepository.get_playlist_tracks(db, playlist_id)
 
     @staticmethod
     def add_playlist_track(

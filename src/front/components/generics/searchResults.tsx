@@ -24,12 +24,12 @@ export function SearchResults({
     }
 
     return (
-        <div class={`absolute top-full left-0 right-0 mt-2 rounded-md border border-border bg-neutral-900 shadow-md max-h-96 overflow-y-auto z-50 ${className}`}>
+        <div class={`absolute top-full left-0 right-0 mt-2 rounded-md border border-border bg-neutral-900 shadow-md max-h-96 overflow-y-auto z-50 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] ${className}`}>
             {tracks.length > 0 && (
                 <div class="p-2">
                     <div class="px-2 py-1.5 text-xs font-medium text-muted-foreground">Tracks</div>
                     {tracks.map((track, index) => {
-                        const artistName = track.artist?.name ? ` - ${track.artist.name}` : '';
+                        const artistName = track.artists && track.artists.length > 0 ? ` - ${track.artists[0].name}` : '';
                         return (
                             <div
                                 class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm text-foreground outline-none hover:bg-neutral-800 hover:text-foreground transition-colors"
@@ -65,10 +65,20 @@ export function SearchResults({
                         <a
                             href={`/playlist/${playlist.idPlaylist}`}
                             data-link
-                            class="block p-2 hover:bg-gray-700 rounded cursor-pointer"
+                            class="flex items-center p-2 hover:bg-neutral-800 rounded cursor-pointer transition-colors"
                             data-playlist-index={index}
                         >
-                            {playlist.name ?? 'Unknown Playlist'}
+                            <svg
+                                class="mr-2 h-4 w-4 text-muted-foreground"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                            <span class="text-sm text-foreground">{playlist.name ?? 'Unknown Playlist'}</span>
                         </a>
                     ))}
                 </div>
