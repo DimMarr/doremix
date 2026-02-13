@@ -180,11 +180,15 @@ class PlaylistRepository:
     def search_playlists(db: Session, query: str, limit: int = 10) -> List[Playlist]:
         playlists: List[Playlist] = (
             db.query(Playlist)
-            .options(joinedload(Playlist.owner))
             .filter(
                 and_(
                     Playlist.name.ilike(f"%{query}%"),
-                    Playlist.visibility == PlaylistVisibility.PUBLIC,
+                    or_(
+                        Playlist.visibility == PlaylistVisibility.PUBLIC,
+                        Playlist.visibility == PlaylistVisibility.OPEN,
+                        Playlist.idOwner == 1,
+                        # TODO: Quand l'auth sera en place, rajouter les playlists de l'utilsateur connecté
+                    ),
                 )
             )
             .limit(limit)

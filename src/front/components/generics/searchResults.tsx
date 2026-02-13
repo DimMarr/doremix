@@ -65,10 +65,20 @@ export function SearchResults({
                         <a
                             href={`/playlist/${playlist.idPlaylist}`}
                             data-link
-                            class="block p-2 hover:bg-gray-700 rounded cursor-pointer"
+                            class="flex items-center p-2 hover:bg-neutral-800 rounded cursor-pointer transition-colors"
                             data-playlist-index={index}
                         >
-                            {playlist.name ?? 'Unknown Playlist'}
+                            <svg
+                                class="mr-2 h-4 w-4 text-muted-foreground"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                            <span class="text-sm text-foreground">{playlist.name ?? 'Unknown Playlist'}</span>
                         </a>
                     ))}
                 </div>
