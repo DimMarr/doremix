@@ -10,8 +10,8 @@ export async function LoginPage(container) {
         <div>
         {
             <div class="flex justify-center items-center h-[calc(100vh-64px)]">
-                <div class="flex flex-col lg:flex-row">
-                    <div class="bg-(--color-secondary) rounded-t-lg lg:rounded-l-lg lg:rounded-tr-none p-10 w-xl lg:w-md flex flex-col justify-between gap-10">
+                <div class="flex flex-col lg:flex-row items-stretch" >
+                    <div class="bg-(--color-secondary) rounded-t-lg lg:rounded-l-lg lg:rounded-tr-none p-10 flex flex-col justify-between gap-10" style="max-width: 600px;">
                         <div class="flex flex-col gap-4">
                             <h3 class="font-bold text-lg">Welcome to DoReMiX</h3>
                             <p>A smarter way to manage YouTube playlists. <br />
@@ -20,7 +20,7 @@ export async function LoginPage(container) {
                         </div>
                         <Testimony name="Olivier De Jonckère" description="Teacher at Polytech Montpellier" testimony="DoReMix is one of the most secure applications I have ever seen. No injection vulnerabilities — I’m impressed." image="../../assets/images/profileimage.jpg"/>
                     </div>
-                    <Card title="Log in to DoReMiX" className="w-xl py-10 flex justify-center items-center rounded-b-lg lg:rounded-b-none lg:rounded-r-lg">
+                    <Card title="Log in to DoReMiX" className="p-10 flex justify-center items-center rounded-b-lg lg:rounded-b-none lg:rounded-r-lg">
                         <form id="loginForm" class="mt-6 flex flex-col gap-5">
                             <Input id="email" placeholder="vincent.berry@umontpellier.fr" label="Email" type="email"></Input>
                             <div>
