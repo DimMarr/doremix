@@ -3,7 +3,7 @@ import secrets
 import hashlib
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
-from back.models.verification_token import VerificationToken
+from models.verification_token import VerificationToken
 from typing import cast
 
 

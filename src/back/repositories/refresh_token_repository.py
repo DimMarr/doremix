@@ -3,7 +3,7 @@ import secrets
 import hashlib
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
-from back.models.refresh_token import RefreshToken
+from models.refresh_token import RefreshToken
 from typing import cast
 
 
