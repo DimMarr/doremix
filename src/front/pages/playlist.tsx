@@ -44,7 +44,8 @@ function getIconForVisibility(visibility: Visibility) {
   }
 }
 
-function getVisibilityElement(visibility: Visibility) {
+function getVisibilityElement(playlist: Playlist) {
+  const visibility = playlist.visibility
   const badgeBase = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border uppercase tracking-wider transition-all duration-200 shadow-sm whitespace-nowrap";
   const interactable = "cursor-pointer hover:shadow-md relative select-none";
   const locked = "cursor-not-allowed opacity-80";
@@ -66,6 +67,22 @@ function getVisibilityElement(visibility: Visibility) {
   }
 
   if (visibility === Visibility.open) {
+    return (
+      <div class={`${badgeBase} ${colorClass} ${locked} w-fit`}>
+        <div class="flex items-center gap-2">
+          {getIconForVisibility(visibility) as 'safe'}
+          <span>{visibility}</span>
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+      </div>
+    );
+  }
+
+  // TODO: Replace hardcoded owner ID (1) with actual user ID from auth context when available
+  const currentUserId = 1;
+  if (visibility === Visibility.public && currentUserId != playlist.idOwner) {
     return (
       <div class={`${badgeBase} ${colorClass} ${locked} w-fit`}>
         <div class="flex items-center gap-2">
@@ -154,7 +171,7 @@ export async function PlaylistDetailPage(
     if (headerContainer) {
       headerContainer.innerHTML = (
         <>
-          {getVisibilityElement(playlist.visibility) as 'safe'}
+          {getVisibilityElement(playlist) as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
         </>
@@ -270,7 +287,7 @@ export async function PlaylistDetailPage(
           <Button id="add-track-button" variant="outline" size="md">Add Track</Button>
         </div>
         <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
-          {getVisibilityElement(playlist.visibility) as 'safe'}
+          {getVisibilityElement(playlist) as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
         </div>
