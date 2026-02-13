@@ -176,4 +176,13 @@ export function initSearchBar() {
             )
         );
     }
+    document.addEventListener('click', (e) => {
+        const searchContainer = searchSection?.querySelector('[class*="relative w-full"]');
+        const target = e.target as Node;
+
+        if (searchContainer && !searchContainer.contains(target)) {
+            removeExistingResults(searchSection);
+            setResults(null);
+        }
+    });
 }
