@@ -12,6 +12,11 @@ class LoginSchema(BaseModel):
     )
 
 
+class AccessTokenValidity(BaseModel):
+    access_token: str
+    validity: bool
+
+
 class TokenResponse(BaseModel):
     """
     Schéma pour la réponse après login/refresh

@@ -3,7 +3,13 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from database import get_db
 from controllers.login import LoginController
-from schemas.auth import LoginSchema, TokenResponse, LogoutResponse, UserInfoResponse
+from schemas.auth import (
+    LoginSchema,
+    AccessTokenValidity,
+    TokenResponse,
+    LogoutResponse,
+    UserInfoResponse,
+)
 from middleware.auth_middleware import get_current_user, get_current_user_id
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -38,6 +44,15 @@ def login(credentials: LoginSchema, response: Response, db: Session = Depends(ge
         max_age=30 * 24 * 60 * 60,
     )
 
+    return result
+
+
+@router.post(
+    "/check-token", response_model=AccessTokenValidity, status_code=status.HTTP_200_OK
+)
+def check_token(request: Request, response: Response, db: Session = Depends(get_db)):
+    access_token_str = request.cookies.get("access_token")
+    result = LoginController.check_access_token_validity(db, access_token_str)
     return result
 
 

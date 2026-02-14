@@ -69,6 +69,20 @@ class LoginController:
         }
 
     @staticmethod
+    def check_access_token_validity(db: Session, access_token_str: str):
+        access_token = AccessTokenRepository.get_valid_token(db, access_token_str)
+
+        if not access_token:
+            raise HTTPException(
+                status_code=401, detail="Invalid or expired access token"
+            )
+
+        return {
+            "access_token": access_token_str,
+            "validity": True,
+        }
+
+    @staticmethod
     def refresh_access_token(db: Session, refresh_token_str: str):
         """
         Génère un nouveau access token à partir d'un refresh token valide
