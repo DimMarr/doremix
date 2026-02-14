@@ -20,8 +20,6 @@ class RefreshToken(Base):
     )
     expiresAt = Column("expiresat", DateTime, nullable=False)
 
-    user = relationship("Users", back_populates="refresh_token")
-
     @property
     def is_valid(self):
         return datetime.now(timezone.utc) < self.expiresAt
