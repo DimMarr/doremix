@@ -6,7 +6,7 @@ from controllers.login import LoginController
 from schemas.auth import LoginSchema, TokenResponse, LogoutResponse, UserInfoResponse
 from middleware.auth_middleware import get_current_user, get_current_user_id
 
-router = APIRouter(prefix="/api/auth", tags=["Authentication"])
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post("/login", response_model=TokenResponse, status_code=status.HTTP_200_OK)

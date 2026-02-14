@@ -18,10 +18,10 @@ class AuthMiddleware:
         Vérifie l'access token pour toutes les routes protégées
         """
         public_routes = [
-            "/api/auth/register",
-            "/api/auth/login",
-            "/api/auth/refresh",
-            "/api/health",
+            "/auth/register",
+            "/auth/login",
+            "/auth/refresh",
+            "/health",
             "/docs",
             "/redoc",
             "/openapi.json",
