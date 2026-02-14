@@ -32,16 +32,16 @@ class LoginController:
         if user.banned:
             raise HTTPException(status_code=403, detail="Your account has been banned")
 
-        if not user.isVerified:
-            raise HTTPException(
-                status_code=403, detail="Please verify your email before logging in"
-            )
-
         peppered_pw = password + LoginController.pepper
         pre_hashed_password = hashlib.sha256(peppered_pw.encode("utf-8")).hexdigest()
 
         if not LoginController.pwd_context.verify(pre_hashed_password, user.password):
             raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        if not user.isVerified:
+            raise HTTPException(
+                status_code=403, detail="Please verify your email before logging in"
+            )
 
         access_token = AccessTokenRepository.create_token(
             db=db,
