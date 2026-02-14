@@ -18,7 +18,7 @@ class RefreshTokenRepository:
         return hashlib.sha256(combined.encode("utf-8")).hexdigest()
 
     @staticmethod
-    def create_token(db: Session, userId: int, durationMinutes: int) -> RefreshToken:
+    def create_token(db: Session, userId: int, durationMinutes: int) -> str:
         cookieToken = secrets.token_urlsafe(64)  # not stored in DB
         hashedToken = RefreshTokenRepository.hash_token(cookieToken)
         expiresAt = datetime.now(timezone.utc) + timedelta(minutes=durationMinutes)
@@ -30,8 +30,7 @@ class RefreshTokenRepository:
         db.refresh(dbToken)
 
         # we return the unhashed token to use it in cookies
-        dbToken.token = cookieToken
-        return dbToken
+        return cookieToken
 
     @staticmethod
     def get_valid_token(

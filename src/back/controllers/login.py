@@ -56,8 +56,8 @@ class LoginController:
         )
 
         return {
-            "access_token": access_token.token,
-            "refresh_token": refresh_token.token,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
             "user": {
                 "id": user.idUser,
                 "email": user.email,
@@ -94,7 +94,7 @@ class LoginController:
         )
 
         return {
-            "access_token": access_token.token,
+            "access_token": access_token,
             "user": {
                 "id": user.idUser,
                 "email": user.email,

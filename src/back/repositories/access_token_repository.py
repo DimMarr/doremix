@@ -3,7 +3,7 @@ import secrets
 import hashlib
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
-from models.acces_token import AccessToken
+from models.access_token import AccessToken
 from typing import cast
 
 
@@ -18,20 +18,18 @@ class AccessTokenRepository:
         return hashlib.sha256(combined.encode("utf-8")).hexdigest()
 
     @staticmethod
-    def create_token(db: Session, userId: int, durationMinutes: int) -> AccessToken:
+    def create_token(db: Session, userId: int, durationMinutes: int) -> str:
         cookieToken = secrets.token_urlsafe(64)  # not stored in DB
         hashedToken = AccessTokenRepository.hash_token(cookieToken)
         expiresAt = datetime.now(timezone.utc) + timedelta(minutes=durationMinutes)
 
         dbToken = AccessToken(token=hashedToken, idUser=userId, expiresAt=expiresAt)
-
         db.add(dbToken)
         db.commit()
         db.refresh(dbToken)
 
         # we return the unhashed token to use it in cookies
-        dbToken.token = cookieToken
-        return dbToken
+        return cookieToken
 
     @staticmethod
     def get_valid_token(
