@@ -27,6 +27,17 @@ class UserRegisterSchema(BaseModel):
     email: str
     password: str
 
+    @field_validator("password")
+    def validate_password(cls, password):
+        if not re.match(
+            r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[#?!@$%^&*-])[A-Za-z\d#?!@$%^&*-]{8,}$",
+            password,
+        ):
+            raise ValueError(
+                "Password must be at least 8 characters and contains one uppercase, one lowercase, one digit and one special character."
+            )
+        return password
+
     @field_validator("email")
     def validate_email(cls, email):
         if not re.match(
