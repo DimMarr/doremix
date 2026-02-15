@@ -1,5 +1,6 @@
 import { cn, getCardClasses } from '@components/index';
 import { trackPlayerInstance } from '@layouts/mainLayout';
+import { AlertManager } from '@utils/alertManager';
 import Playlist, { Visibility } from '@models/playlist';
 
 export interface CardProps {
@@ -172,6 +173,12 @@ export function initCardsElements(container: HTMLElement, playlists: Playlist[])
       playButton.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        if (p.tracks.length === 0) {
+            new AlertManager().error("No track to listen in this playlist");
+            return;
+        }
+
         if (trackPlayerInstance.playlist.idPlaylist !== p.idPlaylist) {
           trackPlayerInstance.setPlaylist(p);
         }
