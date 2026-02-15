@@ -10,7 +10,7 @@ DROP TABLE IF EXISTS GENRE CASCADE;
 DROP TABLE IF EXISTS USERS CASCADE;
 DROP TYPE IF EXISTS playlist_visibility;
 
-CREATE TYPE playlist_visibility AS ENUM ('PUBLIC', 'PRIVATE', 'OPEN');
+CREATE TYPE playlist_visibility AS ENUM ('PUBLIC', 'PRIVATE', 'SHARED', 'OPEN');
 
 CREATE TABLE GENRE (
     idGenre SERIAL PRIMARY KEY,
@@ -65,6 +65,7 @@ CREATE TABLE PLAYLIST (
     idGenre INTEGER NOT NULL DEFAULT 1,
     idOwner INTEGER NOT NULL,
     vote INTEGER DEFAULT 0,
+    visibility playlist_visibility DEFAULT 'PRIVATE',
     visibility playlist_visibility DEFAULT 'PRIVATE',
     coverImage VARCHAR(500),
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
