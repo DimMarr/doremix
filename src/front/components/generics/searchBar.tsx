@@ -83,13 +83,8 @@ function attachPlaylistClickHandlers(
 ): void {
     const playlistItems = searchContainer.querySelectorAll('[data-playlist-index]');
     playlistItems.forEach((item) => {
-        const index = parseInt((item as HTMLElement).dataset.playlistIndex || '0', 10);
         item.addEventListener('click', () => {
-            const currentResults = getCurrentResults();
-            if (currentResults) {
-                trackPlayerInstance.setPlaylist(currentResults.playlists[index]);
-                trackPlayerInstance.playTrack(0);
-            }
+            // let the router handle navigation
             removeExistingResults(searchSection);
             clearResults();
         });

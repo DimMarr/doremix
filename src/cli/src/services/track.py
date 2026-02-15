@@ -47,6 +47,9 @@ def play_track(id: int):
         def error(self, msg):
             pass
 
+        def warning(self, msg):
+            pass
+
     ydl_opts = {
         "format": "bestaudio",
         "quiet": True,
