@@ -10,14 +10,14 @@ export class TrackRepository {
     return response.json();
   }
 
-  async create(playlistId: number, url: string, title: string) {
+  async create(playlistId: number, youtubeLink : string, title: string) {
     try {
-      const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/tracks/by-url`, {
+      const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/tracks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url, title }),
+        body: JSON.stringify({ youtubeLink, title }),
       });
 
       if (!response.ok) {

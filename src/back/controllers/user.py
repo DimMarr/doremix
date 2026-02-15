@@ -1,19 +1,21 @@
-from sqlalchemy.orm import Session
-from models.user import User
+from fastapi import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from models import User
+from repositories import UserRepository
 
 
 class UserController:
     @staticmethod
-    def get_all_users(db: Session):
-        return db.query(User).all()
+    async def get_all_users(db: AsyncSession):
+        users = await UserRepository.get_all(db)
+        if not users:
+            raise HTTPException(status_code=404, detail="No users found")
+        return users
 
     @staticmethod
-    def get_user(db: Session, idUser: int):
-        return db.query(User).filter(User.idUser == idUser).first()
-
-    @staticmethod
-    def get_user_playlists(db: Session, idUser: int):
-        user = db.query(User).filter(User.idUser == idUser).first()
-        if user:
-            return user.playlists
-        return []
+    async def get_user(db: AsyncSession, idUser: int):
+        user = await UserRepository.get_by_id(db, idUser)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user

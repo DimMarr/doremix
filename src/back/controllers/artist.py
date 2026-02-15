@@ -1,16 +1,20 @@
-from sqlalchemy.orm import Session
-from repositories.artist_repository import ArtistRepository
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
+
+from repositories import ArtistRepository
 
 
 class ArtistController:
     @staticmethod
-    def get_all_artists(db: Session):
-        return ArtistRepository.get_all(db)
+    async def get_all_artists(db: AsyncSession):
+        artists = await ArtistRepository.get_all(db)
+        if not artists:
+            raise HTTPException(status_code=404, detail="Artists not found")
+        return artists
 
     @staticmethod
-    def get_artist(db: Session, artist_id: int):
-        artist = ArtistRepository.get_by_id(db, artist_id)
+    async def get_artist(db: AsyncSession, artist_id: int):
+        artist = await ArtistRepository.get_by_id(db, artist_id)
         if not artist:
             raise HTTPException(status_code=404, detail="Artist not found")
         return artist

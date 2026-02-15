@@ -1,98 +1,48 @@
-from sqlalchemy.orm import Session
-from repositories import PlaylistRepository
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, UploadFile, Response
+from fastapi.responses import JSONResponse
+
 from utils.image_processor import save_cover_image
-from models.playlist import Playlist
+
+from repositories import PlaylistRepository
+from models import Playlist, Track
+from schemas import PlaylistCreate, PlaylistUpdate, TrackCreate
 
 
 class PlaylistController:
+    # =========================
+    # GET methods
+    # =========================
     @staticmethod
-    def get_all_playlists(db: Session):
-        return PlaylistRepository.get_all(db)
+    async def get_all_playlists(db: AsyncSession):
+        playlists = await PlaylistRepository.get_all(db)
+        if not playlists:
+            raise HTTPException(status_code=404, detail="Playlists not found")
+        return playlists
 
     @staticmethod
-    def get_public_playlists(db: Session):
-        return PlaylistRepository.get_public_playlists(db)
+    async def get_public_playlists(db: AsyncSession):
+        playlists = await PlaylistRepository.get_public_playlists(db)
+        if not playlists:
+            raise HTTPException(status_code=404, detail="Public playlists not found")
+        return playlists
 
     @staticmethod
-    def get_playlist(db: Session, playlist_id: int):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id)
+    async def get_playlist(db: AsyncSession, playlist_id: int):
+        playlist = await PlaylistRepository.get_by_id(db, playlist_id)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
         return playlist
 
     @staticmethod
-    def get_playlist_tracks(db: Session, playlist_id: int):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id)
+    async def get_playlist_tracks(db: AsyncSession, playlist_id: int):
+        playlist = await PlaylistRepository.get_by_id(db, playlist_id)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
         return playlist.tracks
 
     @staticmethod
-    def add_playlist_track(
-        db: Session,
-        title: str,
-        youtubeLink: str,
-        playlist_id: int,
-    ):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id)
-        if not playlist:
-            raise HTTPException(status_code=404, detail="Playlist not found")
-
-        # TODO: Quand l'auth sera en place, vérifier les permissions :
-        # is_owner = playlist.idOwner == user_id
-        # is_editor = PlaylistRepository.is_user_editor(db, playlist.idPlaylist, user_id)
-        # is_open = playlist.visibility.value == "OPEN"
-        #
-        # if not (is_owner or is_editor or is_open):
-        #     raise HTTPException(status_code=403, detail="You don't have permission to edit this playlist")
-
-        track, status = PlaylistRepository.add_track(
-            db, title, youtubeLink, playlist_id
-        )
-
-        if status == "invalid url":
-            raise HTTPException(status_code=403, detail="Invalid YouTube URL provided")
-
-        if track is None:
-            raise HTTPException(status_code=400, detail="Failed to add track")
-
-        if status == "already_exists":
-            raise HTTPException(
-                status_code=409, detail="Track already exists in this playlist"
-            )
-        return track
-
-    @staticmethod
-    def upload_cover(db: Session, playlist_id: int, file: UploadFile):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id)
-        if not playlist:
-            raise HTTPException(status_code=404, detail="Playlist not found")
-
-        cover_path = save_cover_image(file, playlist_id)
-
-        updated_playlist = PlaylistRepository.update_cover_image(
-            db, playlist_id, cover_path
-        )
-
-        return updated_playlist
-
-    @staticmethod
-    def remove_track(db: Session, playlist_id: int, track_id: int):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id)
-        if not playlist:
-            raise HTTPException(status_code=404, detail="Playlist not found")
-        if not PlaylistRepository.remove_track(db, playlist_id, track_id):
-            raise HTTPException(
-                status_code=404, detail="This track is not in the current playlist"
-            )
-
-        db.refresh(playlist)
-
-        return playlist
-
-    @staticmethod
-    def search(db: Session, query: str):
+    def search(db: AsyncSession, query: str):
         if not query or len(query) < 2:
             raise HTTPException(
                 status_code=400, detail="Query must be at least 2 characters"
@@ -101,47 +51,100 @@ class PlaylistController:
         playlists = PlaylistRepository.search_playlists(db, query)
         return playlists
 
+    # =========================
+    # CREATE methods
+    # =========================
     @staticmethod
-    def create_playlist(db: Session, playlist_data: dict):
-        new_playlist = Playlist(
-            name=playlist_data["name"],
-            idGenre=playlist_data["idGenre"],
-            visibility=playlist_data["visibility"],
-            idOwner=1,  # TODO: Remplacer par current_user.id quand l'auth sera en place
+    async def add_playlist_track(
+        db: AsyncSession, track_create: TrackCreate, playlist_id: int
+    ) -> Track:
+        playlist = await PlaylistRepository.get_by_id(db, playlist_id)
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+
+        new_track = Track(**track_create.model_dump())
+        track_obj, track_status = await PlaylistRepository.add_track(
+            db, new_track, playlist_id
         )
 
-        return PlaylistRepository.create(db, new_playlist)
+        # Gérer les erreurs
+        if track_status == "invalid_url":
+            raise HTTPException(status_code=403, detail="Invalid YouTube URL provided")
+        if track_status == "failed" or track_obj is None:
+            raise HTTPException(status_code=400, detail="Failed to add track")
+        if track_status == "already_exists":
+            raise HTTPException(
+                status_code=409, detail="Track already exists in this playlist"
+            )
+
+        return track_obj
+
+        # TODO: Quand l'auth sera en place, vérifier les permissions :
+        # is_owner = playlist.idOwner == user_id
+        # is_editor = PlaylistRepository.is_user_editor(db, playlist.idPlaylist, user_id)
+        # is_open = playlist.visibility.value == "OPEN"
 
     @staticmethod
-    def delete_playlist(db: Session, playlist_id: int):
-        # TODO: Quand l'auth sera en place, ajouter user_id en paramètre :
-        # def delete_playlist(db: Session, playlist_id: int, user_id: int):
+    async def create_playlist(db: AsyncSession, playlist: PlaylistCreate):
+        new_playlist = Playlist(
+            **playlist.model_dump(),
+            idOwner=1,  # TODO: Remplacer par current_user.id quand l'auth sera en place
+        )
+        return await PlaylistRepository.create(db, new_playlist)
 
-        playlist = PlaylistRepository.get_by_id(db, playlist_id)
-
+    # =========================
+    # DELETE methods
+    # =========================
+    @staticmethod
+    async def delete_playlist(db: AsyncSession, playlist_id: int):
+        playlist = await PlaylistRepository.get_by_id(db, playlist_id)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
+        deleted = await PlaylistRepository.delete(db, playlist)
+        return deleted
+        # TODO: Quand l'auth sera en place, vérifier que l'utilisateur est le propriétaire :
+        # if playlist.idOwner != user_id:
+        #     raise HTTPException(status_code=403, detail="You are not the owner of this playlist")
+
+    @staticmethod
+    async def remove_track(db: AsyncSession, playlist_id: int, track_id: int):
+        playlist = await PlaylistRepository.get_by_id(db, playlist_id)
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+        removed = await PlaylistRepository.remove_track(db, playlist_id, track_id)
+        if not removed:
+            raise HTTPException(
+                status_code=404, detail="This track is not in the current playlist"
+            )
+        await db.refresh(playlist)
+        return playlist
+
+    # =========================
+    # UPDATE methods
+    # =========================
+    @staticmethod
+    async def update_playlist(
+        db: AsyncSession, playlist_id: int, update_data: PlaylistUpdate
+    ):
+        playlist = await PlaylistRepository.get_by_id(db, playlist_id)
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+
+        return await PlaylistRepository.update(db, playlist, update_data)
 
         # TODO: Quand l'auth sera en place, vérifier que l'utilisateur est le propriétaire :
         # if playlist.idOwner != user_id:
         #     raise HTTPException(status_code=403, detail="You are not the owner of this playlist")
 
-        PlaylistRepository.delete(db, playlist)
-
-        return {"message": f"Playlist '{playlist.name}' successfully deleted"}
-
     @staticmethod
-    def update_playlist(db: Session, playlist_id: int, update_data: dict):
-        # TODO: Quand l'auth sera en place, ajouter user_id en paramètre :
-        # def update_playlist(db: Session, playlist_id: int, update_data: dict, user_id: int):
-
+    def upload_cover(db: AsyncSession, playlist_id: int, file: UploadFile):
         playlist = PlaylistRepository.get_by_id(db, playlist_id)
-
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
+        cover_path = save_cover_image(file, playlist_id)
 
-        # TODO: Quand l'auth sera en place, vérifier que l'utilisateur est le propriétaire :
-        # if playlist.idOwner != user_id:
-        #     raise HTTPException(status_code=403, detail="You are not the owner of this playlist")
+        updated_playlist = PlaylistRepository.update_cover_image(
+            db, playlist_id, cover_path
+        )
 
-        return PlaylistRepository.update_playlist(db, playlist, update_data)
+        return updated_playlist

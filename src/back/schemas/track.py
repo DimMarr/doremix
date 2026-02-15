@@ -14,3 +14,8 @@ class TrackSchema(BaseModel):
     artists: List[ArtistSchema]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class TrackCreate(BaseModel):
+    title: str
+    youtubeLink: str

@@ -30,8 +30,13 @@ app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 for router in routers:
     app.include_router(router)
 
+
 # Create all tables
-Base.metadata.create_all(bind=engine)
+@app.on_event("startup")
+async def on_startup():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
 
 cors_origins = os.getenv("CORS_ORIGINS", "")
 
