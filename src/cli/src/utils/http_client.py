@@ -9,9 +9,9 @@ import requests
 from src.services import auth_service
 from src.utils.exceptions import ApiRequestError, NotAuthenticatedError
 from src.utils.get_env import get_env
-from src.utils.token_storage import get_access_token
+from src.utils.token_storage import get_access_token, get_refresh_token
 
-BASE_URL = get_env("API_BASE_URL") or "http://localhost:8000"
+BASE_URL = get_env("API_BASE_URL") or get_env("BACKEND_URL") or "http://localhost:8000"
 
 
 def _build_url(endpoint: str) -> str:
@@ -27,17 +27,24 @@ def make_authenticated_request(
 ) -> requests.Response:
     url = _build_url(endpoint)
     headers = dict(kwargs.pop("headers", {}))
+    request_cookies = dict(kwargs.pop("cookies", {}))
     retried = False
 
     while True:
-        token = get_access_token()
-        headers["Authorization"] = f"Bearer {token}"
+        access_token = get_access_token(allow_expired=True)
+        refresh_token = get_refresh_token()
+        merged_cookies = {
+            **request_cookies,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+        }
 
         try:
             response = requests.request(
                 method=method.upper(),
                 url=url,
                 headers=headers,
+                cookies=merged_cookies,
                 timeout=kwargs.pop("timeout", 10),
                 **kwargs,
             )

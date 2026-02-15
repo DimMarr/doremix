@@ -10,7 +10,6 @@ from src.utils.exceptions import (
     NotAuthenticatedError,
     UserExistsError,
 )
-from src.utils.token_storage import get_user
 
 
 @click.group(name="auth")
@@ -20,12 +19,11 @@ def auth() -> None:
 
 @auth.command("register")
 @click.option("--email", prompt=True, help="University email.")
-@click.option("--username", prompt=True, help="Display username.")
 @click.option("--password", prompt=True, hide_input=True, confirmation_prompt=True)
-def register_command(email: str, username: str, password: str) -> None:
+def register_command(email: str, password: str) -> None:
     try:
-        auth_service.register(email=email, password=password, username=username)
-        click.secho("Registration successful. You are now logged in.", fg="green")
+        auth_service.register(email=email, password=password)
+        click.secho("Registration successful. You can now login.", fg="green")
     except UserExistsError as exc:
         click.secho(str(exc), fg="yellow")
     except InvalidRequestError as exc:
@@ -65,9 +63,15 @@ def logout_command() -> None:
 @auth.command("whoami")
 def whoami_command() -> None:
     try:
-        user = get_user()
+        user = auth_service.whoami()
     except NotAuthenticatedError as exc:
         click.secho(str(exc), fg="yellow")
+        return
+    except InvalidCredentialsError as exc:
+        click.secho(str(exc), fg="red")
+        return
+    except ApiRequestError as exc:
+        click.secho(str(exc), fg="red")
         return
 
     click.secho("Authenticated user:", fg="cyan")

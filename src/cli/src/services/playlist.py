@@ -1,17 +1,26 @@
 from typing import Any, Optional
-from src.utils.get_env import get_env
+
 from src.models.playlist import PlaylistSchema
 from src.models.track import TrackSchema
-import requests
-import json
+from src.utils.http_client import make_authenticated_request
 
-API_BASE_URL = get_env("API_BASE_URL")
+
+def _detail(response: Any) -> str:
+    try:
+        payload = response.json()
+    except ValueError:
+        return str(response.text)
+    if isinstance(payload, dict):
+        return str(payload.get("detail", payload))
+    return str(payload)
 
 
 def get_all_playlists() -> list[PlaylistSchema]:
-    res = requests.get(f"{API_BASE_URL}/playlists")
+    res = make_authenticated_request("GET", "/playlists")
     if res.status_code == 404:
         raise Exception("Playlists not found")
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
     data = res.json()
 
     # Create a PlaylistSchema Object from raw JSON data
@@ -19,11 +28,13 @@ def get_all_playlists() -> list[PlaylistSchema]:
 
 
 def get_playlist(id: str) -> PlaylistSchema:
-    res = requests.get(f"{API_BASE_URL}/playlists/{id}")
+    res = make_authenticated_request("GET", f"/playlists/{id}")
     if res.status_code == 404:
         raise Exception("Playlist not found")
     if res.status_code == 422:
         raise Exception("Playlist ID should be an integer")
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
     data = res.json()
 
     # Create a PlaylistSchema Object from raw JSON data
@@ -31,11 +42,13 @@ def get_playlist(id: str) -> PlaylistSchema:
 
 
 def get_playlist_tracks(id: str) -> list[TrackSchema]:
-    res = requests.get(f"{API_BASE_URL}/playlists/{id}/tracks")
+    res = make_authenticated_request("GET", f"/playlists/{id}/tracks")
     if res.status_code == 404:
         raise Exception("Playlist not found")
     if res.status_code == 422:
         raise Exception("Playlist ID should be an integer")
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
     data = res.json()
 
     # Create a TrackSchema Object from raw JSON data
@@ -43,11 +56,17 @@ def get_playlist_tracks(id: str) -> list[TrackSchema]:
 
 
 def remove_track(playlist_id: str, track_id: str):
-    res = requests.delete(f"{API_BASE_URL}/playlists/{playlist_id}/track/{track_id}")
+    res = make_authenticated_request(
+        "DELETE", f"/playlists/{playlist_id}/track/{track_id}"
+    )
     if res.status_code == 404:
         raise Exception(res.json()["detail"])
     if res.status_code == 422:
         raise Exception("Playlist ID and Track ID should be integers")
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
+    if res.status_code != 200:
+        raise Exception(f"Error while removing track: {_detail(res)}")
     return "Track successfully deleted."
 
 
@@ -60,22 +79,22 @@ def create_playlist(name: str, id_genre: int, visibility: str) -> PlaylistSchema
         "visibility": visibility,
         # "idOwner": user_id  # TODO: À ajouter quand l'auth sera en place
     }
-    res = requests.post(f"{API_BASE_URL}/playlists/", json=payload)
+    res = make_authenticated_request("POST", "/playlists/", json=payload)
 
     if res.status_code != 200:
-        raise Exception(f"Erreur lors de la création: {res.text}")
+        raise Exception(f"Error while creating playlist: {_detail(res)}")
 
     data = res.json()
     return PlaylistSchema(**data)
 
 
 def delete_playlist(identifier: str) -> dict:
-    res = requests.delete(f"{API_BASE_URL}/playlists/{identifier}")
+    res = make_authenticated_request("DELETE", f"/playlists/{identifier}")
 
     if res.status_code == 404:
         raise Exception("Playlist not found")
     if res.status_code != 200:
-        raise Exception(f"Error while deleting: {res.text}")
+        raise Exception(f"Error while deleting: {_detail(res)}")
 
     # TODO: Quand l'auth sera en place, gérer l'erreur 403 :
     # if res.status_code == 403:
@@ -99,9 +118,7 @@ def update_playlist(
     if visibility is not None:
         payload["visibility"] = visibility
 
-    # TODO: Quand l'auth sera en place, ajouter le token dans les headers
-
-    res = requests.patch(f"{API_BASE_URL}/playlists/{playlist_id}", json=payload)
+    res = make_authenticated_request("PATCH", f"/playlists/{playlist_id}", json=payload)
 
     if res.status_code == 404:
         raise Exception("Playlist not found")
@@ -119,12 +136,11 @@ def update_playlist(
 def add_track_to_playlist(
     playlist_id: str, title: str, youtube_link: str
 ) -> TrackSchema:
-    # TODO: Quand l'auth sera en place, ajouter le token dans les headers
-
     body = {"title": title, "url": youtube_link}
 
-    res = requests.post(
-        f"{API_BASE_URL}/playlists/{playlist_id}/tracks/by-url",
+    res = make_authenticated_request(
+        "POST",
+        f"/playlists/{playlist_id}/tracks/by-url",
         json=body,
     )
 
@@ -146,7 +162,7 @@ def add_track_to_playlist(
 
 
 def search_playlists(query: str) -> list[PlaylistSchema]:
-    res = requests.get(f"{API_BASE_URL}/playlists")
+    res = make_authenticated_request("GET", "/playlists")
 
     if res.status_code != 200:
         raise Exception(f"Error while fetching playlists: {res.text}")
@@ -163,7 +179,7 @@ def search_playlists(query: str) -> list[PlaylistSchema]:
 
 
 def search_tracks_in_playlist(playlist_id: str, query: str) -> list[TrackSchema]:
-    res = requests.get(f"{API_BASE_URL}/playlists/{playlist_id}/tracks")
+    res = make_authenticated_request("GET", f"/playlists/{playlist_id}/tracks")
 
     if res.status_code == 404:
         raise Exception("Playlist not found")

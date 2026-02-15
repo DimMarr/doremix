@@ -60,14 +60,14 @@ def save_tokens(
     _write_config(payload)
 
 
-def get_access_token() -> str:
+def get_access_token(*, allow_expired: bool = False) -> str:
     config = _read_config()
     access_token = config.get("access_token")
     if not access_token:
         raise NotAuthenticatedError("Missing access token. Please login again.")
 
     expires_at = _parse_expires_at(config.get("expires_at"))
-    if datetime.now(UTC) >= expires_at:
+    if not allow_expired and datetime.now(UTC) >= expires_at:
         raise NotAuthenticatedError("Access token has expired.")
     return str(access_token)
 
@@ -86,6 +86,12 @@ def get_user() -> dict[str, Any]:
     if not isinstance(user, dict) or not user:
         raise NotAuthenticatedError("No user profile found. Please login again.")
     return user
+
+
+def save_user(user: dict[str, Any]) -> None:
+    config = _read_config()
+    config["user"] = user
+    _write_config(config)
 
 
 def clear_tokens() -> None:

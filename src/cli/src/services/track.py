@@ -1,23 +1,22 @@
-from src.utils.get_env import get_env
 from src.utils.stop_process import stop_process
 from src.models.track import TrackSchema
-import requests
+from src.utils.http_client import make_authenticated_request
 import yt_dlp
 import subprocess
 import psutil
 import os
 from pathlib import Path
 
-API_BASE_URL = get_env("API_BASE_URL")
-
 # PID of the current song playing is stored in this file
 PID_FILE = Path(f"/run/user/{os.getuid()}/yt-player.pid")
 
 
 def get_track(id: int) -> TrackSchema:
-    res = requests.get(f"{API_BASE_URL}/tracks/{id}")
+    res = make_authenticated_request("GET", f"/tracks/{id}")
     if res.status_code == 404:
         raise Exception("Track not found")
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
     data = res.json()
 
     # Create a PlaylistSchema Object from raw JSON data
@@ -25,7 +24,9 @@ def get_track(id: int) -> TrackSchema:
 
 
 def get_all_tracks() -> list[TrackSchema]:
-    res = requests.get(f"{API_BASE_URL}/tracks")
+    res = make_authenticated_request("GET", "/tracks")
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
     data = res.json()
 
     return [TrackSchema(**item) for item in data]
@@ -82,7 +83,7 @@ def stop_track():
 
 
 def search_tracks(query: str) -> list[TrackSchema]:
-    res = requests.get(f"{API_BASE_URL}/tracks")
+    res = make_authenticated_request("GET", "/tracks")
 
     if res.status_code != 200:
         raise Exception(f"Error while fetching tracks: {res.text}")
