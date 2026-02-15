@@ -17,7 +17,7 @@ class User(Base):
     email = Column("email", String(255), unique=True, nullable=False)
     password = Column("password", String(255), nullable=False)
     username = Column("username", String(255), nullable=False)
-    role = Column("role", Enum(UserRole), default=UserRole.USER)
+    role = Column("idrole", Enum(UserRole), default=UserRole.USER)
     banned = Column("banned", Boolean, default=False)
 
     playlists = relationship(

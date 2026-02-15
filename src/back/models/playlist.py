@@ -3,12 +3,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from database import Base
 import enum
-
-
-class PlaylistVisibility(enum.Enum):
-    PUBLIC = "PUBLIC"
-    PRIVATE = "PRIVATE"
-    SHARED = "SHARED"
+from .enums import PlaylistVisibility
 
 
 class Playlist(Base):

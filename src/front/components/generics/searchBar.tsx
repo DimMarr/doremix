@@ -4,17 +4,19 @@ import { trackPlayerInstance } from "@layouts/mainLayout";
 
 export interface SearchBarProps {
     placeholder?: string;
-    className?: string;
+    className?: string; // Classes for the container (bg, rounded, size, etc.)
+    inputClassName?: string; // Classes for the input (text color, placeholder color)
 }
 
 export function SearchBar({
     placeholder = "Search tracks and playlists...",
-    className = ""
+    className = "",
+    inputClassName = ""
 }: SearchBarProps) {
     return (
-        <div class={`relative w-full max-w-2xl mx-auto ${className}`}>
+        <div class={`relative w-full max-w-2xl mx-auto flex items-center group transition-all duration-200 z-50 ${className}`}>
             <svg
-                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-current opacity-70 pointer-events-none"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -27,7 +29,7 @@ export function SearchBar({
             <input
                 type="text"
                 placeholder={placeholder}
-                class="flex h-10 w-full rounded-md border border-border bg-input pl-10 pr-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+                class={`flex h-full w-full bg-transparent border-none px-12 py-2 text-sm focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-50 transition-colors ${inputClassName}`}
                 id="search-input"
             />
         </div>
@@ -174,4 +176,13 @@ export function initSearchBar() {
             )
         );
     }
+    document.addEventListener('click', (e) => {
+        const searchContainer = searchSection?.querySelector('[class*="relative w-full"]');
+        const target = e.target as Node;
+
+        if (searchContainer && !searchContainer.contains(target)) {
+            removeExistingResults(searchSection);
+            setResults(null);
+        }
+    });
 }
