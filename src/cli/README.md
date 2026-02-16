@@ -33,7 +33,7 @@ doremix
     |- whoami
     |- logout
     |- playlist
-        |- list
+        |- list [--scope accessible|mine|open|public]
         |- get <playlist-id>
         |- tracks <playlist-id>
         |- remove <playlist-id> <track-id>
@@ -50,3 +50,8 @@ doremix
         |- stop
         |- search <query>
 ```
+
+Notes:
+- Visibility values are `PUBLIC`, `PRIVATE`, `OPEN`.
+- `playlist list` defaults to `--scope accessible` (your playlists + other users' `OPEN` and `PUBLIC` playlists).
+- Playlist mutations (`update`, `delete`, `add-track`, `remove`) are owner-only.

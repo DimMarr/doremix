@@ -40,6 +40,7 @@ def mock_api_calls():
         patch("requests.request") as mock_request,
         patch("src.utils.http_client.get_access_token", return_value="access-token"),
         patch("src.utils.http_client.get_refresh_token", return_value="refresh-token"),
+        patch("src.services.playlist.auth_service.whoami", return_value={"id": 1}),
     ):
         responses: dict[str, MagicMock] = {}
         for method in ("get", "post", "patch", "delete"):
