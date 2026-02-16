@@ -66,7 +66,7 @@ CREATE TABLE PLAYLIST (
     idOwner INTEGER NOT NULL,
     vote INTEGER DEFAULT 0,
     visibility playlist_visibility DEFAULT 'PRIVATE',
-    visibility playlist_visibility DEFAULT 'PRIVATE',
+
     coverImage VARCHAR(500),
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
