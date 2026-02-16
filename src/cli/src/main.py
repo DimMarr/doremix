@@ -13,7 +13,10 @@ def app() -> None:
 
 app.add_command(get_command(playlist_app), name="playlist")
 app.add_command(get_command(track_app), name="track")
-app.add_command(auth_group, name="auth")
+app.add_command(auth_group.commands["register"], name="register")
+app.add_command(auth_group.commands["login"], name="login")
+app.add_command(auth_group.commands["whoami"], name="whoami")
+app.add_command(auth_group.commands["logout"], name="logout")
 
 
 def main() -> None:
