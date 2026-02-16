@@ -121,23 +121,13 @@ for monitor in monitors:
         - monitor with same type and hostname already exist
     """
     for existing_monitor in existing_monitors:
+        print(monitor["url"])
         if (
-            ("key" not in monitor or monitor["url"] == existing_monitor["url"])
-            and "type" not in monitor
-            or monitor["type"] == existing_monitor["type"]
-            and "hostname" not in monitor
-            or monitor["hostname"] == existing_monitor["hostname"]
+            monitor["url"] == existing_monitor["url"]
+            and monitor["name"] == existing_monitor["name"]
         ):
-            url = ("url : " + monitor["url"] + " ") if "url" in monitor else ""
-            url += (
-                ("hostname : " + monitor["hostname"] + " ")
-                if "hostname" in monitor
-                else ""
-            )
-            url += ("type : " + monitor["type"]) if "type" in monitor else ""
-
             print(
-                f"{bcolors.WARNING} WARNING: Monitor with {url} already exists. Ignoring this monitor."
+                f"{bcolors.WARNING} WARNING: Monitor with  url: {monitor["url"]} and name: {monitor['name']} already exists. Ignoring this monitor."
             )
             monitor_already_exists = True
             break
