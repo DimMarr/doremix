@@ -4,12 +4,12 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.engine import Result
 from re import findall as regex_match
 from typing import Optional, List, cast
+from utils.youtube_utils import get_youtube_video_info
 
 from models import Playlist, PlaylistVisibility, Track, TrackPlaylist, Artist
 from .track import TrackRepository
 from .artist import ArtistRepository
-from utils.youtube_utils import get_youtube_video_info
-from schemas.playlist import PlaylistUpdate
+from schemas import PlaylistUpdate
 
 
 class PlaylistRepository:
@@ -46,7 +46,12 @@ class PlaylistRepository:
             .where(
                 and_(
                     Playlist.name.ilike(f"%{query}%"),
-                    Playlist.visibility == PlaylistVisibility.PUBLIC,
+                    or_(
+                        Playlist.visibility == PlaylistVisibility.PUBLIC,
+                        Playlist.visibility == PlaylistVisibility.OPEN,
+                        Playlist.idOwner == 1,
+                        # TODO: Quand l'auth sera en place, rajouter les playlists de l'utilsateur connecté
+                    ),
                 )
             )
             .limit(limit)

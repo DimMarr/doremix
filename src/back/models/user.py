@@ -4,10 +4,10 @@ from database import Base
 import enum
 
 
-class UserRole(enum.Enum):
-    USER = "USER"
-    MODERATOR = "MODERATOR"
-    ADMIN = "ADMIN"
+class UserRole(enum.IntEnum):
+    USER = 1
+    MODERATOR = 2
+    ADMIN = 3
 
 
 class User(Base):
@@ -17,14 +17,9 @@ class User(Base):
     email = Column("email", String(255), unique=True, nullable=False)
     password = Column("password", String(255), nullable=False)
     username = Column("username", String(255), nullable=False)
-    idRole = Column("idrole", Integer, ForeignKey("role.idrole"), default=1)
+    idRole = Column("idrole", Enum(UserRole), default=UserRole.USER)
     banned = Column("banned", Boolean, default=False)
 
     playlists = relationship(
         "Playlist", secondary="user_playlist", back_populates="users", lazy="selectin"
     )
-
-    @property
-    def role(self) -> UserRole:
-        mapping = {1: UserRole.USER, 2: UserRole.MODERATOR, 3: UserRole.ADMIN}
-        return mapping.get(self.idRole, UserRole.USER)

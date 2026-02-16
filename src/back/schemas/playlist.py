@@ -2,12 +2,7 @@ from pydantic import BaseModel, ConfigDict
 from enum import Enum
 from datetime import datetime
 from typing import Optional
-
-
-class PlaylistVisibility(str, Enum):
-    PUBLIC = "PUBLIC"
-    PRIVATE = "PRIVATE"
-    SHARED = "SHARED"
+from models import PlaylistVisibility
 
 
 class PlaylistSchema(BaseModel):

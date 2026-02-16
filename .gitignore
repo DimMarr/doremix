@@ -12,3 +12,7 @@ uv.lock
 
 uploads/
 .coverage
+
+
+CLAUDE.md
+AGENTS.md

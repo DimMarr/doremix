@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from database import Base, get_db
 from routes.playlists import router as playlists_router
 from routes.users import router as users_router
-from routes.search_router import router as search_router
+from routes import searchRouter
 from models import User, Genre
 
 # Crée une base de données SQLite en mémoire pour les tests
@@ -24,7 +24,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_
 app = FastAPI()
 app.include_router(playlists_router)
 app.include_router(users_router)
-app.include_router(search_router)
+app.include_router(searchRouter)
 
 
 @pytest.fixture(scope="function")

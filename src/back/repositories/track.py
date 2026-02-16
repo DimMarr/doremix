@@ -48,15 +48,13 @@ class TrackRepository:
     ) -> List[Track]:
         result: Result[tuple[Track]] = await db.execute(
             select(Track)
-            .join(Track.artists)
-            .options(joinedload(Track.artists))
+            .options(selectinload(Track.artists))
             .where(
                 or_(
                     Track.title.ilike(f"%{query}%"),
-                    Artist.name.ilike(f"%{query}%"),
+                    Track.artists.any(Artist.name.ilike(f"%{query}%")),
                 )
             )
-            .distinct()
             .limit(limit)
         )
         return cast(List[Track], result.scalars().all())

@@ -2,7 +2,7 @@ import { Track } from "@models/track";
 
 export default class Playlist {
     public idPlaylist?: number;
-    private idOwner?: number;
+    public idOwner?: number;
     public name?: string;
     private idGenre?: number;
     public createdAt?: string;
@@ -22,5 +22,4 @@ export enum Visibility {
     public = "public",
     private = "private",
     open = "open",
-    shared = "shared",
 }

@@ -13,7 +13,7 @@ export async function createMainLayout() {
   await waitForYouTubeAPI();
 
   const appHtml = (
-    <div class="min-h-screen bg-background text-foreground px-6">
+    <div class="min-h-screen bg-background text-foreground px-6 pb-20">
       <Header className="">
         <a href="/">
           <img src={logo} alt="Dorémix" class="h-8" />
@@ -32,7 +32,7 @@ export async function createMainLayout() {
 
   // Initialisation du TrackPlayer
   const trackPlayer = new YoutubePlayer({
-    playlist: new Playlist({tracks:[]}),
+    playlist: new Playlist({ tracks: [] }),
     youtubePlayerHtmlElementId: "youtubePlayer",
   });
 
