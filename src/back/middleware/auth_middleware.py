@@ -27,6 +27,9 @@ class AuthMiddleware:
             "/openapi.json",
         ]
 
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         if any(request.url.path.startswith(route) for route in public_routes):
             return await call_next(request)
 
