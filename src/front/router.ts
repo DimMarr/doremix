@@ -25,7 +25,7 @@ export class Router {
   }
 
   async onRouteChange() {
-    if(navigator.onLine === false){
+    if (navigator.onLine === false) {
       this.container.innerHTML = NoInternetPage();
       return;
     }
@@ -33,9 +33,15 @@ export class Router {
     // Gestion de l'authentification
     let path = window.location.pathname;
     const publicRoutes = ['/login', '/signup'];
-    const isAuth = await authService.isAuthenticated();
+    let isAuth = false;
+    try {
+      isAuth = await authService.isAuthenticated();
+    } catch (e) {
+      console.error("Auth check failed, assuming not authenticated:", e);
+      isAuth = false;
+    }
 
-    if(!publicRoutes.includes(path) && !isAuth){
+    if (!publicRoutes.includes(path) && !isAuth) {
       window.history.pushState({}, "", "/login");
       if (this.routes["/login"]) {
         this.routes["/login"](this.container, {}, {});
@@ -43,7 +49,7 @@ export class Router {
       return;
     }
 
-    if(publicRoutes.includes(path) && isAuth){
+    if (publicRoutes.includes(path) && isAuth) {
       window.history.pushState({}, "", "/");
       if (this.routes["/"]) {
         this.routes["/"](this.container, {}, {});

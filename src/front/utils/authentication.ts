@@ -65,12 +65,17 @@ class AuthService {
 
     // refresh accessToken through refreshToken
     async refreshAccessToken() {
-        const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-            method: 'POST',
-            credentials: 'include' // or include ?
-        })
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+                method: 'POST',
+                credentials: 'include' // or include ?
+            })
 
-        return response.status == 200
+            return response.status == 200
+        } catch (e) {
+            console.error("Failed to refresh token:", e);
+            return false;
+        }
 
         // Trying to replicate success without backend
         // if(document.cookie.includes("refreshToken")){
