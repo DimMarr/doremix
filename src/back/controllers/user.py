@@ -8,6 +8,10 @@ class UserController:
         return db.query(User).all()
 
     @staticmethod
+    def get_all_verified_users(db: Session):
+        return db.query(User).filter(User.isVerified).all()
+
+    @staticmethod
     def get_user(db: Session, idUser: int):
         return db.query(User).filter(User.idUser == idUser).first()
 

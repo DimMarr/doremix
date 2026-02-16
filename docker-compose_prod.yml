@@ -65,6 +65,8 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      TOKEN_SECRET_KEY: ${TOKEN_SECRET_KEY}
+      PEPPER_KEY: ${PEPPER_KEY}
     volumes:
       - ./src/back:/app
       - ./uploads/covers:/app/uploads/covers
