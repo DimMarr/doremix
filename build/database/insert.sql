@@ -39,13 +39,11 @@ INSERT INTO USER_GROUP (groupName) VALUES
 ('Staff Admin'),
 ('Fans de Rock');
 
-INSERT INTO USERS (username, email, password, idRole, banned) VALUES
-('SuperAdmin', 'admin@umontpellier.fr', 'root123', 3, FALSE),
-('ModoSarah', 'sarah@etu.umontpellier.fr', 'modoPass', 2, FALSE),
-('AliceEtudiante', 'alice@etu.umontpellier.fr', 'passA', 1, FALSE),
-('BobRocker', 'bob@etu.umontpellier.fr', 'passB', 1, FALSE),
-('Charlie', 'charlie@etu.umontpellier.frm', 'passC', 1, FALSE),
-('DaveHacker', 'dave@evil.com', 'hack', 1, TRUE);
+INSERT INTO USERS (username, email, password, idRole, isverified) VALUES
+('SuperAdmin', 'admin@umontpellier.fr', '$2b$12$xnS.JxXR0Rij1Cw/60901Of0vVcowP8t1C5.TVB4ZGGjaS5XeUCSK', 3, TRUE),
+('ModoSarah', 'sarah@etu.umontpellier.fr', '$2b$12$MfGljJQRrXEFoIXXniPzFueRzeO.wSwElO8U1uRqmq.f15VHw7kIK', 2, TRUE),
+('AliceEtudiante', 'alice@etu.umontpellier.fr', '$2b$12$j538y6ALuA4i/ZN.N/xxjObHVeb5NnB9HNYIZo4tKfNfvEAIMzoJu', 1, TRUE),
+('Charlie', 'charlie@umontpellier.fr', '$2b$12$fnRwsmyffcI00XeKK15W/.2/lsUvSN/7PThyDCbyboWuIkczRA5Ha', 1, FALSE);
 
 INSERT INTO GROUP_USER (idUser, idGroup) VALUES
 (1, 2),

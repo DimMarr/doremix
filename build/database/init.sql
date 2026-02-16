@@ -46,6 +46,7 @@ CREATE TABLE USERS (
     password VARCHAR(255) NOT NULL,
     username VARCHAR(255) NOT NULL,
     banned BOOLEAN DEFAULT FALSE,
+    isVerified BOOLEAN DEFAULT FALSE,
     idRole INTEGER NOT NULL DEFAULT 1,
     CONSTRAINT fk_users_role FOREIGN KEY (idRole) REFERENCES ROLE(idRole)
 );
@@ -133,6 +134,34 @@ CREATE TABLE USER_PLAYLIST (
     CONSTRAINT fk_userplaylist_playlist FOREIGN KEY (idPlaylist) REFERENCES PLAYLIST(idPlaylist) ON DELETE CASCADE
 );
 
+
+CREATE TABLE ACCESS_TOKEN (
+    idToken SERIAL PRIMARY KEY,
+    token VARCHAR(255) NOT NULL,
+    idUser INTEGER NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expiresAt TIMESTAMP NOT NULL,
+    CONSTRAINT fk_token_user FOREIGN KEY (idUser) REFERENCES USERS(idUser) ON DELETE CASCADE
+);
+
+CREATE TABLE REFRESH_TOKEN (
+    idToken SERIAL PRIMARY KEY,
+    token VARCHAR(255) NOT NULL,
+    idUser INTEGER NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expiresAt TIMESTAMP NOT NULL,
+    CONSTRAINT fk_token_user FOREIGN KEY (idUser) REFERENCES USERS(idUser) ON DELETE CASCADE
+);
+
+CREATE TABLE VERIFICATION_TOKEN (
+    idToken SERIAL PRIMARY KEY,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    idUser INTEGER NOT NULL,
+    expiresAt TIMESTAMP NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_verification_user FOREIGN KEY (idUser) REFERENCES USERS(idUser) ON DELETE CASCADE
+);
+
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -149,3 +178,6 @@ CREATE TRIGGER update_playlist_updated_at
 CREATE INDEX IF NOT EXISTS idx_track_title ON track(title);
 CREATE INDEX IF NOT EXISTS idx_playlist_name ON playlist(name);
 CREATE INDEX IF NOT EXISTS idx_artist_name ON artist(name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_access_token_string ON access_token(token);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_refresh_token_string ON refresh_token(token);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_verification_token_string ON verification_token(token);

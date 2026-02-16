@@ -45,7 +45,7 @@ export function getInputClasses(): string {
 }
 
 export function getCardClasses(): string {
-  return 'rounded-lg bg-[#161616] p-5';
+  return 'bg-[#161616] p-5';
 }
 
 export type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline';

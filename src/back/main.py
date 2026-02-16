@@ -5,22 +5,42 @@ from database import engine, Base
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+
+from middleware.auth_middleware import AuthMiddleware
 from middleware.rate_limiter import limiter, rate_limit_exceeded_handler
 import uvicorn
 from fastapi.staticfiles import StaticFiles
 
 # Import routes
 from routes import (
+    authRouter,
     usersRouter,
     playlistsRouter,
     tracksRouter,
     artistsRouter,
     searchRouter,
+    registerRouter,
 )
 
-routers = [usersRouter, playlistsRouter, tracksRouter, artistsRouter, searchRouter]
+routers = [
+    authRouter,
+    usersRouter,
+    playlistsRouter,
+    tracksRouter,
+    artistsRouter,
+    searchRouter,
+    registerRouter,
+]
 
 app = FastAPI()
+
+pepper = os.getenv("PEPPER_KEY")
+token_secret = os.getenv("TOKEN_SECRET_KEY")
+
+if not pepper:
+    raise ValueError("PEPPER_KEY is missing in .env file")
+if not token_secret:
+    raise ValueError("TOKEN_SECRET_KEY is missing in .env file")
 
 # Setup du rate limiter
 print("Setting up rate limiter with limit:", os.getenv("RATE_LIMIT", "100/minute"))
@@ -50,6 +70,8 @@ app.add_middleware(
 
 # Add SlowAPI middleware for rate limiting
 app.add_middleware(SlowAPIMiddleware)
+
+app.middleware("http")(AuthMiddleware.verify_access_token)
 
 app.mount("/covers", StaticFiles(directory="/app/uploads/covers"), name="covers")
 

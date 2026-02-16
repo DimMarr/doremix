@@ -77,6 +77,15 @@ export async function HomePage(container) {
         </section>
       )}
 
+              { /* Playlist Cards */ }
+              <div class="flex p-0! gap-10 mt-4 mb-2 overflow-auto">
+                {playlistCards as 'safe'}
+              </div>
+            </div>
+          ),
+          className: "rounded-lg"
+        })
+      }
       <div id="modal-container"></div>
     </div>
   );
