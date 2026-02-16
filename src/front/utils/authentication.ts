@@ -12,7 +12,7 @@ export function isValidEmail(email: string): boolean {
 }
 
 class AuthService {
-    async isAuthenticated(){
+    async isAuthenticated() {
         // const hasRefreshToken = document.cookie.includes("refreshToken")
         // const hasAccessToken = document.cookie.includes("accessToken")
 
@@ -20,18 +20,19 @@ class AuthService {
         //     return false
         // }
 
-        try{
+        try {
             const response = await fetch(`${API_BASE_URL}/auth/check-token`, {
                 method: 'POST',
-                credentials: 'same-origin'
+                credentials: 'include'
             })
+
             if (response.status == 200) {
                 return true
             }
         } catch {
             const refresh = await this.refreshAccessToken()
             console.log(`refresh: ${refresh}`)
-            if (refresh){
+            if (refresh) {
                 return true
             }
             return false
@@ -39,11 +40,11 @@ class AuthService {
     }
 
     // Login provides a new accessToken
-    async login(email, password){
-        try{
+    async login(email, password) {
+        try {
             const response = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
                     "email": email,
@@ -57,16 +58,18 @@ class AuthService {
             // document.cookie = `refreshToken=${result.refresh_token}; path=/`
         } catch (e) {
             console.log('Login failed', e);
-            throw error;
+            throw e;
         }
+
     }
 
     // refresh accessToken through refreshToken
     async refreshAccessToken() {
         const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
             method: 'POST',
-            credentials: 'same-origin' // or include ?
+            credentials: 'include' // or include ?
         })
+
         return response.status == 200
 
         // Trying to replicate success without backend
@@ -84,8 +87,9 @@ class AuthService {
         // document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
         const response = await fetch(`${API_BASE_URL}/auth/logout`, {
             method: 'POST',
-            credentials: 'same-origin' // or include ?
+            credentials: 'include' // or include ?
         })
+
     }
 }
 
