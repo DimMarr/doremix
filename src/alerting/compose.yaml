@@ -48,7 +48,7 @@ services:
     networks:
       - monitoring
     command: >
-      sh -c "pip install uptime_kuma_api requests && python3 /setup-uptime.py"
+      sh -c "pip install uptime_kuma_api && python3 /init-monitors.py"
 volumes:
   uptime-kuma-data:
 
