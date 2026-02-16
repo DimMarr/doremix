@@ -1,0 +1,9 @@
+[
+  {
+    "name": "Discord",
+    "isDefault": true,
+    "applyExisting": true,
+    "type": "discord",
+    "discordWebhookUrl": "https://discord.com/api/webhooks/1472245062778753035/4GAocd9VBWtR3aoGxlhiNGD8YJgxVjogX0WSDu0cgfQtz1kIBhgtU8-7KTYspuqRxDPq"
+  }
+]

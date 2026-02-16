@@ -1,5 +1,6 @@
 from uptime_kuma_api import UptimeKumaApi
 import os
+import json
 from uptime_kuma_api.api import _convert_monitor_input, _check_arguments_monitor, Event
 
 
@@ -23,24 +24,95 @@ if not os.environ.get("UPTIME_PASSWORD"):
     print(f"{bcolors.FAIL} ENV variable UPTIME_PASSWORD missing in .env")
     raise Exception("ENV variable UPTIME_PASSWORD missing in .env")
 
-api = UptimeKumaApi(os.environ.get("UPTIME_URL", "http://localhost:3001"))
+api = UptimeKumaApi("http://uptime:3001")
 api.login(os.environ["UPTIME_USERNAME"], os.environ["UPTIME_PASSWORD"])
 
-# Define monitors to create
-monitors = [
-    {
-        "name": "Production API",
-        "type": "http",
-        "url": "https://api.example.com/health",
-        "interval": 60,
-        "maxretries": 3,
-    }
-]
+# Load monitors from JSON file
+monitors_file = "monitors.json"
+try:
+    with open(monitors_file, "r") as f:
+        monitors = json.load(f)
+    print(f"{bcolors.OKGREEN}Loaded {len(monitors)} monitor(s) from {monitors_file}")
+except FileNotFoundError:
+    print(f"{bcolors.FAIL}Error: {monitors_file} not found")
+    raise
+except json.JSONDecodeError as e:
+    print(f"{bcolors.FAIL}Error parsing {monitors_file}: {e}")
+    raise
+except Exception as e:
+    print(f"{bcolors.FAIL}Error loading monitors from {monitors_file}: {e}")
+    raise
+
+# Load notifications from JSON file
+notifications_file = "notifications.json"
+notifications = []
+try:
+    with open(notifications_file, "r") as f:
+        notifications = json.load(f)
+    print(
+        f"{bcolors.OKGREEN}Loaded {len(notifications)} notification(s) from {notifications_file}"
+    )
+except FileNotFoundError:
+    print(
+        f"{bcolors.WARNING}Warning: {notifications_file} not found, skipping notifications"
+    )
+except json.JSONDecodeError as e:
+    print(f"{bcolors.FAIL}Error parsing {notifications_file}: {e}")
+    raise
+except Exception as e:
+    print(f"{bcolors.FAIL}Error loading notifications from {notifications_file}: {e}")
+    raise
+
+# Create notifications first
+notification_id_mapping = {}
+for notification in notifications:
+    existing_notifications = api.get_notifications()
+    notification_already_exists = False
+
+    # Check if notification already exists by name
+    for existing_notification in existing_notifications:
+        if notification["name"] == existing_notification["name"]:
+            print(
+                f"{bcolors.WARNING} WARNING: Notification '{notification['name']}' already exists. Using existing ID: {existing_notification['id']}"
+            )
+            notification_id_mapping[notification["name"]] = existing_notification["id"]
+            notification_already_exists = True
+            break
+
+    if notification_already_exists:
+        continue
+
+    try:
+        result = api.add_notification(**notification)
+        notification_id = result.get("id")
+        notification_id_mapping[notification["name"]] = notification_id
+        print(
+            f"{bcolors.OKGREEN}Created notification: {notification['name']} (ID: {notification_id})"
+        )
+    except Exception as e:
+        print(
+            f"{bcolors.FAIL}Failed to create notification {notification.get('name')}: {e}"
+        )
+        continue
 
 # Create each monitor
 for monitor in monitors:
     existing_monitors = api.get_monitors()
     monitor_already_exists = False
+
+    # Resolve notification names to IDs in notificationIDList
+    if "notificationIDList" in monitor and "notificationNames" in monitor:
+        resolved_ids = []
+        for name in monitor["notificationNames"]:
+            if name in notification_id_mapping:
+                resolved_ids.append(notification_id_mapping[name])
+            else:
+                print(
+                    f"{bcolors.WARNING} WARNING: Notification '{name}' not found for monitor '{monitor['name']}'"
+                )
+        monitor["notificationIDList"] = resolved_ids
+        # Remove the helper field
+        del monitor["notificationNames"]
 
     """
     Check if monitor already exist before adding them
