@@ -28,6 +28,10 @@ $ uv tool uninstall doremix-cli
 ## Commandes
 ```
 doremix
+    |- register
+    |- login
+    |- whoami
+    |- logout
     |- playlist
         |- list
         |- get <playlist-id>
