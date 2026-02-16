@@ -82,7 +82,22 @@ class PlaylistRepository:
             db.delete(track)
             db.commit()
             return True
+        if track:
+            db.delete(track)
+            db.commit()
+            return True
         return False
+
+    @staticmethod
+    def get_playlist_tracks(db: Session, playlist_id: int) -> List[Track]:
+        tracks: List[Track] = (
+            db.query(Track)
+            .join(TrackPlaylist)
+            .filter(TrackPlaylist.idPlaylist == playlist_id)
+            .order_by(TrackPlaylist.idTrack)
+            .all()
+        )
+        return tracks
 
     @staticmethod
     def add_track(
@@ -165,11 +180,15 @@ class PlaylistRepository:
     def search_playlists(db: Session, query: str, limit: int = 10) -> List[Playlist]:
         playlists: List[Playlist] = (
             db.query(Playlist)
-            .options(joinedload(Playlist.owner))
             .filter(
                 and_(
                     Playlist.name.ilike(f"%{query}%"),
-                    Playlist.visibility == PlaylistVisibility.PUBLIC,
+                    or_(
+                        Playlist.visibility == PlaylistVisibility.PUBLIC,
+                        Playlist.visibility == PlaylistVisibility.OPEN,
+                        Playlist.idOwner == 1,
+                        # TODO: Quand l'auth sera en place, rajouter les playlists de l'utilsateur connecté
+                    ),
                 )
             )
             .limit(limit)

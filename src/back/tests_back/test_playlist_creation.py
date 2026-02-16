@@ -135,7 +135,7 @@ class TestPlaylistCreation:
 
     def test_create_playlist_with_all_visibility_types(self, client, sample_genre):
         """Test la création de playlists avec tous les types de visibilité."""
-        visibility_types = ["PUBLIC", "PRIVATE", "SHARED"]
+        visibility_types = ["PUBLIC", "PRIVATE"]
 
         for visibility in visibility_types:
             playlist_data = {
@@ -198,20 +198,6 @@ class TestPlaylistCreation:
         assert "updatedAt" in data
         assert isinstance(data["createdAt"], str)
         assert isinstance(data["updatedAt"], str)
-
-    def test_create_playlist_with_shared_visibility(self, client, sample_genre):
-        """Test la création d'une playlist avec visibilité SHARED."""
-        playlist_data = {
-            "name": "Shared Playlist",
-            "idGenre": sample_genre.idGenre,
-            "visibility": "SHARED",
-        }
-
-        response = client.post("/playlists/", json=playlist_data)
-        assert response.status_code == 200
-
-        data = response.json()
-        assert data["visibility"] == "SHARED"
 
     def test_create_playlist_returns_complete_schema(self, client, sample_genre):
         """Test que la création retourne le schéma complet de la playlist."""

@@ -33,10 +33,10 @@ class TrackRepository:
         return track
 
     @staticmethod
-    def search_tracks(db: Session, query: str, limit: int = 10):
-        tracks = (
+    def search_tracks(db: Session, query: str, limit: int = 10) -> List[Track]:
+        tracks: List[Track] = (
             db.query(Track)
-            .join(Track.artists)
+            .outerjoin(Track.artists)
             .options(joinedload(Track.artists))
             .filter(
                 or_(
@@ -48,5 +48,4 @@ class TrackRepository:
             .limit(limit)
             .all()
         )
-
         return tracks
