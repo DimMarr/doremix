@@ -8,7 +8,10 @@ import { handleHttpError } from "@utils/errorHandling";
 export class PlaylistRepository {
     private async _fetchAll() {
         try {
-            const response = await fetch(`${API_BASE_URL}/playlists/`);
+            const response = await fetch(`${API_BASE_URL}/playlists/`, {
+                credentials: 'include'
+            });
+
             if (!response.ok) {
                 handleHttpError(response, "Fetch playlists");
                 throw new Error("Failed to fetch playlists");
@@ -20,7 +23,10 @@ export class PlaylistRepository {
     }
 
     private async _fetchPublic() {
-        const response = await fetch(`${API_BASE_URL}/playlists/public`);
+        const response = await fetch(`${API_BASE_URL}/playlists/public`, {
+            credentials: 'include'
+        });
+
         if (!response.ok) {
             throw new Error("Failed to fetch public playlists");
         }
@@ -29,7 +35,10 @@ export class PlaylistRepository {
 
     private async _fetchById(playlistId: number) {
         try {
-            const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}`);
+            const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}`, {
+                credentials: 'include'
+            });
+
             if (!response.ok) {
                 handleHttpError(response, "Playlist");
                 throw new Error("Failed to fetch playlist");
@@ -48,7 +57,12 @@ export class PlaylistRepository {
         try {
             const response = await fetch(
                 `${API_BASE_URL}/playlists/${playlistId}/tracks`,
+                {
+                    credentials: 'include'
+                }
             );
+
+
             if (!response.ok) {
                 handleHttpError(response, "Tracks");
                 throw new Error("Failed to fetch tracks");
@@ -71,7 +85,9 @@ export class PlaylistRepository {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ name }),
+                credentials: 'include'
             });
+
 
             if (!response.ok) {
                 handleHttpError(response, "Create playlist");
@@ -97,7 +113,9 @@ export class PlaylistRepository {
                 {
                     method: "POST",
                     body: formData,
+                    credentials: 'include'
                 },
+
             );
 
             if (!response.ok) {
