@@ -3,7 +3,6 @@ from __future__ import annotations
 import typer
 
 from rich.console import Console
-from typer.main import get_command
 
 from src.commands.playlist import app as playlist_app
 from src.commands.track import app as track_app
@@ -159,7 +158,7 @@ def whoami_command() -> None:
 root_app.add_typer(playlist_app, name="playlist", help="Playlist commands.")
 root_app.add_typer(track_app, name="track", help="Track commands.")
 
-app = get_command(root_app)
+app = root_app
 
 
 def main() -> None:
