@@ -3,12 +3,20 @@ from src.models.track import TrackSchema
 from src.utils.http_client import make_authenticated_request
 import yt_dlp
 import subprocess
+import shutil
 import psutil
 import os
 from pathlib import Path
 
 # PID of the current song playing is stored in this file
 PID_FILE = Path(f"/run/user/{os.getuid()}/yt-player.pid")
+
+
+def _build_player_command(audio_url: str) -> list[str]:
+    if shutil.which("vlc"):
+        return ["vlc", "-I", "dummy", "--play-and-exit", "--no-video", audio_url]
+
+    raise Exception("VLC is required but not installed. Install `vlc` and retry.")
 
 
 def get_track(id: int) -> TrackSchema:
@@ -61,16 +69,21 @@ def play_track(id: int):
             info = ydl.extract_info(get_track(id).youtubeLink, download=False)
             audio_url = info["url"]
     except Exception as e:
-        print(e)
-        return
+        raise Exception(f"Unable to stream track: {e}") from e
 
-    # Stream with VLC from a new process
-    process = subprocess.Popen(
-        ["vlc", "-I", "dummy", "--play-and-exit", "--no-video", audio_url],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        start_new_session=True,
-    )
+    # Stream with an available local player.
+    player_command = _build_player_command(audio_url)
+    try:
+        process = subprocess.Popen(
+            player_command,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except FileNotFoundError as e:
+        raise Exception(
+            "VLC executable not found. Install `vlc` and retry."
+        ) from e
 
     PID_FILE.write_text(str(process.pid))
 
