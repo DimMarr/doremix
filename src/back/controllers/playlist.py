@@ -102,12 +102,12 @@ class PlaylistController:
         return playlists
 
     @staticmethod
-    def create_playlist(db: Session, playlist_data: dict):
+    def create_playlist(db: Session, playlist_data: dict, user_id: int):
         new_playlist = Playlist(
             name=playlist_data["name"],
             idGenre=playlist_data["idGenre"],
             visibility=playlist_data["visibility"],
-            idOwner=1,  # TODO: Remplacer par current_user.id quand l'auth sera en place
+            idOwner=user_id,
         )
 
         return PlaylistRepository.create(db, new_playlist)

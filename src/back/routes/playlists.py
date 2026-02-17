@@ -9,6 +9,8 @@ from schemas import PlaylistSchema, TrackSchema, PlaylistCreate, PlaylistUpdate
 from database import get_db
 import os
 
+from middleware.auth_middleware import get_current_user_id
+
 router = APIRouter(prefix="/playlists", tags=["Playlists"])
 
 
@@ -23,11 +25,15 @@ class AddTrackBody(BaseModel):
     summary="Créer une playlist",
     description="Crée une nouvelle playlist avec les informations fournies.",
 )
-def create_playlist(playlist: PlaylistCreate, db: Session = Depends(get_db)):
+def create_playlist(
+    playlist: PlaylistCreate,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
     # TODO: Quand l'auth sera en place :
     # def create_playlist(playlist: PlaylistCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     #     return PlaylistController.create_playlist(db, playlist.model_dump(), current_user)
-    return PlaylistController.create_playlist(db, playlist.model_dump())
+    return PlaylistController.create_playlist(db, playlist.model_dump(), user_id)
 
 
 @router.get(
