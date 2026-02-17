@@ -30,16 +30,36 @@ def _build_url(path: str) -> str:
     return f"{BASE_URL.rstrip('/')}{normalized}"
 
 
+def _extract_detail(raw_payload: Any, fallback: str) -> str:
+    if isinstance(raw_payload, dict):
+        return _extract_detail(raw_payload.get("detail", fallback), fallback)
+
+    if isinstance(raw_payload, list):
+        parts: list[str] = []
+        for item in raw_payload:
+            if isinstance(item, dict):
+                msg = item.get("msg")
+                if isinstance(msg, str) and msg:
+                    parts.append(msg)
+                else:
+                    parts.append(str(item))
+                continue
+            parts.append(str(item))
+        return "; ".join(parts) if parts else fallback
+
+    if raw_payload is None:
+        return fallback
+
+    text = str(raw_payload).strip()
+    return text or fallback
+
+
 def _map_auth_error(response: requests.Response, context: str) -> None:
-    detail: str
+    fallback = response.text or "No details provided by backend."
     try:
-        payload = response.json()
-        if isinstance(payload, dict):
-            detail = str(payload.get("detail", response.text))
-        else:
-            detail = response.text
+        detail = _extract_detail(response.json(), fallback)
     except ValueError:
-        detail = response.text
+        detail = fallback
 
     if response.status_code == 400:
         raise InvalidRequestError(f"{context}: {detail}")
@@ -154,7 +174,13 @@ def logout() -> None:
         raise ApiRequestError(f"Logout failed: {exc}") from exc
 
     if response.status_code == 401:
-        refreshed_access_token = refresh()
+        try:
+            refreshed_access_token = refresh()
+        except Exception as exc:
+            clear_tokens()
+            raise NotAuthenticatedError(
+                "Session expired. Local credentials were removed. Please login again."
+            ) from exc
         try:
             response = requests.post(
                 _build_url("/auth/logout"),
@@ -168,6 +194,11 @@ def logout() -> None:
             raise ApiRequestError(f"Logout failed: {exc}") from exc
 
     if response.status_code not in (200, 204):
+        if response.status_code in (400, 401, 403):
+            clear_tokens()
+            raise NotAuthenticatedError(
+                "No active session found. Local credentials were removed."
+            )
         _map_auth_error(response, "Logout failed")
 
     clear_tokens()
