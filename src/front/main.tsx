@@ -1,5 +1,5 @@
 import "@styles/alert.css";
-import { HomePage, PlaylistDetailPage } from "@pages/index";
+import { HomePage, PlaylistDetailPage, LoginPage, SignupPage } from "@pages/index";
 import { createMainLayout, trackPlayerInstance } from "@layouts/mainLayout";
 import { Router } from "./router";
 import { NoInternetPage } from "@pages/noInternet";
@@ -22,6 +22,14 @@ export default async function init() {
   router.register("/playlist/:id", async (container, params) => {
     PlaylistDetailPage(container, () => router.navigate("/"), params);
   });
+
+  router.register("/login", async(container, params) => {
+    LoginPage(container);
+  })
+
+  router.register("/signup", async(container) => {
+    SignupPage(container);
+  })
 
   router.onRouteChange();
   routerInstance = router;

@@ -1,0 +1,57 @@
+services:
+  uptime:
+    image: louislam/uptime-kuma:2
+    restart: unless-stopped
+    volumes:
+      - uptime-kuma-data:/app/data
+    ports:
+      - "3001:3001"
+    environment:
+      # Set the timezone for accurate timestamps
+      TZ: UTC
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3001 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # Nginx reverse proxy for HTTPS termination
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./certs:/etc/nginx/certs
+    depends_on:
+      - uptime
+    networks:
+      - monitoring
+
+  python:
+    image: python:3.14.3-slim-trixie
+    env_file:
+      - .env
+    volumes:
+      - ./init-monitors.py:/init-monitors.py
+      - ./setup-uptime.py:/setup-uptime.py
+      - ./monitors.json:/monitors.json
+      - ./notifications.json:/notifications.json
+    depends_on:
+      uptime:
+        condition: service_healthy
+    networks:
+      - monitoring
+    command: >
+      sh -c "pip install uptime_kuma_api && python3 /init-monitors.py"
+volumes:
+  uptime-kuma-data:
+
+networks:
+  monitoring:
+    driver: bridge
