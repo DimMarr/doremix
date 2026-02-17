@@ -50,9 +50,7 @@ def register_command(
     if email is None:
         email = typer.prompt("Email")
     if password is None:
-        password = typer.prompt(
-            "Password", hide_input=True, confirmation_prompt=True
-        )
+        password = typer.prompt("Password", hide_input=True, confirmation_prompt=True)
 
     try:
         auth_service.register(email=email, password=password)
@@ -141,10 +139,14 @@ def whoami_command() -> None:
         console.print("[yellow]You are not logged in. Use `doremix login`.[/yellow]")
         return
     except InvalidCredentialsError as exc:
-        console.print(f"[red]✗ Unable to fetch user: {_extract_error_detail(exc)}[/red]")
+        console.print(
+            f"[red]✗ Unable to fetch user: {_extract_error_detail(exc)}[/red]"
+        )
         return
     except ApiRequestError as exc:
-        console.print(f"[red]✗ Unable to fetch user: {_extract_error_detail(exc)}[/red]")
+        console.print(
+            f"[red]✗ Unable to fetch user: {_extract_error_detail(exc)}[/red]"
+        )
         return
 
     console.print("[cyan]Authenticated user:[/cyan]")
