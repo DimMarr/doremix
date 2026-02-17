@@ -81,9 +81,7 @@ def play_track(id: int):
             start_new_session=True,
         )
     except FileNotFoundError as e:
-        raise Exception(
-            "VLC executable not found. Install `vlc` and retry."
-        ) from e
+        raise Exception("VLC executable not found. Install `vlc` and retry.") from e
 
     PID_FILE.write_text(str(process.pid))
 
