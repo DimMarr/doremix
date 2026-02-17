@@ -8,6 +8,7 @@ import { YoutubePlayerState } from "@store/trackPlayer";
 import { PlaylistRepository } from "@repositories/index";
 import Playlist, { Visibility } from "@models/playlist";
 import type { Track } from "@models/track";
+import { authService } from "@utils/authentication";
 
 interface PageParams {
   id: string;
@@ -44,7 +45,7 @@ function getIconForVisibility(visibility: Visibility) {
   }
 }
 
-function getVisibilityElement(playlist: Playlist) {
+async function getVisibilityElement(playlist: Playlist) {
   const visibility = playlist.visibility
   const badgeBase = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border uppercase tracking-wider transition-all duration-200 shadow-sm whitespace-nowrap";
   const interactable = "cursor-pointer hover:shadow-md relative select-none";
@@ -80,8 +81,8 @@ function getVisibilityElement(playlist: Playlist) {
     );
   }
 
-  // TODO: Replace hardcoded owner ID (1) with actual user ID from auth context when available
-  const currentUserId = 1;
+  const userInfos = await authService.iduser();
+  const currentUserId = userInfos.id;
   if (visibility === Visibility.public && currentUserId != playlist.idOwner) {
     return (
       <div class={`${badgeBase} ${colorClass} ${locked} w-fit`}>
@@ -166,12 +167,12 @@ export async function PlaylistDetailPage(
   // Local state
   let tracks: Track[] = playlist.tracks || [];
 
-  const updateHeader = () => {
+  const updateHeader = async () => {
     const headerContainer = container.querySelector('#playlist-header-info');
     if (headerContainer) {
       headerContainer.innerHTML = (
         <>
-          {getVisibilityElement(playlist) as 'safe'}
+          {await getVisibilityElement(playlist) as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
         </>
@@ -287,7 +288,7 @@ export async function PlaylistDetailPage(
           <Button id="add-track-button" variant="outline" size="md">Add Track</Button>
         </div>
         <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
-          {getVisibilityElement(playlist) as 'safe'}
+          {await getVisibilityElement(playlist) as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
         </div>
