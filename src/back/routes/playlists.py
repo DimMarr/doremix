@@ -169,10 +169,10 @@ def update_playlist(
     playlist_id: int,
     playlist_data: PlaylistUpdate,
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
     return PlaylistController.update_playlist(
-        db, playlist_id, playlist_data.model_dump(exclude_unset=True), user_id
+        db, playlist_id, playlist_data.model_dump(exclude_unset=True), user
     )
 
 
