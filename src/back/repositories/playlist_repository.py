@@ -62,10 +62,32 @@ class PlaylistRepository:
         return playlists
 
     @staticmethod
-    def get_by_id(db: Session, playlist_id: int) -> Optional[Playlist]:
-        playlist: Optional[Playlist] = (
-            db.query(Playlist).filter(Playlist.idPlaylist == playlist_id).first()
+    def get_by_id(db: Session, playlist_id: int, user_id: int) -> Optional[Playlist]:
+        direct_shared_subquery = db.query(UserPlaylist.idPlaylist).filter(
+            UserPlaylist.idUser == user_id
         )
+
+        my_group_ids = db.query(GroupUser.idGroup).filter(GroupUser.idUser == user_id)
+        group_shared_subquery = db.query(GroupPlaylist.idPlaylist).filter(
+            GroupPlaylist.idGroup.in_(my_group_ids)
+        )
+
+        playlist: Optional[Playlist] = (
+            db.query(Playlist)
+            .filter(Playlist.idPlaylist == playlist_id)
+            .filter(
+                or_(
+                    Playlist.idOwner == user_id,
+                    Playlist.visibility == PlaylistVisibility.PUBLIC,
+                    Playlist.visibility == PlaylistVisibility.OPEN,
+                    Playlist.idOwner.is_(None),
+                    Playlist.idPlaylist.in_(direct_shared_subquery),
+                    Playlist.idPlaylist.in_(group_shared_subquery),
+                )
+            )
+            .first()
+        )
+
         return playlist
 
     @staticmethod

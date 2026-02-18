@@ -16,24 +16,29 @@ class PlaylistController:
         return PlaylistRepository.get_public_playlists(db)
 
     @staticmethod
-    def get_playlist(db: Session, playlist_id: int):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id)
+    def get_playlist(db: Session, playlist_id: int, user_id: int):
+        playlist = PlaylistRepository.get_by_id(db, playlist_id, user_id)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
         return playlist
 
     @staticmethod
-    def get_playlist_tracks(db: Session, playlist_id: int):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id)
+    def get_playlist_tracks(db: Session, playlist_id: int, user_id: int):
+        playlist = PlaylistRepository.get_by_id(db, playlist_id, user_id)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
         return PlaylistRepository.get_playlist_tracks(db, playlist_id)
 
     @staticmethod
     def add_playlist_track(
-        db: Session, title: str, youtubeLink: str, playlist_id: int, user: User
+        db: Session,
+        title: str,
+        youtubeLink: str,
+        playlist_id: int,
+        user: User,
+        user_id: int,
     ):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id)
+        playlist = PlaylistRepository.get_by_id(db, playlist_id, user_id)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
 
@@ -66,8 +71,8 @@ class PlaylistController:
         return track
 
     @staticmethod
-    def upload_cover(db: Session, playlist_id: int, file: UploadFile):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id)
+    def upload_cover(db: Session, playlist_id: int, file: UploadFile, user_id: int):
+        playlist = PlaylistRepository.get_by_id(db, playlist_id, user_id)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
 
@@ -80,8 +85,8 @@ class PlaylistController:
         return updated_playlist
 
     @staticmethod
-    def remove_track(db: Session, playlist_id: int, track_id: int):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id)
+    def remove_track(db: Session, playlist_id: int, track_id: int, user_id: int):
+        playlist = PlaylistRepository.get_by_id(db, playlist_id, user_id)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
         if not PlaylistRepository.remove_track(db, playlist_id, track_id):
@@ -115,11 +120,11 @@ class PlaylistController:
         return PlaylistRepository.create(db, new_playlist)
 
     @staticmethod
-    def delete_playlist(db: Session, playlist_id: int):
+    def delete_playlist(db: Session, playlist_id: int, user_id: int):
         # TODO: Quand l'auth sera en place, ajouter user_id en paramètre :
         # def delete_playlist(db: Session, playlist_id: int, user_id: int):
 
-        playlist = PlaylistRepository.get_by_id(db, playlist_id)
+        playlist = PlaylistRepository.get_by_id(db, playlist_id, user_id)
 
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
@@ -133,11 +138,11 @@ class PlaylistController:
         return {"message": f"Playlist '{playlist.name}' successfully deleted"}
 
     @staticmethod
-    def update_playlist(db: Session, playlist_id: int, update_data: dict):
+    def update_playlist(db: Session, playlist_id: int, update_data: dict, user_id: int):
         # TODO: Quand l'auth sera en place, ajouter user_id en paramètre :
         # def update_playlist(db: Session, playlist_id: int, update_data: dict, user_id: int):
 
-        playlist = PlaylistRepository.get_by_id(db, playlist_id)
+        playlist = PlaylistRepository.get_by_id(db, playlist_id, user_id)
 
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
