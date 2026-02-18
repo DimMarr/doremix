@@ -13,13 +13,6 @@ export function isValidEmail(email: string): boolean {
 
 class AuthService {
     async isAuthenticated() {
-        // const hasRefreshToken = document.cookie.includes("refreshToken")
-        // const hasAccessToken = document.cookie.includes("accessToken")
-
-        // if (!hasAccessToken){
-        //     return false
-        // }
-
         try {
             const response = await fetch(`${API_BASE_URL}/auth/check-token`, {
                 method: 'POST',
@@ -53,9 +46,10 @@ class AuthService {
             })
 
             const result = await response.json()
-            console.log(result)
-            // document.cookie = `accessToken=${result.access_token}; path=/`
-            // document.cookie = `refreshToken=${result.refresh_token}; path=/`
+
+            if (!response.ok) {
+                throw new Error(result.message || "Login failed");
+            }
         } catch (e) {
             console.log('Login failed', e);
             throw e;
@@ -63,38 +57,56 @@ class AuthService {
 
     }
 
-    // refresh accessToken through refreshToken
-    async refreshAccessToken() {
+    async register(email, password) {
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+            const response = await fetch(`${API_BASE_URL}/auth/register`, {
                 method: 'POST',
-                credentials: 'include' // or include ?
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    "email": email,
+                    "password": password
+                })
             })
 
-            return response.status == 200
-        } catch (e) {
-            console.error("Failed to refresh token:", e);
-            return false;
-        }
+            const result = await response.json()
 
-        // Trying to replicate success without backend
-        // if(document.cookie.includes("refreshToken")){
-        //     this.accessToken = Math.random().toString(36).substring(2, 2 + 6);
-        //     console.log("accessToken provided.")
-        //     return
-        // }
-        // console.log("Do not have a refreshToken.")
+            if (!response.ok) {
+                throw new Error(result.message || "Register failed");
+            }
+        } catch (e) {
+            console.log('Register failed', e);
+            throw e;
+        }
 
     }
 
-    async logout() {
-        // this.accessToken = null;
-        // document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
-        const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+    // refresh accessToken through refreshToken
+    async refreshAccessToken() {
+        const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
             method: 'POST',
-            credentials: 'include' // or include ?
+            credentials: 'include'
         })
 
+        return response.status == 200
+    }
+
+    async logout() {
+        const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+            method: 'POST',
+            credentials: 'include'
+        })
+
+    }
+
+    async iduser() {
+        const response = await fetch(`${API_BASE_URL}/auth/me`, {
+            method: 'GET',
+            credentials: 'include'
+        })
+
+        const result = response.json()
+        return result
     }
 }
 

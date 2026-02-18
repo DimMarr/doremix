@@ -8,28 +8,6 @@ from sqlalchemy.orm import Session
 from models import User, Playlist, Genre, PlaylistVisibility
 
 
-@pytest.fixture
-def sample_user(db):
-    """Crée un utilisateur de test"""
-    user = User(
-        username="testuser", email="test@example.com", password="hashed_password"
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
-
-
-@pytest.fixture
-def sample_genre(db):
-    """Crée un genre de test"""
-    genre = Genre(label="Rock")
-    db.add(genre)
-    db.commit()
-    db.refresh(genre)
-    return genre
-
-
 class TestPlaylistCreation:
     """Tests pour la création de playlists."""
 

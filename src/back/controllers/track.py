@@ -20,11 +20,11 @@ class TrackController:
         return TrackRepository.get_by_youtube_link(db, url)
 
     @staticmethod
-    def search(db: Session, query: str):
+    def search(db: Session, query: str, idUser: int):
         if not query or len(query) < 2:
             raise HTTPException(
                 status_code=400, detail="Query must be at least 2 characters"
             )
 
-        tracks = TrackRepository.search_tracks(db, query)
+        tracks = TrackRepository.search_tracks(db, query, idUser)
         return tracks

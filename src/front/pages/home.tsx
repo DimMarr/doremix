@@ -3,6 +3,7 @@ import { buildCardsFromPlaylists, Card, initCardsElements } from "@components/ge
 import { setupPlaylistAndTrackModals } from "@components/playlists";
 import { PlaylistRepository } from "@repositories/index";
 import Playlist, { Visibility } from "@models/playlist";
+import { authService } from "@utils/authentication";
 
 export async function HomePage(container) {
   container.innerHTML = "";
@@ -10,10 +11,8 @@ export async function HomePage(container) {
   // Fetch all playlists to separate them
   const allPlaylists = await new PlaylistRepository().getAll();
 
-  // Filter playlists
-  // TODO: Replace hardcoded owner ID (1) with actual user ID from auth context when available
-  const currentUserId = 1;
-
+  const userInfos = await authService.iduser();
+  const currentUserId = userInfos.id;
   const personalPlaylists = allPlaylists.filter(p => p.idOwner === currentUserId);
   const publicPlaylists = allPlaylists.filter(p => p.visibility === Visibility.public && p.idOwner !== currentUserId);
   const openPlaylists = allPlaylists.filter(p => p.visibility === Visibility.open);
