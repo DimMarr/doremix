@@ -31,3 +31,12 @@ class PlaylistUpdate(BaseModel):
     idGenre: Optional[int] = None
     visibility: Optional[PlaylistVisibility] = None
     model_config = ConfigDict(from_attributes=True)
+
+
+class SharePlaylistRequest(BaseModel):
+    target_email: str  # L'email de la personne à inviter
+    is_editor: bool = False  # False = Lecture seule, True = Peut modifier
+
+
+class ShareGroupRequest(BaseModel):
+    group_name: str

@@ -8,8 +8,8 @@ from models import User
 
 class PlaylistController:
     @staticmethod
-    def get_all_playlists(db: Session):
-        return PlaylistRepository.get_all(db)
+    def get_accessible_playlists(db: Session, user_id: int):
+        return PlaylistRepository.get_accessible_playlists(db, user_id)
 
     @staticmethod
     def get_public_playlists(db: Session):
@@ -147,3 +147,52 @@ class PlaylistController:
         #     raise HTTPException(status_code=403, detail="You are not the owner of this playlist")
 
         return PlaylistRepository.update_playlist(db, playlist, update_data)
+
+    @staticmethod
+    def add_playlist_track_secure(
+        db: Session, title: str, url: str, playlist_id: int, user_id: int
+    ):
+        # 1. Vérification de sécurité
+        if not PlaylistRepository.can_edit_playlist(db, playlist_id, user_id):
+            raise HTTPException(
+                status_code=403,
+                detail="Permission denied : You don't have permission to edit this playlist",
+            )
+
+        # 2. Appel de la logique métier
+        track, status = PlaylistRepository.add_track(db, title, url, playlist_id)
+
+        if status == "invalid url":
+            raise HTTPException(400, "Invalid URL")
+        if status == "already_exists":
+            raise HTTPException(409, "Track already exists")
+        if not track:
+            raise HTTPException(500, "Failed to add track")
+
+        return track
+
+    @staticmethod
+    def share_user(
+        db: Session, playlist_id: int, owner_id: int, email: str, is_editor: bool
+    ):
+        success, msg = PlaylistRepository.share_with_user(
+            db, playlist_id, owner_id, email, is_editor
+        )
+        if msg == "forbidden":
+            raise HTTPException(403, "Forbidden")
+        if msg == "user_not_found":
+            raise HTTPException(404, "User not found")
+        if msg == "self_share":
+            raise HTTPException(400, "Cannot share with yourself")
+        return {"message": "Shared successfully"}
+
+    @staticmethod
+    def share_group(db: Session, playlist_id: int, owner_id: int, group_name: str):
+        success, msg = PlaylistRepository.share_with_group(
+            db, playlist_id, owner_id, group_name
+        )
+        if msg == "forbidden":
+            raise HTTPException(403, "Forbidden")
+        if msg == "group_not_found":
+            raise HTTPException(404, "Group not found")
+        return {"message": "Shared with group successfully"}
