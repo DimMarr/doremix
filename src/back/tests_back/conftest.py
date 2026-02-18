@@ -9,6 +9,8 @@ from routes.playlists import router as playlists_router
 from routes.users import router as users_router
 from routes.search_router import router as search_router
 from models import User, Genre
+from models.enums import PlaylistVisibility
+from models.playlist import Playlist
 
 # Crée une base de données SQLite en mémoire pour les tests
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -38,8 +40,8 @@ def db():
 
 
 @pytest.fixture(scope="function")
-def client(db):
-    """Crée un client de test avec dépendance override."""
+def client(db, sample_user):
+    """Crée un client de test avec dépendance override et utilisateur simulé."""
 
     def override_get_db():
         try:
@@ -47,17 +49,30 @@ def client(db):
         finally:
             pass
 
+    def override_get_current_user_id():
+        return sample_user.idUser
+
     app.dependency_overrides[get_db] = override_get_db
+    # Override auth dependencies so routes depending on user or user id work in tests
+    from middleware.auth_middleware import get_current_user_id, get_current_user
+
+    app.dependency_overrides[get_current_user_id] = (
+        lambda: override_get_current_user_id()
+    )
+    app.dependency_overrides[get_current_user] = lambda: sample_user
 
     test_client = TestClient(app)
     yield test_client
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture(scope="function")
 def sample_user(db: Session):
     """Crée un utilisateur de test"""
     user = User(
-        username="testuser", email="test@example.com", password="hashed_password"
+        username="sarah",
+        email="sarah@etu.umontpellier.fr",
+        password="$2b$12$MfGljJQRrXEFoIXXniPzFueRzeO.wSwElO8U1uRqmq.f15VHw7kIK",
     )
     db.add(user)
     db.commit()
@@ -73,4 +88,46 @@ def sample_genre(db: Session):
     db.commit()
     db.refresh(genre)
     return genre
-    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def sample_playlist(db, sample_user, sample_genre):
+    """Crée une playlist de test"""
+    playlist = Playlist(
+        name="Test Playlist",
+        idOwner=sample_user.idUser,
+        idGenre=sample_genre.idGenre,
+        visibility=PlaylistVisibility.PUBLIC,
+    )
+    db.add(playlist)
+    db.commit()
+    db.refresh(playlist)
+    return playlist
+
+
+@pytest.fixture
+def sample_playlists(db: Session, sample_user, sample_genre):
+    """Crée plusieurs playlists de test."""
+    playlists = [
+        Playlist(
+            name="My Favorite Songs",
+            idGenre=sample_genre.idGenre,
+            idOwner=sample_user.idUser,
+            vote=10,
+            visibility=PlaylistVisibility.PUBLIC,
+        ),
+        Playlist(
+            name="Private Mix",
+            idGenre=sample_genre.idGenre,
+            idOwner=sample_user.idUser,
+            vote=5,
+            visibility=PlaylistVisibility.PRIVATE,
+        ),
+    ]
+    db.add_all(playlists)
+    db.commit()
+
+    for playlist in playlists:
+        db.refresh(playlist)
+
+    return playlists

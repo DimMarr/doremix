@@ -3,6 +3,7 @@ from repositories import PlaylistRepository
 from fastapi import HTTPException, UploadFile, Response
 from utils.image_processor import save_cover_image
 from models.playlist import Playlist
+from models import User
 
 
 class PlaylistController:
@@ -30,22 +31,23 @@ class PlaylistController:
 
     @staticmethod
     def add_playlist_track(
-        db: Session,
-        title: str,
-        youtubeLink: str,
-        playlist_id: int,
+        db: Session, title: str, youtubeLink: str, playlist_id: int, user: User
     ):
         playlist = PlaylistRepository.get_by_id(db, playlist_id)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
 
         # TODO: Quand l'auth sera en place, vérifier les permissions :
-        # is_owner = playlist.idOwner == user_id
+        is_owner = playlist.idOwner == user.idUser
+        is_admin = user.idRole == 3
         # is_editor = PlaylistRepository.is_user_editor(db, playlist.idPlaylist, user_id)
-        # is_open = playlist.visibility.value == "OPEN"
-        #
-        # if not (is_owner or is_editor or is_open):
-        #     raise HTTPException(status_code=403, detail="You don't have permission to edit this playlist")
+        is_public = playlist.visibility.value == "PUBLIC"
+
+        if not (is_owner or is_public or is_admin):
+            raise HTTPException(
+                status_code=403,
+                detail="You don't have permission to edit this playlist",
+            )
 
         track, status = PlaylistRepository.add_track(
             db, title, youtubeLink, playlist_id
@@ -92,22 +94,22 @@ class PlaylistController:
         return playlist
 
     @staticmethod
-    def search(db: Session, query: str):
+    def search(db: Session, query: str, idUser: int):
         if not query or len(query) < 2:
             raise HTTPException(
                 status_code=400, detail="Query must be at least 2 characters"
             )
 
-        playlists = PlaylistRepository.search_playlists(db, query)
+        playlists = PlaylistRepository.search_playlists(db, query, idUser)
         return playlists
 
     @staticmethod
-    def create_playlist(db: Session, playlist_data: dict):
+    def create_playlist(db: Session, playlist_data: dict, user_id: int):
         new_playlist = Playlist(
             name=playlist_data["name"],
             idGenre=playlist_data["idGenre"],
             visibility=playlist_data["visibility"],
-            idOwner=1,  # TODO: Remplacer par current_user.id quand l'auth sera en place
+            idOwner=user_id,
         )
 
         return PlaylistRepository.create(db, new_playlist)

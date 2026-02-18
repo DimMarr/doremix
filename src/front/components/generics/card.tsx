@@ -73,7 +73,7 @@ export function Card({
 
   const cardContent = (
     <>
-      <div class="relative w-full aspect-square overflow-hidden rounded-md shadow-lg mb-2">
+      {image != null ? <div class="relative w-full aspect-square overflow-hidden rounded-md shadow-lg mb-2">
         {getVisibilityIcon(visibility) as 'safe'}
 
         {image as 'safe' ? (
@@ -101,7 +101,9 @@ export function Card({
             </button>
           </div>
         )}
-      </div>
+      </div> : ""
+      }
+
 
       <div class="flex flex-col gap-0.5 min-w-0">
         {title as 'safe' && (

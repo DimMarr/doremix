@@ -1,4 +1,4 @@
-import { Button, Input, AlertBox, Testimony } from "@components/generics";
+import { Button, Input, Testimony } from "@components/generics";
 import { AlertManager } from "@utils/alertManager";
 import { isValidEmail, isValidPassword } from "@utils/authentication";
 import { Card } from "@components/generics/card";
@@ -20,7 +20,7 @@ export async function LoginPage(container) {
                             </div>
                             <Testimony name="Olivier De Jonckère" description="Teacher at Polytech Montpellier" testimony="DoReMix is one of the most secure applications I have ever seen. No injection vulnerabilities — I’m impressed." image="../../assets/images/profileimage.jpg" />
                         </div>
-                        <Card title="Log in to DoReMiX" className="p-10 flex justify-center items-center rounded-b-lg lg:rounded-b-none lg:rounded-r-lg">
+                        <Card image={null} title="Log in to DoReMiX" className="p-10 flex justify-center items-center rounded-b-lg lg:rounded-b-none lg:rounded-r-lg">
                             <form id="loginForm" class="mt-6 flex flex-col gap-5">
                                 <Input id="email" placeholder="vincent.berry@umontpellier.fr" label="Email" type="email"></Input>
                                 <div>
