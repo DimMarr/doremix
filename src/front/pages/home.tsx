@@ -11,7 +11,7 @@ export async function HomePage(container) {
   // Fetch all playlists to separate them
   const allPlaylists = await new PlaylistRepository().getAll();
 
-  const userInfos = await authService.iduser();
+  const userInfos = await authService.infos();
   const currentUserId = userInfos.id;
   const personalPlaylists = allPlaylists.filter(p => p.idOwner === currentUserId);
   const sharedPlaylists = allPlaylists.filter(p => p.idOwner != currentUserId && p.visibility !== Visibility.open && p.visibility !== Visibility.public)

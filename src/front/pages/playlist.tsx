@@ -81,7 +81,7 @@ async function getVisibilityElement(playlist: Playlist) {
     );
   }
 
-  const userInfos = await authService.iduser();
+  const userInfos = await authService.infos();
   const currentUserId = userInfos.id;
   if (visibility === Visibility.public && currentUserId != playlist.idOwner) {
     return (
@@ -270,7 +270,7 @@ export async function PlaylistDetailPage(
   };
 
   // Render page
-  const userInfos = await authService.iduser();
+  const userInfos = await authService.infos();
   const currentUserRole = userInfos.role
 
   container.innerHTML = (
