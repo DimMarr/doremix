@@ -259,7 +259,7 @@ class PlaylistRepository:
         if playlist.idOwner == user_id:
             return True
 
-        if playlist.visibility == PlaylistVisibility.OPEN:
+        if playlist.visibility == PlaylistVisibility.PUBLIC:
             return True
 
         # Gestion du droit le plus fort
