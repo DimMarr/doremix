@@ -83,13 +83,19 @@ class AuthService {
 
     // refresh accessToken through refreshToken
     async refreshAccessToken() {
-        const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-            method: 'POST',
-            credentials: 'include'
-        })
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+                method: 'POST',
+                credentials: 'include'
+            })
 
-        return response.status == 200
+            return response.status == 200
+        } catch (e) {
+            console.error("Failed to refresh token:", e);
+            return false;
+        }
     }
+
 
     async logout() {
         const response = await fetch(`${API_BASE_URL}/auth/logout`, {
