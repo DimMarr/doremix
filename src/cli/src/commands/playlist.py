@@ -4,7 +4,7 @@ from rich.console import Console
 from rich.table import Table
 
 from src.services.playlist import (
-    get_all_playlists,
+    get_accessible_playlists,
     get_playlist,
     get_playlist_tracks,
     remove_track,
@@ -23,7 +23,7 @@ console = Console()
 @app.command(help="List all playlists.")
 def list():
     try:
-        playlists = get_all_playlists()
+        playlists = get_accessible_playlists()
     except Exception as e:
         print(e)
         return
