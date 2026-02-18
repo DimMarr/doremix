@@ -1,4 +1,4 @@
-from back.models.user import User
+from models.user import User
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
