@@ -177,7 +177,9 @@ class PlaylistRepository:
         return playlist
 
     @staticmethod
-    def search_playlists(db: Session, query: str, limit: int = 10) -> List[Playlist]:
+    def search_playlists(
+        db: Session, query: str, idUser: int, limit: int = 10
+    ) -> List[Playlist]:
         playlists: List[Playlist] = (
             db.query(Playlist)
             .filter(
@@ -186,7 +188,7 @@ class PlaylistRepository:
                     or_(
                         Playlist.visibility == PlaylistVisibility.PUBLIC,
                         Playlist.visibility == PlaylistVisibility.OPEN,
-                        Playlist.idOwner == 1,
+                        Playlist.idOwner == idUser,
                         # TODO: Quand l'auth sera en place, rajouter les playlists de l'utilsateur connecté
                     ),
                 )
