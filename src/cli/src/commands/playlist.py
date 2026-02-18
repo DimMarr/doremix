@@ -1,9 +1,12 @@
+from typing import cast
+
 import typer
 
 from rich.console import Console
 from rich.table import Table
 
 from src.services.playlist import (
+    PlaylistScope,
     get_all_playlists,
     get_playlist,
     get_playlist_tracks,
@@ -20,24 +23,36 @@ app = typer.Typer()
 console = Console()
 
 
-@app.command(help="List all playlists.")
-def list():
+@app.command(help="List playlists.")
+def list(
+    scope: str = typer.Option(
+        "accessible",
+        "--scope",
+        "-s",
+        help="Scope (accessible, mine, open, public)",
+    ),
+):
     try:
-        playlists = get_all_playlists()
+        normalized_scope = cast(PlaylistScope, scope.lower())
+        playlists = get_all_playlists(normalized_scope)
     except Exception as e:
         print(e)
         return
 
-    table = Table(title="All Playlists")
+    table = Table(title=f"Playlists ({normalized_scope})")
 
     table.add_column("id", style="cyan")
     table.add_column("title", style="magenta")
+    table.add_column("visibility", style="green")
+    table.add_column("owner", style="yellow")
 
     for playlist in playlists:
         id = str(playlist.idPlaylist)
         title = playlist.name
+        visibility = playlist.visibility.value
+        owner = str(playlist.idOwner)
 
-        table.add_row(id, title)
+        table.add_row(id, title, visibility, owner)
 
     console.print(table)
 
@@ -173,7 +188,7 @@ def update(
         None,
         "--visibility",
         "-v",
-        help="New visibility (PUBLIC, PRIVATE)",
+        help="New visibility (PUBLIC, PRIVATE, OPEN)",
     ),
     # TODO: Quand l'auth sera en place, l'utilisateur sera automatiquement identifié via le token
 ):
