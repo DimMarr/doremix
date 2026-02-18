@@ -9,18 +9,6 @@ from models import User, Playlist, Track, Genre
 
 
 @pytest.fixture
-def sample_playlist(db, sample_user, sample_genre):
-    """Crée une playlist de test"""
-    playlist = Playlist(
-        name="Ma Playlist", idOwner=sample_user.idUser, idGenre=sample_genre.idGenre
-    )
-    db.add(playlist)
-    db.commit()
-    db.refresh(playlist)
-    return playlist
-
-
-@pytest.fixture
 def sample_track(db):
     """Crée un track de test"""
     track = Track(

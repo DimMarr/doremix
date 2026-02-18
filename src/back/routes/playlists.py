@@ -1,3 +1,4 @@
+from models.user import User
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
@@ -5,9 +6,18 @@ from typing import List
 from pydantic import BaseModel
 
 from controllers import PlaylistController
-from schemas import PlaylistSchema, TrackSchema, PlaylistCreate, PlaylistUpdate
+from schemas import (
+    PlaylistSchema,
+    TrackSchema,
+    PlaylistCreate,
+    PlaylistUpdate,
+    SharePlaylistRequest,
+    ShareGroupRequest,
+)
 from database import get_db
 import os
+
+from middleware.auth_middleware import get_current_user, get_current_user_id
 
 router = APIRouter(prefix="/playlists", tags=["Playlists"])
 
@@ -23,28 +33,36 @@ class AddTrackBody(BaseModel):
     summary="Créer une playlist",
     description="Crée une nouvelle playlist avec les informations fournies.",
 )
-def create_playlist(playlist: PlaylistCreate, db: Session = Depends(get_db)):
+def create_playlist(
+    playlist: PlaylistCreate,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
     # TODO: Quand l'auth sera en place :
     # def create_playlist(playlist: PlaylistCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     #     return PlaylistController.create_playlist(db, playlist.model_dump(), current_user)
-    return PlaylistController.create_playlist(db, playlist.model_dump())
+    return PlaylistController.create_playlist(db, playlist.model_dump(), user_id)
+
+
+# MOCK USER ID (En attendant l'authentification JWT)
+CURRENT_USER_ID = 1
 
 
 @router.get(
     "/",
     response_model=List[PlaylistSchema],
-    summary="Lister toutes les playlists",
-    description="Retourne la liste complète des playlists disponibles.",
+    summary="Lister toutes les playlists accessibles par l'utilisateur courrant",
+    description="Retourne la liste complète des playlists visibles.",
 )
-def get_playlists(db: Session = Depends(get_db)):
-    playlists = PlaylistController.get_all_playlists(db)
+def get_accessible_playlists(db: Session = Depends(get_db)):
+    playlists = PlaylistController.get_accessible_playlists(db, CURRENT_USER_ID)
     return playlists
 
 
 @router.get(
     "/public",
     response_model=List[PlaylistSchema],
-    summary="Lister toutes les playlists public",
+    summary="Lister toutes les playlists publiques",
     description="Retourne la liste complète des playlists disponibles.",
 )
 def get_public_playlists(db: Session = Depends(get_db)):
@@ -72,14 +90,18 @@ def get_playlist_tracks(playlist_id: int, db: Session = Depends(get_db)):
 @router.post(
     "/{playlist_id}/tracks/by-url",
     response_model=TrackSchema,
-    summary="Ajoute un track à une playlist via URL",
+    summary="Ajoute un track à une playlist via URL (Sécurisé)",
 )
 def add_playlist_track_by_url(
     playlist_id: int,
     body: AddTrackBody,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    track = PlaylistController.add_playlist_track(db, body.title, body.url, playlist_id)
+    track = PlaylistController.add_playlist_track_secure(
+        db, body.title, body.url, playlist_id, CURRENT_USER_ID
+    )
+
     if not track:
         raise HTTPException(status_code=500, detail="Failed to add track")
     return track
@@ -139,4 +161,22 @@ def update_playlist(
 
     return PlaylistController.update_playlist(
         db, playlist_id, playlist_data.model_dump(exclude_unset=True)
+    )
+
+
+@router.post("/{playlist_id}/share/user", summary="Partager avec un utilisateur")
+def share_playlist_user(
+    playlist_id: int, req: SharePlaylistRequest, db: Session = Depends(get_db)
+):
+    return PlaylistController.share_user(
+        db, playlist_id, CURRENT_USER_ID, req.target_email, req.is_editor
+    )
+
+
+@router.post("/{playlist_id}/share/group", summary="Partager avec un groupe")
+def share_playlist_group(
+    playlist_id: int, req: ShareGroupRequest, db: Session = Depends(get_db)
+):
+    return PlaylistController.share_group(
+        db, playlist_id, CURRENT_USER_ID, req.group_name
     )

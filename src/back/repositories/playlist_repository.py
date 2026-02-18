@@ -6,6 +6,8 @@ from models.track_playlist import TrackPlaylist
 from models.track import Track
 from models.artist import Artist
 from models.user_playlists import UserPlaylist
+from models.user import User
+from models.group import GroupUser, GroupPlaylist, UserGroup
 from typing import Optional, List
 from repositories.track_repository import TrackRepository
 from repositories.artist_repository import ArtistRepository
@@ -17,9 +19,37 @@ from utils.youtube_utils import (
 
 
 class PlaylistRepository:
+    # get_all() supprimée pour la notion d'accès
+
     @staticmethod
-    def get_all(db: Session) -> List[Playlist]:
-        playlists: List[Playlist] = db.query(Playlist).all()
+    def get_accessible_playlists(db: Session, user_id: int) -> List[Playlist]:
+        # Playlists partagées avec l'utilisateur
+        direct_shared_subquery = db.query(UserPlaylist.idPlaylist).filter(
+            UserPlaylist.idUser == user_id
+        )
+
+        # Playlists partagées via les GROUPES
+        my_group_ids = db.query(GroupUser.idGroup).filter(GroupUser.idUser == user_id)
+        group_shared_subquery = db.query(GroupPlaylist.idPlaylist).filter(
+            GroupPlaylist.idGroup.in_(my_group_ids)
+        )
+
+        playlists: List[Playlist] = (
+            db.query(Playlist)
+            .filter(
+                or_(
+                    Playlist.idOwner == user_id,
+                    Playlist.visibility == PlaylistVisibility.PUBLIC,
+                    Playlist.visibility == PlaylistVisibility.OPEN,
+                    Playlist.idOwner is None,
+                    Playlist.idPlaylist.in_(direct_shared_subquery),
+                    Playlist.idPlaylist.in_(group_shared_subquery),
+                )
+            )
+            .distinct()
+            .all()
+        )
+
         return playlists
 
     @staticmethod
@@ -177,7 +207,9 @@ class PlaylistRepository:
         return playlist
 
     @staticmethod
-    def search_playlists(db: Session, query: str, limit: int = 10) -> List[Playlist]:
+    def search_playlists(
+        db: Session, query: str, idUser: int, limit: int = 10
+    ) -> List[Playlist]:
         playlists: List[Playlist] = (
             db.query(Playlist)
             .filter(
@@ -186,7 +218,7 @@ class PlaylistRepository:
                     or_(
                         Playlist.visibility == PlaylistVisibility.PUBLIC,
                         Playlist.visibility == PlaylistVisibility.OPEN,
-                        Playlist.idOwner == 1,
+                        Playlist.idOwner == idUser,
                         # TODO: Quand l'auth sera en place, rajouter les playlists de l'utilsateur connecté
                     ),
                 )
@@ -195,3 +227,82 @@ class PlaylistRepository:
             .all()
         )
         return playlists
+
+    @staticmethod
+    def can_edit_playlist(db: Session, playlist_id: int, user_id: int) -> bool:
+        playlist = db.query(Playlist).filter(Playlist.idPlaylist == playlist_id).first()
+        if not playlist:
+            return False
+
+        if playlist.idOwner == user_id:
+            return True
+
+        if playlist.visibility == PlaylistVisibility.OPEN:
+            return True
+
+        # Gestion du droit le plus fort
+        direct_right = (
+            db.query(UserPlaylist)
+            .filter(
+                UserPlaylist.idPlaylist == playlist_id,
+                UserPlaylist.idUser == user_id,
+                UserPlaylist.editor is True,
+            )
+            .first()
+        )
+
+        if direct_right:
+            return True
+
+        return False
+
+    @staticmethod
+    def share_with_user(
+        db: Session, playlist_id: int, owner_id: int, target_email: str, is_editor: bool
+    ):
+        playlist = db.query(Playlist).filter(Playlist.idPlaylist == playlist_id).first()
+
+        if not playlist or playlist.idOwner != owner_id:
+            return False, "forbidden"
+
+        target = db.query(User).filter(User.email == target_email).first()
+        if not target:
+            return False, "user_not_found"
+
+        if target.idUser == owner_id:
+            return False, "self_share"
+
+        link = UserPlaylist(
+            idUser=target.idUser, idPlaylist=playlist_id, editor=is_editor
+        )
+        db.merge(link)
+        db.commit()
+        return True, "success"
+
+    @staticmethod
+    def share_with_group(db: Session, playlist_id: int, owner_id: int, group_name: str):
+        playlist = db.query(Playlist).filter(Playlist.idPlaylist == playlist_id).first()
+
+        if not playlist or playlist.idOwner != owner_id:
+            return False, "forbidden"
+
+        group = db.query(UserGroup).filter(UserGroup.groupName == group_name).first()
+        if not group:
+            return False, "group_not_found"
+
+        # Vérifier si déjà partagé pour éviter erreur SQL (Primary Key)
+        exists = (
+            db.query(GroupPlaylist)
+            .filter(
+                GroupPlaylist.idGroup == group.idGroup,
+                GroupPlaylist.idPlaylist == playlist_id,
+            )
+            .first()
+        )
+
+        if not exists:
+            link = GroupPlaylist(idGroup=group.idGroup, idPlaylist=playlist_id)
+            db.add(link)
+            db.commit()
+
+        return True, "success"

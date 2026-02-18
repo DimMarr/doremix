@@ -5,28 +5,6 @@ from sqlalchemy.orm import Session
 
 
 @pytest.fixture
-def sample_genre(db: Session):
-    """Crée un genre de test."""
-    genre = Genre(label="Rock")
-    db.add(genre)
-    db.commit()
-    db.refresh(genre)
-    return genre
-
-
-@pytest.fixture
-def sample_user(db: Session):
-    """Crée un utilisateur de test."""
-    user = User(
-        email="test@example.com", password="hashed_password", username="testuser"
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
-
-
-@pytest.fixture
 def sample_artist(db: Session):
     """Crée un artiste de test."""
     artist = Artist(name="John Lennon")
