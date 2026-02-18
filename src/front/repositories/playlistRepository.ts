@@ -148,13 +148,8 @@ export class PlaylistRepository {
         const img1 = new URL("../assets/images/playlist1.jpg", import.meta.url).href;
         try {
             const rawDataPlaylists = await this._fetchAll();
-            const playlistPromises = rawDataPlaylists.map(async (item: any) => {
-                const rawDatatracks = await this._fetchTracks(item.idPlaylist);
-                const tracks = [];
-                for (const data of rawDatatracks) {
-                    tracks.push(new Track(data));
-                }
-
+            // Lazy loading: do NOT fetch tracks here
+            const playlists = rawDataPlaylists.map((item: any) => {
                 // Ensure visibility is correctly mapped, handling case-insensitivity
                 let visibility: Visibility = Visibility.public;
                 if (item.visibility) {
@@ -168,10 +163,9 @@ export class PlaylistRepository {
                     ...item,
                     image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
                     visibility: visibility,
-                    tracks: tracks,
+                    tracks: [], // Initialize with empty tracks
                 });
             });
-            const playlists = await Promise.all(playlistPromises);
             return playlists;
         } catch (error) {
             console.error("Erreur lors de la récupération des playlists", error);
@@ -183,13 +177,8 @@ export class PlaylistRepository {
         const img1 = new URL("../assets/images/playlist1.jpg", import.meta.url).href;
         try {
             const rawDataPlaylists = await this._fetchPublic();
-            const playlistPromises = rawDataPlaylists.map(async (item: any) => {
-                const rawDatatracks = await this._fetchTracks(item.idPlaylist);
-                const tracks = [];
-                for (const data of rawDatatracks) {
-                    tracks.push(new Track(data));
-                }
-
+            // Lazy loading: do NOT fetch tracks here
+            const playlists = rawDataPlaylists.map((item: any) => {
                 // Ensure visibility is correctly mapped, handling case-insensitivity
                 let visibility: Visibility = Visibility.public;
                 if (item.visibility) {
@@ -203,15 +192,23 @@ export class PlaylistRepository {
                     ...item,
                     image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
                     visibility: visibility,
-                    tracks: tracks,
+                    tracks: [], // Initialize with empty tracks
                 });
             });
-            const playlists = await Promise.all(playlistPromises);
             return playlists;
         } catch (error) {
             console.error("Erreur lors de la récupération des playlists", error);
             return [];
         }
+    }
+
+    async getTracks(playlistId: number): Promise<Track[]> {
+        const rawDatatracks = await this._fetchTracks(playlistId);
+        const tracks: Track[] = [];
+        for (const data of rawDatatracks) {
+            tracks.push(new Track(data));
+        }
+        return tracks;
     }
 
     async getById(id: number): Promise<Playlist> {
