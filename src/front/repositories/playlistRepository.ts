@@ -134,6 +134,12 @@ export class PlaylistRepository {
 
     getCoverUrl(coverPath: string) {
         if (!coverPath) return null;
+        if (coverPath.startsWith("asset:")) {
+            const assetName = coverPath.split(":")[1];
+            if (assetName === "playlist1.jpg") return new URL("../assets/images/playlist1.jpg", import.meta.url).href;
+            if (assetName === "playlist2.jpg") return new URL("../assets/images/playlist2.jpg", import.meta.url).href;
+            if (assetName === "playlist3.jpg") return new URL("../assets/images/playlist3.jpg", import.meta.url).href;
+        }
         if (coverPath.startsWith("http") || coverPath.startsWith("https")) return coverPath;
         return `${API_BASE_URL}/covers/${coverPath}`;
     }
