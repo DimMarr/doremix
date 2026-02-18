@@ -80,12 +80,23 @@ def get(id: int = typer.Argument(..., help="Track ID")):
 
 @app.command(help="Play a track.")
 def play(id: int):
-    return play_track(id)
+    try:
+        play_track(id)
+        console.print("[green]✓ Playback started.[/green]")
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
 
 
 @app.command(help="Stop a track.")
 def stop():
-    return stop_track()
+    try:
+        message = stop_track()
+        if message == "No track is running.":
+            console.print(f"[yellow]{message}[/yellow]")
+            return
+        console.print(f"[green]✓ {message}[/green]")
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
 
 
 @app.command(help="Search tracks by title.")

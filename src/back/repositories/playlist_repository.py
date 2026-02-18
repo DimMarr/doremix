@@ -123,7 +123,7 @@ class PlaylistRepository:
             durationSeconds, author_name = get_youtube_video_info(clean_url)
 
             # Checks if Youtube video exists
-            if durationSeconds is None:
+            if author_name == "Video unavailable":
                 return track, "invalid url"
 
             if durationSeconds is None:

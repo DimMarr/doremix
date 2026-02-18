@@ -15,7 +15,7 @@ def get_youtube_video_info(url: str) -> Tuple[Optional[int], Optional[str]]:
             author = info.get("uploader")
             return duration, author
 
-    # Return an error if the video doesn't exists
+    # Signal unavailable videos with a sentinel author value.
     except yt_dlp.utils.DownloadError:
         return None, "Video unavailable"
     except Exception as e:
