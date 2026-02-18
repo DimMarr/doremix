@@ -38,14 +38,7 @@ def create_playlist(
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user_id),
 ):
-    # TODO: Quand l'auth sera en place :
-    # def create_playlist(playlist: PlaylistCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    #     return PlaylistController.create_playlist(db, playlist.model_dump(), current_user)
     return PlaylistController.create_playlist(db, playlist.model_dump(), user_id)
-
-
-# MOCK USER ID (En attendant l'authentification JWT)
-CURRENT_USER_ID = 1
 
 
 @router.get(
@@ -54,8 +47,8 @@ CURRENT_USER_ID = 1
     summary="Lister toutes les playlists accessibles par l'utilisateur courrant",
     description="Retourne la liste complète des playlists visibles.",
 )
-def get_accessible_playlists(db: Session = Depends(get_db)):
-    playlists = PlaylistController.get_accessible_playlists(db, CURRENT_USER_ID)
+def get_accessible_playlists(db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    playlists = PlaylistController.get_accessible_playlists(db, user_id)
     return playlists
 
 
@@ -96,10 +89,10 @@ def add_playlist_track_by_url(
     playlist_id: int,
     body: AddTrackBody,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user_id: User = Depends(get_current_user_id),
 ):
     track = PlaylistController.add_playlist_track_secure(
-        db, body.title, body.url, playlist_id, CURRENT_USER_ID
+        db, body.title, body.url, playlist_id, user_id
     )
 
     if not track:
@@ -166,17 +159,18 @@ def update_playlist(
 
 @router.post("/{playlist_id}/share/user", summary="Partager avec un utilisateur")
 def share_playlist_user(
-    playlist_id: int, req: SharePlaylistRequest, db: Session = Depends(get_db)
+    playlist_id: int, req: SharePlaylistRequest, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)
+    
 ):
     return PlaylistController.share_user(
-        db, playlist_id, CURRENT_USER_ID, req.target_email, req.is_editor
+        db, playlist_id, user_id, req.target_email, req.is_editor
     )
 
 
 @router.post("/{playlist_id}/share/group", summary="Partager avec un groupe")
 def share_playlist_group(
-    playlist_id: int, req: ShareGroupRequest, db: Session = Depends(get_db)
+    playlist_id: int, req: ShareGroupRequest, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)
 ):
     return PlaylistController.share_group(
-        db, playlist_id, CURRENT_USER_ID, req.group_name
+        db, playlist_id, user_id, req.group_name
     )
