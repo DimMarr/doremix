@@ -43,7 +43,7 @@ def _extract_items(data: Any, resource_key: str) -> list[dict[str, Any]]:
     return cast(list[dict[str, Any]], items)
 
 
-def get_accessible_playlists() -> list[PlaylistSchema]:
+def get_all_playlists() -> list[PlaylistSchema]:
     res = requests.get(f"{API_BASE_URL}/playlists")
     if res.status_code == 404:
         raise Exception("Playlists not found")
