@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, exists
 from re import findall as regex_match
 from models.playlist import Playlist, PlaylistVisibility
 from models.track_playlist import TrackPlaylist
@@ -241,7 +241,12 @@ class PlaylistRepository:
                         Playlist.visibility == PlaylistVisibility.PUBLIC,
                         Playlist.visibility == PlaylistVisibility.OPEN,
                         Playlist.idOwner == idUser,
-                        # TODO: Quand l'auth sera en place, rajouter les playlists de l'utilsateur connecté
+                        exists().where(
+                            and_(
+                                UserPlaylist.idPlaylist == Playlist.idPlaylist,
+                                UserPlaylist.idUser == idUser,
+                            )
+                        ),
                     ),
                 )
             )
