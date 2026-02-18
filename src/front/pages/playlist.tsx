@@ -280,19 +280,15 @@ export async function PlaylistDetailPage(
       const idOwner = playlist.idOwner
       console.log("canaddtrack")
       if (currentUserId == idOwner){
-        console.log("owner")
         return true
       }
       if (editors.includes(currentUserId)){
-        console.log("editor")
         return true
       }
       if (currentUserRole == "ADMIN"){
-        console.log("admin")
         return true
       }
       if (playlist.visibility == Visibility.public){
-        console.log("public")
         return true
       }
       return false
