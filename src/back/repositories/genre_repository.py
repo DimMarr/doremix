@@ -1,17 +1,21 @@
-from sqlalchemy.orm import Session
+from typing import Optional, cast
+
 from fastapi import HTTPException, status
 from models.genre import Genre
-from typing import Optional, List
+from sqlalchemy.orm import Session
 
 
 class GenreRepository:
     @staticmethod
-    def get_all(db: Session) -> List[Genre]:
-        return db.query(Genre).all()
+    def get_all(db: Session) -> list[Genre]:
+        return cast(list[Genre], db.query(Genre).all())
 
     @staticmethod
     def get_by_id(db: Session, genre_id: int) -> Optional[Genre]:
-        return db.query(Genre).filter(Genre.idGenre == genre_id).first()
+        return cast(
+            Optional[Genre],
+            db.query(Genre).filter(Genre.idGenre == genre_id).first(),
+        )
 
     @staticmethod
     def create(db: Session, label: str) -> Genre:
@@ -44,6 +48,7 @@ class GenreRepository:
             )
         # Check FK constraint: any playlist still using this genre?
         from models.playlist import Playlist
+
         in_use = db.query(Playlist).filter(Playlist.idGenre == genre_id).first()
         if in_use:
             raise HTTPException(
