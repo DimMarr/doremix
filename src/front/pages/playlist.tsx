@@ -272,6 +272,31 @@ export async function PlaylistDetailPage(
   // Render page
   const userInfos = await authService.infos();
   const currentUserRole = userInfos.role
+  const currentUserId = userInfos.id
+
+  const canAddTrack = async () => {
+      const users = await repo.sharedWith(playlistId)
+      const editors = users.filter(user => user.editor === true).map(user => user.idUser)
+      const idOwner = playlist.idOwner
+      console.log("canaddtrack")
+      if (currentUserId == idOwner){
+        console.log("owner")
+        return true
+      }
+      if (editors.includes(currentUserId)){
+        console.log("editor")
+        return true
+      }
+      if (currentUserRole == "ADMIN"){
+        console.log("admin")
+        return true
+      }
+      if (playlist.visibility == Visibility.public){
+        console.log("public")
+        return true
+      }
+      return false
+  }
 
   container.innerHTML = (
     <div>
@@ -288,7 +313,7 @@ export async function PlaylistDetailPage(
             class="w-48 h-48 rounded-md object-cover shadow-2xl"
             alt={playlist.name}
           />
-          { (playlist.visibility !== Visibility.open || currentUserRole == "ADMIN") && <Button id="add-track-button" variant="outline" size="md">Add Track</Button> }
+          { await canAddTrack() && <Button id="add-track-button" variant="outline" size="md">Add Track</Button> }
         </div>
         <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
           {await getVisibilityElement(playlist) as 'safe'}

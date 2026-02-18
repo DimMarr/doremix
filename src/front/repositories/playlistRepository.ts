@@ -225,6 +225,33 @@ export class PlaylistRepository {
         });
     }
 
+    async sharedWith(playlist_id: Number) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/playlists/${playlist_id}/shared-with`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: 'include',
+            });
+
+            if (response.status == 403){
+                return []
+            }
+
+            if (!response.ok) {
+                throw new Error("Failed to get shared users");
+            }
+            return response.json();
+        } catch (error) {
+            if (error instanceof TypeError) {
+                new AlertManager().error("Network error. Check your connection.");
+            }
+            console.error("Error getting shared users for a playlist:", error);
+            throw error;
+        }
+    }
+
     async update(id: number, data: Partial<Playlist>) {
         try {
             const response = await fetch(`${API_BASE_URL}/playlists/${id}`, {
