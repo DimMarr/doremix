@@ -14,10 +14,12 @@ export async function HomePage(container) {
   const userInfos = await authService.iduser();
   const currentUserId = userInfos.id;
   const personalPlaylists = allPlaylists.filter(p => p.idOwner === currentUserId);
+  const sharedPlaylists = allPlaylists.filter(p => p.idOwner != currentUserId && p.visibility !== Visibility.open && p.visibility !== Visibility.public)
   const publicPlaylists = allPlaylists.filter(p => p.visibility === Visibility.public && p.idOwner !== currentUserId);
   const openPlaylists = allPlaylists.filter(p => p.visibility === Visibility.open);
 
   const personalCards = buildCardsFromPlaylists(personalPlaylists);
+  const sharedCards = buildCardsFromPlaylists(sharedPlaylists);
   const publicCards = buildCardsFromPlaylists(publicPlaylists);
   const openCards = buildCardsFromPlaylists(openPlaylists);
 
@@ -46,6 +48,22 @@ export async function HomePage(container) {
           </div>
         )}
       </section>
+
+      {/* Shared Playlists Section */}
+        {sharedPlaylists.length > 0 ? (
+          <section>
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h2 class="text-3xl font-bold tracking-tight text-white/90">Shared Playlists</h2>
+                <p class="text-white/60 mt-1 text-sm">Discover what people want you to hear.</p>
+              </div>
+              <div id="addPlaylistSection"></div>
+            </div>
+              <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6">
+                {sharedCards as 'safe'}
+              </div>
+          </section>
+        ) : ""}
 
       {/* Public Playlists Section */}
       <section>
