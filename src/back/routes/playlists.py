@@ -180,6 +180,18 @@ def update_playlist(
     )
 
 
+@router.get(
+    "/{playlist_id}/shared-with",
+    summary="Lister la liste des utilisateurs partagées et leurs droits",
+)
+def shared_with(
+    playlist_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    return PlaylistController.shared_with(db, playlist_id, current_user_id)
+
+
 @router.post("/{playlist_id}/share/user", summary="Partager avec un utilisateur")
 def share_playlist_user(
     playlist_id: int,

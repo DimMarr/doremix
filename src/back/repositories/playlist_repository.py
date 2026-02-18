@@ -279,6 +279,22 @@ class PlaylistRepository:
         return False
 
     @staticmethod
+    def list_shared_user(db: Session, playlist_id: int, current_user_id: int):
+        users = (
+            db.query(UserPlaylist).filter(UserPlaylist.idPlaylist == playlist_id).all()
+        )
+        if current_user_id != db.query(Playlist.idOwner).filter(
+            Playlist.idPlaylist == playlist_id
+        ).scalar() and current_user_id not in [
+            user_playlist.idUser for user_playlist in users
+        ]:
+            return [], "You're not allowed to see shared users for this playlist"
+        if users:
+            return users, None
+        else:
+            return [], None
+
+    @staticmethod
     def share_with_user(
         db: Session, playlist_id: int, owner_id: int, target_email: str, is_editor: bool
     ):

@@ -136,6 +136,15 @@ class PlaylistController:
         return track
 
     @staticmethod
+    def shared_with(db: Session, playlist_id: int, current_user_id: int):
+        users, err = PlaylistRepository.list_shared_user(
+            db, playlist_id, current_user_id
+        )
+        if err:
+            raise HTTPException(403, err)
+        return users
+
+    @staticmethod
     def share_user(
         db: Session, playlist_id: int, owner_id: int, email: str, is_editor: bool
     ):
