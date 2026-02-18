@@ -79,18 +79,17 @@ class PlaylistController:
         return PlaylistRepository.create(db, new_playlist)
 
     @staticmethod
-    def delete_playlist(db: Session, playlist_id: int, user_id: int):
-        # TODO: Quand l'auth sera en place, ajouter user_id en paramètre :
-        # def delete_playlist(db: Session, playlist_id: int, user_id: int):
-
-        playlist = PlaylistRepository.get_by_id(db, playlist_id, user_id)
+    def delete_playlist(db: Session, playlist_id: int, user: User):
+        playlist = PlaylistRepository.get_by_id(db, playlist_id, user.idUser)
 
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
 
-        # TODO: Quand l'auth sera en place, vérifier que l'utilisateur est le propriétaire :
-        # if playlist.idOwner != user_id:
-        #     raise HTTPException(status_code=403, detail="You are not the owner of this playlist")
+        # Only playlist owner and admin can delete playlist
+        if not (playlist.idOwner == user.idUser or user.idRole == 3):
+            raise HTTPException(
+                status_code=404, detail="You're not allowed to delete this playlist."
+            )
 
         PlaylistRepository.delete(db, playlist)
 

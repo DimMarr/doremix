@@ -140,13 +140,9 @@ def get_cover_image(filename: str):
 def delete_playlist(
     playlist_id: int,
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
-    # TODO: Quand l'auth sera en place :
-    # def delete_playlist(playlist_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    #     return PlaylistController.delete_playlist(db, playlist_id, current_user.id)
-
-    return PlaylistController.delete_playlist(db, playlist_id, user_id)
+    return PlaylistController.delete_playlist(db, playlist_id, user)
 
 
 @router.delete("/{playlist_id}/track/{track_id}", response_model=PlaylistSchema)
