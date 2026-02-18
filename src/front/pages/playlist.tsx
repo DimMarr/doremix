@@ -270,6 +270,9 @@ export async function PlaylistDetailPage(
   };
 
   // Render page
+  const userInfos = await authService.iduser();
+  const currentUserRole = userInfos.role
+
   container.innerHTML = (
     <div>
       <div id="modal-container"></div>
@@ -285,7 +288,7 @@ export async function PlaylistDetailPage(
             class="w-48 h-48 rounded-md object-cover shadow-2xl"
             alt={playlist.name}
           />
-          <Button id="add-track-button" variant="outline" size="md">Add Track</Button>
+          { (playlist.visibility !== Visibility.open || currentUserRole == "ADMIN") && <Button id="add-track-button" variant="outline" size="md">Add Track</Button> }
         </div>
         <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
           {await getVisibilityElement(playlist) as 'safe'}

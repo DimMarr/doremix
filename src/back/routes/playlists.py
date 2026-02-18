@@ -5,11 +5,12 @@ from typing import List
 from pydantic import BaseModel
 
 from controllers import PlaylistController
+from models import User
 from schemas import PlaylistSchema, TrackSchema, PlaylistCreate, PlaylistUpdate
 from database import get_db
 import os
 
-from middleware.auth_middleware import get_current_user_id
+from middleware.auth_middleware import get_current_user, get_current_user_id
 
 router = APIRouter(prefix="/playlists", tags=["Playlists"])
 
@@ -84,8 +85,11 @@ def add_playlist_track_by_url(
     playlist_id: int,
     body: AddTrackBody,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    track = PlaylistController.add_playlist_track(db, body.title, body.url, playlist_id)
+    track = PlaylistController.add_playlist_track(
+        db, body.title, body.url, playlist_id, user
+    )
     if not track:
         raise HTTPException(status_code=500, detail="Failed to add track")
     return track
