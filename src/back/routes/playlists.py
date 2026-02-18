@@ -80,13 +80,11 @@ def get_playlist_tracks(playlist_id: int, db: Session = Depends(get_db)):
     return tracks
 
 
-router.post(
+@router.post(
     "/{playlist_id}/tracks/by-url",
     response_model=TrackSchema,
     summary="Ajoute un track à une playlist via URL (Sécurisé)",
 )
-
-
 def add_playlist_track_by_url(
     playlist_id: int,
     body: AddTrackBody,
