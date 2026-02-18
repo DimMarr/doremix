@@ -268,11 +268,12 @@ class PlaylistRepository:
             .filter(
                 UserPlaylist.idPlaylist == playlist_id,
                 UserPlaylist.idUser == user_id,
-                UserPlaylist.editor is True,
+                UserPlaylist.editor,
             )
-            .first()
+            .all()
         )
 
+        print(direct_right)
         if direct_right:
             return True
 
