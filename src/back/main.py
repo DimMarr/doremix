@@ -71,7 +71,7 @@ app.add_middleware(
 # Add SlowAPI middleware for rate limiting
 app.add_middleware(SlowAPIMiddleware)
 
-# app.middleware("http")(AuthMiddleware.verify_access_token)
+app.middleware("http")(AuthMiddleware.verify_access_token)
 
 app.mount("/covers", StaticFiles(directory="/app/uploads/covers"), name="covers")
 
