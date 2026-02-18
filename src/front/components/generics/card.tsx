@@ -78,13 +78,23 @@ export function Card({
         {getVisibilityIcon(visibility) as 'safe'}
 
         {image as 'safe' ? (
-          <img
-            safe
-            src={image}
-            alt={title || 'Card image'}
-            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-          />
+          <>
+            <div class="absolute inset-0 flex items-center justify-center z-0 bg-neutral-800">
+              <svg class="animate-spin h-8 w-8 text-neutral-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            <img
+              safe
+              src={image}
+              alt={title || 'Card image'}
+              class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-0 transition-opacity duration-300 relative z-10"
+              loading="lazy"
+              onload="this.classList.remove('opacity-0'); this.previousElementSibling?.remove()"
+              onerror="this.previousElementSibling?.remove()"
+            />
+          </>
         ) : (
           <div class="w-full h-full bg-neutral-800 flex items-center justify-center text-neutral-500">
             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
