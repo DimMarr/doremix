@@ -31,6 +31,8 @@ class Playlist(Base):
         "updatedat", TIMESTAMP, server_default=func.now(), onupdate=func.now()
     )
 
+    genre = relationship("Genre", foreign_keys=[idGenre])
+
     tracks = relationship(
         "Track", secondary="track_playlist", back_populates="playlists"
     )

@@ -1,5 +1,6 @@
 import { Button } from "@components/generics/button";
-import { PlaylistRepository } from "@repositories/index";
+import { PlaylistRepository, GenreRepository } from "@repositories/index";
+import { Genre } from "@models/genre";
 
 // Le bouton que nous allons exporter pour main.tsx
 export function AddPlaylistButton() {
@@ -28,6 +29,13 @@ export function AddPlaylistModal() {
           </div>
 
           <div>
+            <label class="block text-sm font-medium text-muted-foreground mb-1">Genre</label>
+            <select name="idGenre" id="playlist-genre-select" class="w-full px-4 py-2 rounded-lg bg-input border border-border text-foreground focus:ring-2 focus:ring-ring outline-none">
+              <option value="">Loading genres...</option>
+            </select>
+          </div>
+
+          <div>
             <label class="block text-sm font-medium text-muted-foreground mb-1">Cover image (optional)</label>
             <input type="file" id="playlist-cover-input" accept="image/*" class="w-full px-4 py-2 rounded-lg bg-input border border-border text-foreground file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-primary file:text-primary-foreground hover:file:bg-primary/80" />
           </div>
@@ -52,6 +60,17 @@ export function AddPlaylistModal() {
   );
 }
 
+async function populateGenreSelect(select: HTMLSelectElement) {
+  try {
+    const genres: Genre[] = await new GenreRepository().getAll();
+    select.innerHTML = genres
+      .map(g => `<option value="${g.idGenre}">${g.label}</option>`)
+      .join("");
+  } catch {
+    select.innerHTML = '<option value="">Failed to load genres</option>';
+  }
+}
+
 // Fonction utilitaire pour gérer les événements de la modale
 export function setupModalAddPlaylist() {
   const modal = document.getElementById("add-playlist-modal");
@@ -59,12 +78,16 @@ export function setupModalAddPlaylist() {
   const closeBtn = document.getElementById("close-modal");
   const form = document.getElementById("add-playlist-form") as HTMLFormElement;
   const imageInput = document.getElementById("playlist-cover-input") as HTMLInputElement;
+  const genreSelect = document.getElementById("playlist-genre-select") as HTMLSelectElement;
 
   if (!modal || !openBtn || !closeBtn || !form) return;
 
   const toggleModal = () => modal.classList.toggle("hidden");
 
-  openBtn.addEventListener("click", toggleModal);
+  openBtn.addEventListener("click", () => {
+    if (genreSelect) populateGenreSelect(genreSelect);
+    toggleModal();
+  });
   closeBtn.addEventListener("click", toggleModal);
 
   // Fermer si on clique à l'extérieur
@@ -85,6 +108,8 @@ export function setupModalAddPlaylist() {
 
     const formData = new FormData(form);
     const name = formData.get("name")?.toString().trim();
+    const idGenreRaw = formData.get("idGenre")?.toString();
+    const idGenre = idGenreRaw ? parseInt(idGenreRaw, 10) : undefined;
 
     if (!name) {
       alert("Playlist name cannot be empty");
@@ -95,7 +120,7 @@ export function setupModalAddPlaylist() {
     }
 
     try {
-      const playlistresponse = await new PlaylistRepository().create(name);
+      const playlistresponse = await new PlaylistRepository().create(name, idGenre);
 
       try {
         if (imageInput.files?.length) {

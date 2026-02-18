@@ -7,3 +7,4 @@ from .playlist import (
 )
 from .track import TrackSchema
 from .user import UserSchema
+from .genre import GenreSchema, GenreCreate, GenreUpdate

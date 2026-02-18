@@ -36,6 +36,7 @@ class PlaylistRepository:
 
         playlists: List[Playlist] = (
             db.query(Playlist)
+            .options(joinedload(Playlist.genre))
             .filter(
                 or_(
                     Playlist.idOwner == user_id,
@@ -56,6 +57,7 @@ class PlaylistRepository:
     def get_public_playlists(db: Session) -> List[Playlist]:
         playlists: List[Playlist] = (
             db.query(Playlist)
+            .options(joinedload(Playlist.genre))
             .filter(Playlist.visibility == PlaylistVisibility.PUBLIC)
             .all()
         )
@@ -64,7 +66,10 @@ class PlaylistRepository:
     @staticmethod
     def get_by_id(db: Session, playlist_id: int) -> Optional[Playlist]:
         playlist: Optional[Playlist] = (
-            db.query(Playlist).filter(Playlist.idPlaylist == playlist_id).first()
+            db.query(Playlist)
+            .options(joinedload(Playlist.genre))
+            .filter(Playlist.idPlaylist == playlist_id)
+            .first()
         )
         return playlist
 
