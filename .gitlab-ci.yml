@@ -17,10 +17,8 @@ pre_commit_check:
     key: pre-commit-cache
     paths:
       - .cache/pre-commit
-  before_script:
-    - apt-get update && apt-get install -y git libatomic1
-    - pip install pre-commit
   script:
+    - git config --global --add safe.directory $CI_PROJECT_DIR
     - echo "🔍 Exécution des hooks pre-commit sur l'ensemble des fichiers..."
     - |
       pre-commit run --all-files || {
