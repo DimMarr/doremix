@@ -66,6 +66,18 @@ def get_public_playlists(db: Session = Depends(get_db)):
 
 
 @router.get(
+    "/shared",
+    summary="Lister toutes les playlists partagées",
+    description="Retourne la liste complète des playlists partagées.",
+)
+def get_shared_playlists(
+    db: Session = Depends(get_db), user_id=Depends(get_current_user_id)
+):
+    playlists = PlaylistController.get_shared_playlists(db, user_id)
+    return playlists
+
+
+@router.get(
     "/{idPlaylist}",
     response_model=PlaylistSchema,
     summary="Récupérer une playlist",

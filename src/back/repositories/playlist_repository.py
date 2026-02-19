@@ -57,7 +57,15 @@ class PlaylistRepository:
         playlists: List[Playlist] = (
             db.query(Playlist)
             .filter(Playlist.visibility == PlaylistVisibility.PUBLIC)
+            .filter(~exists().where(UserPlaylist.idPlaylist == Playlist.idPlaylist))
             .all()
+        )
+        return playlists
+
+    @staticmethod
+    def get_shared_playlist(db: Session, user_id: int):
+        playlists: List[Playlist] = (
+            db.query(UserPlaylist).filter(UserPlaylist.idUser == user_id).all()
         )
         return playlists
 

@@ -16,6 +16,10 @@ class PlaylistController:
         return PlaylistRepository.get_public_playlists(db)
 
     @staticmethod
+    def get_shared_playlists(db: Session, user_id: int):
+        return PlaylistRepository.get_shared_playlist(db, user_id)
+
+    @staticmethod
     def get_playlist(db: Session, playlist_id: int, user_id: int):
         playlist = PlaylistRepository.get_by_id(db, playlist_id, user_id)
         if not playlist:
