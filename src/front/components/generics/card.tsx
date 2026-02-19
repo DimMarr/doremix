@@ -2,6 +2,7 @@ import { cn, getCardClasses } from '@components/index';
 import { trackPlayerInstance } from '@layouts/mainLayout';
 import { AlertManager } from '@utils/alertManager';
 import Playlist, { Visibility } from '@models/playlist';
+import { PlaylistRepository } from '@repositories/index';
 
 export interface CardProps {
   image?: string;
@@ -189,13 +190,24 @@ export function initCardsElements(container: HTMLElement, playlists: Playlist[])
     const playButton = link.querySelector('button');
 
     if (playButton) {
-      playButton.addEventListener('click', (e) => {
+      playButton.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
 
         if (p.tracks.length === 0) {
-            new AlertManager().error("No track to listen in this playlist");
+          try {
+            const tracks = await new PlaylistRepository().getTracks(p.idPlaylist!);
+            p.tracks = tracks;
+          } catch (err) {
+            console.error("Failed to load tracks", err);
+            new AlertManager().error("Failed to load playlist tracks");
             return;
+          }
+        }
+
+        if (p.tracks.length === 0) {
+          new AlertManager().error("No track to listen in this playlist");
+          return;
         }
 
         if (trackPlayerInstance.playlist.idPlaylist !== p.idPlaylist) {
