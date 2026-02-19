@@ -1,5 +1,5 @@
 import { TrackRepository } from "@repositories/index";
-import { Button } from "@components/generics";
+import { Button, Input } from "@components/generics";
 import { isValidEmail } from "@utils/authentication";
 import { AlertManager } from "@utils/alertManager";
 
@@ -156,20 +156,12 @@ export function AddTrackModal({ playlistId, onClose, onTrackAdded }) {
 export function ShareModal({ playlistId, onClose }) {
   const modalHtml = (
     <div id="share-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-      <div class="bg-neutral-900 border border-border rounded-lg p-8 max-w-md w-full">
+      <div class="bg-neutral-900 border border-border rounded-lg p-8 max-w-md w-full flex flex-col gap-5">
         <h2 class="text-2xl font-bold text-foreground mb-4">Share Playlist</h2>
         <form id="share-form">
-          <div class="mb-4">
-            <label for="email" class="block text-sm font-medium text-muted-foreground mb-1">
-              Email address
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              class="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
-              placeholder="vincent.berry@umontpellier.fr"
-            />
+          <div class="mb-4 flex flex-col gap-5">
+            <Input label="Email address" placeholder="vincent.berry@umontpellier.fr" id="email"/>
+            <Input label="Is Editor ?" id="editor" type="checkbox"/>
           </div>
 
           <div class="flex justify-end gap-4">
@@ -189,6 +181,7 @@ export function ShareModal({ playlistId, onClose }) {
     container.innerHTML = modalHtml;
 
     const emailInput = container.querySelector('#email');
+    const editorInput = container.querySelector('#editor');
     const submitButton = container.querySelector('#submit-share');
 
     const handleKeyDown = (e) => {
@@ -211,6 +204,7 @@ export function ShareModal({ playlistId, onClose }) {
         container.querySelector('#share-form').onsubmit = async (e) => {
           e.preventDefault();
           const email = emailInput.value;
+          const editor = editorInput.checked;
           const submitButton = container.querySelector('#submit-share');
           const originalButtonContent = submitButton.innerHTML;
           submitButton.disabled = true;
@@ -219,10 +213,11 @@ export function ShareModal({ playlistId, onClose }) {
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            Adding...`;
+            Sharing...`;
 
             try {
-              const response = await new TrackRepository().share(playlistId, email);
+              console.log(editor)
+              const response = await new TrackRepository().share(playlistId, email, editor);
               console.log(response)
               if (response == 200) {
                 new AlertManager().success("Playlist shared successfully");
@@ -247,7 +242,6 @@ export function ShareModal({ playlistId, onClose }) {
 
     async function handleEmailInputChange(email) {
       if (!isValidEmail(email)) {
-        // trackInfo.style.display = 'none';
         submitButton.disabled = true;
         return;
       }

@@ -55,14 +55,14 @@ export class TrackRepository {
     }
   }
 
-  async share(playlistId: number, email: string) {
+  async share(playlistId: number, email: string, editor: boolean) {
     try {
       const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/share/user`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ "target_email": email, "is_editor": false  }),
+        body: JSON.stringify({ "target_email": email, "is_editor": editor  }),
         credentials: 'include'
       });
 
