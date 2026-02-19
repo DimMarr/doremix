@@ -2,6 +2,7 @@ import { cn, getCardClasses } from '@components/index';
 import { trackPlayerInstance } from '@layouts/mainLayout';
 import { AlertManager } from '@utils/alertManager';
 import Playlist, { Visibility } from '@models/playlist';
+import { PlaylistRepository } from '@repositories/index';
 
 export interface CardProps {
   image?: string;
@@ -142,14 +143,23 @@ export function buildCardsFromPlaylists(playlists: Playlist[]) {
   const svg1 = new URL("../../assets/icons/play.svg", import.meta.url).href;
 
   return playlists.map((p) => {
+    const genreBadge = p.genreLabel ? (
+      <span class="mt-1 inline-flex w-fit px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
+        {p.genreLabel}
+      </span>
+    ) : undefined;
+
     return Card({
       title: p.name || "Untitled Playlist",
       image: p.image,
       content: p.description || "",
+      children: genreBadge,
       icon: svg1,
       className: "w-full",
       href: `/playlist/${p.idPlaylist}`,
       "data-link": "",
+      "data-playlist-card": "1",
+      "data-playlist-id": String(p.idPlaylist),
       visibility: p.visibility,
       // Restore onClickPlay for potential inline handling or reference
       onClickPlay: () => {
@@ -163,22 +173,41 @@ export function buildCardsFromPlaylists(playlists: Playlist[]) {
 }
 
 export function initCardsElements(container: HTMLElement, playlists: Playlist[]) {
-  const cardElements = container.querySelectorAll('[data-link]');
-  cardElements.forEach((link, index) => {
-    const p = playlists[index];
+  const playlistsById = new Map(
+    playlists.map((playlist) => [String(playlist.idPlaylist), playlist])
+  );
+  const cardElements = container.querySelectorAll('[data-playlist-card="1"]');
+
+  cardElements.forEach((link) => {
+    const playlistId = link.getAttribute("data-playlist-id");
+    if (!playlistId) return;
+    const p = playlistsById.get(playlistId);
+    if (!p) return;
+
     // We now look for the button, I'll add a data attribute to the button in Card to make this robust
     // See Card implementation above (need to ensure I update Card to include data-play-button)
     // Actually, searching for the button inside the link is safer
     const playButton = link.querySelector('button');
 
     if (playButton) {
-      playButton.addEventListener('click', (e) => {
+      playButton.addEventListener('click', async (e) => {
         e.preventDefault();
         e.stopPropagation();
 
         if (p.tracks.length === 0) {
-            new AlertManager().error("No track to listen in this playlist");
+          try {
+            const tracks = await new PlaylistRepository().getTracks(p.idPlaylist!);
+            p.tracks = tracks;
+          } catch (err) {
+            console.error("Failed to load tracks", err);
+            new AlertManager().error("Failed to load playlist tracks");
             return;
+          }
+        }
+
+        if (p.tracks.length === 0) {
+          new AlertManager().error("No track to listen in this playlist");
+          return;
         }
 
         if (trackPlayerInstance.playlist.idPlaylist !== p.idPlaylist) {

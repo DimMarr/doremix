@@ -3,6 +3,7 @@ from enum import Enum
 from datetime import datetime
 from typing import Optional
 from models.enums import PlaylistVisibility
+from schemas.genre import GenreSchema
 
 
 class PlaylistSchema(BaseModel):
@@ -15,6 +16,7 @@ class PlaylistSchema(BaseModel):
     coverImage: Optional[str] = None
     createdAt: datetime
     updatedAt: datetime
+    genre: Optional[GenreSchema] = None
 
     model_config = ConfigDict(from_attributes=True)
 
