@@ -116,7 +116,7 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
   }
 
   let canEditVisibility = false;
-  if (await canEdit(repo, playlist)) {
+  if (await canEdit(repo, playlist) && playlist.visibility != Visibility.open) {
     canEditVisibility = true;
   }
 
