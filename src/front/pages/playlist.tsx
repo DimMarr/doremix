@@ -9,7 +9,7 @@ import { PlaylistRepository } from "@repositories/index";
 import Playlist, { Visibility } from "@models/playlist";
 import type { Track } from "@models/track";
 import { authService } from "@utils/authentication";
-import { canEdit } from "@utils/rights";
+import { canEdit, isOwner } from "@utils/rights";
 
 interface PageParams {
   id: string;
@@ -159,6 +159,7 @@ export async function PlaylistDetailPage(
           {await getVisibilityElement(repo, playlist) as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
+          { await isOwner(playlist) && <Button id="share-button" variant="outline" size="md">Share Playlist</Button> }
         </>
       );
     }
@@ -288,7 +289,7 @@ export async function PlaylistDetailPage(
           {await getVisibilityElement(repo, playlist) as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
-          { await canEdit(repo, playlist) && <Button id="share-button" variant="outline" size="md">Share Playlist</Button> }
+          { await isOwner(playlist) && <Button id="share-button" variant="outline" size="md">Share Playlist</Button> }
         </div>
       </div>
 

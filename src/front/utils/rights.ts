@@ -20,15 +20,24 @@ export async function canEdit (repo: PlaylistRepository, playlist: Playlist) {
 
   const idOwner = playlist.idOwner
   if (currentUserId == idOwner){
-    console.log("isOwner")
     return true
   }
   if (await isEditor(repo, playlist)){
-    console.log("isEditor")
     return true
   }
   if (currentUserRole == "ADMIN"){
-    console.log("isAdmin")
+    return true
+  }
+  return false
+}
+
+// True if currentUser is playlist owner
+export async function isOwner (playlist: Playlist) {
+  const userInfos = await authService.infos();
+  const currentUserId = userInfos.id
+
+  const idOwner = playlist.idOwner
+  if (currentUserId == idOwner){
     return true
   }
   return false
