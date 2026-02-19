@@ -5,6 +5,7 @@ from typing import List
 from controllers import UserController
 from schemas import UserSchema, PlaylistSchema
 from database import get_db
+from middleware.auth_middleware import require_role
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -15,7 +16,13 @@ router = APIRouter(prefix="/users", tags=["Users"])
     summary="Lister tous les utilisateurs",
     description="Retourne la liste complète des utilisateurs enregistrés.",
 )
-def get_users(db: Session = Depends(get_db)):
+
+#assure que que les admin peuvent acceder a la liste des users (pas utilisé pour le moment)
+
+def get_users(
+    db: Session = Depends(get_db),
+    _admin=Depends(require_role(["ADMIN"])),
+):
     users = UserController.get_all_users(db)
     return users
 
