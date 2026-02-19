@@ -1,6 +1,6 @@
 services:
   frontend:
-    image: ${CI_REGISTRY_IMAGE}/frontend:${IMAGE_TAG:-latest}
+    image: ${CI_REGISTRY_IMAGE}/frontend-beta:${IMAGE_TAG:-latest}
     container_name: web
     restart: unless-stopped
     ports:
@@ -54,7 +54,7 @@ services:
       - backend-network
 
   backend:
-    image: ${CI_REGISTRY_IMAGE}/backend:${IMAGE_TAG:-latest}
+    image: ${CI_REGISTRY_IMAGE}/backend-beta:${IMAGE_TAG:-latest}
     container_name: backend_python
     restart: unless-stopped
     environment:
