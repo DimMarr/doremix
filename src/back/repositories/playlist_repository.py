@@ -67,6 +67,7 @@ class PlaylistRepository:
         playlists: List[Playlist] = (
             db.query(Playlist)
             .filter(UserPlaylist.idPlaylist == Playlist.idPlaylist)
+            .filter(UserPlaylist.idUser == user_id)
             .all()
         )
         return playlists
