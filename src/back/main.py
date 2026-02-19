@@ -20,6 +20,8 @@ from routes import (
     artistsRouter,
     searchRouter,
     registerRouter,
+    genresRouter,
+    adminGenresRouter,
 )
 
 routers = [
@@ -30,6 +32,8 @@ routers = [
     artistsRouter,
     searchRouter,
     registerRouter,
+    genresRouter,
+    adminGenresRouter,
 ]
 
 app = FastAPI()

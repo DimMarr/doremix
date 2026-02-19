@@ -1,6 +1,20 @@
 import { Track, Playlist } from '@models/index';
 import { AlertManager } from '@utils/alertManager';
 
+/**
+ * Formate un temps en secondes vers une chaîne MM:SS ou H:MM:SS si >= 1h
+ */
+export const formatTime = (seconds: number): string => {
+    const totalSeconds = Math.floor(seconds);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    if (h > 0) {
+        return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+};
+
 interface YTPlayer {
     loadVideoById(videoId: string): void;
     playVideo(): void;
@@ -163,7 +177,7 @@ export class YoutubePlayer {
         if (!trackTimer.min) trackTimer.min = "0";
         if (!trackTimer.max) trackTimer.max = String(this.audioPlayer.getDuration());
 
-        trackTotalTime.textContent = new Date(this.audioPlayer.getDuration() * 1000).toISOString().substr(14, 5);
+        trackTotalTime.textContent = formatTime(this.audioPlayer.getDuration());
 
         if (this.intervalChangeVideo) {
             clearInterval(this.intervalChangeVideo);
@@ -173,7 +187,7 @@ export class YoutubePlayer {
             trackTimer.max = String(this.audioPlayer.getDuration());
             let time = this.audioPlayer.getCurrentTime();
             if (!time) return;
-            trackElapsedTime.textContent = new Date(time * 1000).toISOString().substr(14, 5);
+            trackElapsedTime.textContent = formatTime(time);
             this.updateTimer(time);
         }, 32);
     }

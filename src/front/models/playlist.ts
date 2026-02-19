@@ -4,7 +4,8 @@ export default class Playlist {
     public idPlaylist?: number;
     public idOwner?: number;
     public name?: string;
-    private idGenre?: number;
+    public idGenre?: number;
+    public genreLabel?: string;
     public createdAt?: string;
     public updatedAt?: string;
     public vote?: number;

@@ -3,6 +3,7 @@ import { AlertManager } from "@utils/alertManager";
 import { isValidEmail, isValidPassword } from "@utils/authentication";
 import { Card } from "@components/generics/card";
 import { authService } from "@utils/authentication";
+import profileimage from "@assets/images/profileimage.jpg"
 
 export async function LoginPage(container) {
 
@@ -18,7 +19,7 @@ export async function LoginPage(container) {
                                     No clutter. No friction. No wasted time. <br />
                                     Just clean, powerful control.</p>
                             </div>
-                            <Testimony name="Olivier De Jonckère" description="Teacher at Polytech Montpellier" testimony="DoReMix is one of the most secure applications I have ever seen. No injection vulnerabilities — I’m impressed." image="../../assets/images/profileimage.jpg" />
+                            <Testimony name="Olivier De Jonckère" description="Teacher at Polytech Montpellier" testimony="DoReMix is one of the most secure applications I have ever seen. No injection vulnerabilities — I’m impressed." image={profileimage} />
                         </div>
                         <Card image={null} title="Log in to DoReMiX" className="p-10 flex justify-center items-center rounded-b-lg lg:rounded-b-none lg:rounded-r-lg">
                             <form id="loginForm" class="mt-6 flex flex-col gap-5">

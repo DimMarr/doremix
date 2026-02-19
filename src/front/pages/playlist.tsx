@@ -157,6 +157,7 @@ export async function PlaylistDetailPage(
       headerContainer.innerHTML = (
         <>
           {await getVisibilityElement(repo, playlist) as 'safe'}
+          {renderGenreSection() as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
           { await isOwner(playlist) && <Button id="share-button" variant="outline" size="md">Share Playlist</Button> }
@@ -268,6 +269,19 @@ export async function PlaylistDetailPage(
   };
 
   // Render page
+  const userInfos = await authService.iduser();
+  const currentUserRole = userInfos.role;
+
+  function renderGenreSection() {
+    if (!playlist.genreLabel) return '';
+
+    return (
+      <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">
+        {playlist.genreLabel}
+      </span>
+    );
+  }
+
   container.innerHTML = (
     <div>
       <div id="modal-container"></div>
@@ -287,6 +301,7 @@ export async function PlaylistDetailPage(
         </div>
         <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
           {await getVisibilityElement(repo, playlist) as 'safe'}
+          {renderGenreSection() as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
           { await isOwner(playlist) && <Button id="share-button" variant="outline" size="md">Share Playlist</Button> }

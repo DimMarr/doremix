@@ -1,8 +1,8 @@
 import { initSearchBar, SearchBar } from "@components/generics";
-import { buildCardsFromPlaylists, Card, initCardsElements } from "@components/generics/card";
+import { buildCardsFromPlaylists, initCardsElements } from "@components/generics/card";
 import { setupPlaylistAndTrackModals } from "@components/playlists";
 import { PlaylistRepository } from "@repositories/index";
-import Playlist, { Visibility } from "@models/playlist";
+import { Visibility } from "@models/playlist";
 import { authService } from "@utils/authentication";
 
 export async function HomePage(container) {
@@ -14,6 +14,7 @@ export async function HomePage(container) {
 
   const userInfos = await authService.infos();
   const currentUserId = userInfos.id;
+  const isAdmin = userInfos.role === "ADMIN";
   const personalPlaylists = allPlaylists.filter(p => p.idOwner === currentUserId);
   const sharedPlaylists = await repo.getShared();
   console.log(sharedPlaylists)
@@ -38,7 +39,14 @@ export async function HomePage(container) {
             <h2 class="text-3xl font-bold tracking-tight text-white/90">My Playlists</h2>
             <p class="text-white/60 mt-1 text-sm">Your personal collection</p>
           </div>
-          <div id="addPlaylistSection"></div>
+          <div class="flex items-center gap-3">
+            {isAdmin && (
+              <a href="/admin" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">
+                Manage
+              </a>
+            )}
+            <div id="addPlaylistSection"></div>
+          </div>
         </div>
 
         {personalPlaylists.length > 0 ? (
