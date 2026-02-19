@@ -9,13 +9,16 @@ export async function HomePage(container) {
   container.innerHTML = "";
 
   // Fetch all playlists to separate them
-  const allPlaylists = await new PlaylistRepository().getAll();
+  const repo = new PlaylistRepository()
+  const allPlaylists = await repo.getAll();
 
   const userInfos = await authService.infos();
   const currentUserId = userInfos.id;
   const personalPlaylists = allPlaylists.filter(p => p.idOwner === currentUserId);
-  const sharedPlaylists = allPlaylists.filter(p => p.idOwner != currentUserId && p.visibility !== Visibility.open && p.visibility !== Visibility.public)
-  const publicPlaylists = allPlaylists.filter(p => p.visibility === Visibility.public && p.idOwner !== currentUserId);
+  const sharedPlaylists = await repo.getShared();
+  console.log(sharedPlaylists)
+  const publicPlaylists = await repo.getPublic();
+  console.log(publicPlaylists)
   const openPlaylists = allPlaylists.filter(p => p.visibility === Visibility.open);
 
   const personalCards = buildCardsFromPlaylists(personalPlaylists);
