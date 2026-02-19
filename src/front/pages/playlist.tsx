@@ -269,7 +269,7 @@ export async function PlaylistDetailPage(
   };
 
   // Render page
-  const userInfos = await authService.iduser();
+  const userInfos = await authService.infos();
   const currentUserRole = userInfos.role;
 
   function renderGenreSection() {

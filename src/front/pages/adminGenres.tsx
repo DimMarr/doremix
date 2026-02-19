@@ -41,7 +41,7 @@ function renderGenreRows(genres: Genre[], editingId: number | null): string {
 export async function AdminPage(container: HTMLElement | null) {
   if (!container) return;
 
-  const userInfos = await authService.iduser();
+  const userInfos = await authService.infos();
   const isAdmin = userInfos.role === "ADMIN";
 
   if (!isAdmin) {
