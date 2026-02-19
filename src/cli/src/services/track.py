@@ -1,23 +1,30 @@
-from src.utils.get_env import get_env
 from src.utils.stop_process import stop_process
 from src.models.track import TrackSchema
-import requests
+from src.utils.http_client import make_authenticated_request
 import yt_dlp
 import subprocess
+import shutil
 import psutil
 import os
 from pathlib import Path
-
-API_BASE_URL = get_env("API_BASE_URL")
 
 # PID of the current song playing is stored in this file
 PID_FILE = Path(f"/run/user/{os.getuid()}/yt-player.pid")
 
 
+def _build_player_command(audio_url: str) -> list[str]:
+    if shutil.which("vlc"):
+        return ["vlc", "-I", "dummy", "--play-and-exit", "--no-video", audio_url]
+
+    raise Exception("VLC is required but not installed. Install `vlc` and retry.")
+
+
 def get_track(id: int) -> TrackSchema:
-    res = requests.get(f"{API_BASE_URL}/tracks/{id}")
+    res = make_authenticated_request("GET", f"/tracks/{id}")
     if res.status_code == 404:
         raise Exception("Track not found")
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
     data = res.json()
 
     # Create a PlaylistSchema Object from raw JSON data
@@ -25,7 +32,9 @@ def get_track(id: int) -> TrackSchema:
 
 
 def get_all_tracks() -> list[TrackSchema]:
-    res = requests.get(f"{API_BASE_URL}/tracks")
+    res = make_authenticated_request("GET", "/tracks")
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
     data = res.json()
 
     return [TrackSchema(**item) for item in data]
@@ -46,6 +55,9 @@ def play_track(id: int):
         def error(self, msg):
             pass
 
+        def warning(self, msg):
+            pass
+
     ydl_opts = {
         "format": "bestaudio",
         "quiet": True,
@@ -57,16 +69,19 @@ def play_track(id: int):
             info = ydl.extract_info(get_track(id).youtubeLink, download=False)
             audio_url = info["url"]
     except Exception as e:
-        print(e)
-        return
+        raise Exception(f"Unable to stream track: {e}") from e
 
-    # Stream with VLC from a new process
-    process = subprocess.Popen(
-        ["vlc", "-I", "dummy", "--play-and-exit", "--no-video", audio_url],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        start_new_session=True,
-    )
+    # Stream with an available local player.
+    player_command = _build_player_command(audio_url)
+    try:
+        process = subprocess.Popen(
+            player_command,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except FileNotFoundError as e:
+        raise Exception("VLC executable not found. Install `vlc` and retry.") from e
 
     PID_FILE.write_text(str(process.pid))
 
@@ -82,7 +97,7 @@ def stop_track():
 
 
 def search_tracks(query: str) -> list[TrackSchema]:
-    res = requests.get(f"{API_BASE_URL}/tracks")
+    res = make_authenticated_request("GET", "/tracks")
 
     if res.status_code != 200:
         raise Exception(f"Error while fetching tracks: {res.text}")

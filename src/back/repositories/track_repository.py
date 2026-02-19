@@ -15,28 +15,37 @@ class TrackRepository:
 
     @staticmethod
     def get_all(db: Session) -> List[Track]:
-        return db.query(Track).all()
+        tracks: List[Track] = db.query(Track).all()
+        return tracks
 
     @staticmethod
     def get_by_id(db: Session, track_id: int) -> Optional[Track]:
-        return db.query(Track).filter(Track.idTrack == track_id).first()
+        track: Optional[Track] = (
+            db.query(Track).filter(Track.idTrack == track_id).first()
+        )
+        return track
 
     @staticmethod
     def get_by_youtube_link(db: Session, youtube_link: str) -> Optional[Track]:
-        return db.query(Track).filter(Track.youtubeLink == youtube_link).first()
+        track: Optional[Track] = (
+            db.query(Track).filter(Track.youtubeLink == youtube_link).first()
+        )
+        return track
 
     @staticmethod
-    def search_tracks(db: Session, query: str, limit: int = 10):
-        tracks = (
+    def search_tracks(db: Session, query: str, limit: int = 10) -> List[Track]:
+        tracks: List[Track] = (
             db.query(Track)
-            .join(Track.artists)
+            .outerjoin(Track.artists)
             .options(joinedload(Track.artists))
             .filter(
-                or_(Track.title.ilike(f"%{query}%"), Artist.name.ilike(f"%{query}%"))
+                or_(
+                    Track.title.ilike(f"%{query}%"),
+                    Artist.name.ilike(f"%{query}%"),
+                )
             )
             .distinct()
             .limit(limit)
             .all()
         )
-
         return tracks

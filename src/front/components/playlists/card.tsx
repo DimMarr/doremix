@@ -40,7 +40,7 @@ export function PlaylistCard({
                 safe
                 src={icon}
                 alt="Play icon"
-                class="absolute bottom-2 right-2 w-[40px] h-[40px] bg-[#2b7fff] p-2 rounded-[999px] cursor-pointer"
+                class="absolute bottom-2 right-2 w-[40px] h-[40px] bg-primary p-2 rounded-[999px] cursor-pointer"
                 onclick={onClickPlay?.toString()}
               />
             )}

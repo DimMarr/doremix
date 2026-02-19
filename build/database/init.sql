@@ -8,11 +8,9 @@ DROP TABLE IF EXISTS TRACK CASCADE;
 DROP TABLE IF EXISTS ARTIST CASCADE;
 DROP TABLE IF EXISTS GENRE CASCADE;
 DROP TABLE IF EXISTS USERS CASCADE;
-DROP TYPE IF EXISTS user_role;
 DROP TYPE IF EXISTS playlist_visibility;
 
-CREATE TYPE user_role AS ENUM ('USER', 'MODERATOR', 'ADMIN');
-CREATE TYPE playlist_visibility AS ENUM ('PUBLIC', 'PRIVATE', 'OPEN', 'SHARED');
+CREATE TYPE playlist_visibility AS ENUM ('PUBLIC', 'PRIVATE', 'OPEN');
 
 CREATE TABLE GENRE (
     idGenre SERIAL PRIMARY KEY,
@@ -24,13 +22,33 @@ CREATE TABLE ARTIST (
     name VARCHAR(255) NOT NULL
 );
 
+CREATE TABLE ROLE (
+    idRole SERIAL PRIMARY KEY,
+    roleName VARCHAR(255) UNIQUE NOT NULL
+    CHECK (roleName IN ('USER', 'MODERATOR', 'ADMIN'))
+);
+
+CREATE TABLE RIGHTS (
+    idRight SERIAL PRIMARY KEY,
+    rightName VARCHAR(255) UNIQUE NOT NULL
+    CHECK (rightName IN ('CREATE', 'READ', 'EDIT', 'DELETE', 'BAN_USER'))
+);
+
+CREATE TABLE USER_GROUP (
+    idGroup SERIAL PRIMARY KEY,
+    groupName VARCHAR(255) UNIQUE NOT NULL
+);
+
+
 CREATE TABLE USERS (
     idUser SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     username VARCHAR(255) NOT NULL,
-    role user_role DEFAULT 'USER',
-    banned BOOLEAN DEFAULT FALSE
+    banned BOOLEAN DEFAULT FALSE,
+    isVerified BOOLEAN DEFAULT FALSE,
+    idRole INTEGER NOT NULL DEFAULT 1,
+    CONSTRAINT fk_users_role FOREIGN KEY (idRole) REFERENCES ROLE(idRole)
 );
 
 CREATE TABLE TRACK (
@@ -48,12 +66,46 @@ CREATE TABLE PLAYLIST (
     idGenre INTEGER NOT NULL DEFAULT 1,
     idOwner INTEGER NOT NULL,
     vote INTEGER DEFAULT 0,
-    visibility playlist_visibility DEFAULT 'PUBLIC',
+    visibility playlist_visibility DEFAULT 'PRIVATE',
+
     coverImage VARCHAR(500),
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_playlist_genre FOREIGN KEY (idGenre) REFERENCES GENRE(idGenre),
     CONSTRAINT fk_playlist_owner FOREIGN KEY (idOwner) REFERENCES USERS(idUser) ON DELETE CASCADE
+);
+
+CREATE TABLE GROUP_PLAYLIST (
+    idGroup INTEGER NOT NULL,
+    idPlaylist INTEGER NOT NULL,
+    PRIMARY KEY (idGroup, idPlaylist),
+    CONSTRAINT fk_grouppplaylist_group FOREIGN KEY (idGroup) REFERENCES USER_GROUP(idGroup) ON DELETE CASCADE,
+    CONSTRAINT fk_grouppplaylist_playlist FOREIGN KEY (idPlaylist) REFERENCES PLAYLIST(idPlaylist) ON DELETE CASCADE
+);
+
+CREATE TABLE GROUP_USER (
+    idUser INTEGER NOT NULL,
+    idGroup INTEGER NOT NULL,
+    PRIMARY KEY (idUser, idGroup),
+    CONSTRAINT fk_usergroup_user FOREIGN KEY (idUser) REFERENCES USERS(idUser) ON DELETE CASCADE,
+    CONSTRAINT fk_usergroup_group FOREIGN KEY (idGroup) REFERENCES USER_GROUP(idGroup) ON DELETE CASCADE
+);
+
+CREATE TABLE ROLE_RIGHTS (
+    idRole INTEGER NOT NULL,
+    idRight INTEGER NOT NULL,
+    PRIMARY KEY (idRole, idRight),
+    CONSTRAINT fk_rolerights_role FOREIGN KEY (idRole) REFERENCES ROLE(idRole) ON DELETE CASCADE,
+    CONSTRAINT fk_rolerights_right FOREIGN KEY (idRight) REFERENCES RIGHTS(idRight) ON DELETE CASCADE
+);
+
+
+CREATE TABLE PLAYLIST_RIGHTS (
+    idPlaylist INTEGER NOT NULL,
+    idRight INTEGER NOT NULL,
+    PRIMARY KEY (idPlaylist, idRight),
+    CONSTRAINT fk_playlistrights_playlist FOREIGN KEY (idPlaylist) REFERENCES PLAYLIST(idPlaylist) ON DELETE CASCADE,
+    CONSTRAINT fk_playlistrights_right FOREIGN KEY (idRight) REFERENCES RIGHTS(idRight) ON DELETE CASCADE
 );
 
 CREATE TABLE TRACK_ARTIST (
@@ -67,6 +119,7 @@ CREATE TABLE TRACK_ARTIST (
 CREATE TABLE TRACK_PLAYLIST (
     idTrack INTEGER NOT NULL,
     idPlaylist INTEGER NOT NULL,
+    nameInPlaylist VARCHAR(255),
     PRIMARY KEY (idTrack, idPlaylist),
     CONSTRAINT fk_trackplaylist_track FOREIGN KEY (idTrack) REFERENCES TRACK(idTrack) ON DELETE CASCADE,
     CONSTRAINT fk_trackplaylist_playlist FOREIGN KEY (idPlaylist) REFERENCES PLAYLIST(idPlaylist) ON DELETE CASCADE
@@ -79,6 +132,34 @@ CREATE TABLE USER_PLAYLIST (
     PRIMARY KEY (idUser, idPlaylist),
     CONSTRAINT fk_userplaylist_user FOREIGN KEY (idUser) REFERENCES USERS(idUser) ON DELETE CASCADE,
     CONSTRAINT fk_userplaylist_playlist FOREIGN KEY (idPlaylist) REFERENCES PLAYLIST(idPlaylist) ON DELETE CASCADE
+);
+
+
+CREATE TABLE ACCESS_TOKEN (
+    idToken SERIAL PRIMARY KEY,
+    token VARCHAR(255) NOT NULL,
+    idUser INTEGER NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expiresAt TIMESTAMP NOT NULL,
+    CONSTRAINT fk_token_user FOREIGN KEY (idUser) REFERENCES USERS(idUser) ON DELETE CASCADE
+);
+
+CREATE TABLE REFRESH_TOKEN (
+    idToken SERIAL PRIMARY KEY,
+    token VARCHAR(255) NOT NULL,
+    idUser INTEGER NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expiresAt TIMESTAMP NOT NULL,
+    CONSTRAINT fk_token_user FOREIGN KEY (idUser) REFERENCES USERS(idUser) ON DELETE CASCADE
+);
+
+CREATE TABLE VERIFICATION_TOKEN (
+    idToken SERIAL PRIMARY KEY,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    idUser INTEGER NOT NULL,
+    expiresAt TIMESTAMP NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_verification_user FOREIGN KEY (idUser) REFERENCES USERS(idUser) ON DELETE CASCADE
 );
 
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -97,3 +178,6 @@ CREATE TRIGGER update_playlist_updated_at
 CREATE INDEX IF NOT EXISTS idx_track_title ON track(title);
 CREATE INDEX IF NOT EXISTS idx_playlist_name ON playlist(name);
 CREATE INDEX IF NOT EXISTS idx_artist_name ON artist(name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_access_token_string ON access_token(token);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_refresh_token_string ON refresh_token(token);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_verification_token_string ON verification_token(token);

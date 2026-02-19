@@ -2,13 +2,8 @@ from pydantic import BaseModel, ConfigDict
 from enum import Enum
 from datetime import datetime
 from typing import Optional
-
-
-class PlaylistVisibility(str, Enum):
-    PUBLIC = "PUBLIC"
-    PRIVATE = "PRIVATE"
-    OPEN = "OPEN"
-    SHARED = "SHARED"
+from models.enums import PlaylistVisibility
+from schemas.genre import GenreSchema
 
 
 class PlaylistSchema(BaseModel):
@@ -21,6 +16,7 @@ class PlaylistSchema(BaseModel):
     coverImage: Optional[str] = None
     createdAt: datetime
     updatedAt: datetime
+    genre: Optional[GenreSchema] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -37,3 +33,12 @@ class PlaylistUpdate(BaseModel):
     idGenre: Optional[int] = None
     visibility: Optional[PlaylistVisibility] = None
     model_config = ConfigDict(from_attributes=True)
+
+
+class SharePlaylistRequest(BaseModel):
+    target_email: str  # L'email de la personne à inviter
+    is_editor: bool = False  # False = Lecture seule, True = Peut modifier
+
+
+class ShareGroupRequest(BaseModel):
+    group_name: str

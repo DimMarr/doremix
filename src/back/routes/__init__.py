@@ -3,3 +3,7 @@ from .playlists import router as playlistsRouter
 from .tracks import router as tracksRouter
 from .artists import router as artistsRouter
 from .search_router import router as searchRouter
+from .register import router as registerRouter
+from .auth import router as authRouter
+from .genres import router as genresRouter
+from .genres import admin_router as adminGenresRouter

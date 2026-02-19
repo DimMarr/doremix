@@ -1,155 +1,128 @@
-import { Card, SearchBar, SearchResults } from "@components/generics";
-import PlaylistRepository from "@repositories/playlistRepository";
-import SearchRepository from "@repositories/searchRepository";
+import { initSearchBar, SearchBar } from "@components/generics";
+import { buildCardsFromPlaylists, initCardsElements } from "@components/generics/card";
+import { setupPlaylistAndTrackModals } from "@components/playlists";
+import { PlaylistRepository } from "@repositories/index";
+import { Visibility } from "@models/playlist";
+import { authService } from "@utils/authentication";
 
-export async function HomePage(container, trackPlayer) {
+export async function HomePage(container) {
   container.innerHTML = "";
 
-  const repo = new PlaylistRepository();
-  const playlists = await repo.getPlaylists();
-  console.log(playlists);
-  const svg1 = new URL("../assets/icons/play.svg", import.meta.url).href;
+  // Fetch all playlists to separate them
+  const allPlaylists = await new PlaylistRepository().getAll();
 
-  const playlistCards = playlists.map((p) => {
-    const cardHtml = Card({
-      title: p.name || "",
-      image: p.image,
-      content: p.description || "",
-      icon: svg1,
-      className: "px-0! max-w-[200px] md:max-w-[300px] shrink-0",
-      onClickPlay: () => {
-        if (trackPlayer.playlist.idPlaylist !== p.idPlaylist) {
-          trackPlayer.setPlaylist(p);
-        }
-        trackPlayer.playTrack(0);
-      },
-    });
+  const userInfos = await authService.iduser();
+  const currentUserId = userInfos.id;
+  const isAdmin = userInfos.role === "ADMIN";
+  const personalPlaylists = allPlaylists.filter(p => p.idOwner === currentUserId);
+  const publicPlaylists = allPlaylists.filter(p => p.visibility === Visibility.public && p.idOwner !== currentUserId);
+  const openPlaylists = allPlaylists.filter(p => p.visibility === Visibility.open);
 
-    return `<a href="/playlist/${p.idPlaylist}" data-link>${cardHtml}</a>`;
-  }).join('');
+  const personalCards = buildCardsFromPlaylists(personalPlaylists);
+  const publicCards = buildCardsFromPlaylists(publicPlaylists);
+  const openCards = buildCardsFromPlaylists(openPlaylists);
 
   const pageHtml = (
-    <div>
+    <div class="px-4 py-6 md:px-8 space-y-12">
       {/* Search section */}
-      <div id="searchSection" class="mb-8"></div>
+      <div id="searchSection" class="w-full max-w-2xl mx-auto mb-10"></div>
 
-      {
-        Card({
-          children: (
-            <div>
-              <h2 class="text-lg font-semibold leading-none tracking-tight mb-4">Top Tracks</h2>
-              <div class="flex p-0! gap-10 mt-4 mb-2 overflow-scroll">
-                {playlistCards}
-              </div>
-            </div>
-          )
-        })
-      }
+      {/* Personal Playlists Section */}
+      <section>
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-3xl font-bold tracking-tight text-white/90">My Playlists</h2>
+            <p class="text-white/60 mt-1 text-sm">Your personal collection</p>
+          </div>
+          <div class="flex items-center gap-3">
+            {isAdmin && (
+              <a href="/admin" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">
+                Manage
+              </a>
+            )}
+            <div id="addPlaylistSection"></div>
+          </div>
+        </div>
+
+        {personalPlaylists.length > 0 ? (
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6">
+            {personalCards as 'safe'}
+          </div>
+        ) : (
+          <div class="bg-white/5 rounded-lg p-8 text-center border border-white/10">
+            <p class="text-white/60 mb-4">You haven't created any playlists yet.</p>
+          </div>
+        )}
+      </section>
+
+      {/* Public Playlists Section */}
+      <section>
+        <div class="mb-6">
+          <h2 class="text-3xl font-bold tracking-tight text-white/90">Public Playlists</h2>
+          <p class="text-white/60 mt-1 text-sm">Discover what others are listening to</p>
+        </div>
+
+        {publicPlaylists.length > 0 ? (
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6">
+            {publicCards as 'safe'}
+          </div>
+        ) : (
+          <p class="text-white/60">No public playlists available at the moment.</p>
+        )}
+      </section>
+
+      {/* Official/Open Playlists Section */}
+      {openPlaylists.length > 0 && (
+        <section>
+          <div class="mb-6">
+            <h2 class="text-3xl font-bold tracking-tight text-white/90">Official Playlists</h2>
+            <p class="text-white/60 mt-1 text-sm">Curated by Doremix</p>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6">
+            {openCards as 'safe'}
+          </div>
+        </section>
+      )}
+
+      <div id="modal-container"></div>
     </div>
   );
 
   container.innerHTML = pageHtml;
 
-  // Add search functionality
+
+  // Setup modals d'ajout de track et de playlist.
+  setupPlaylistAndTrackModals();
+
+  // Setup composant de recherche.
   const searchSection = document.getElementById("searchSection");
   if (searchSection) {
-    const searchRepo = new SearchRepository();
-    let currentResults: { tracks: any[], playlists: any[] } | null = null;
-    let debounceTimer: ReturnType<typeof setTimeout>;
-
-    // Render search input
     searchSection.innerHTML = SearchBar({
-      placeholder: "Search tracks and playlists..."
+      placeholder: "Search tracks, artists, or playlists...",
+      className: "w-full bg-white/10 border-none h-12 rounded-full shadow-lg backdrop-blur-sm focus-within:ring-2 focus-within:ring-primary",
+      inputClassName: "text-white placeholder:text-white/50"
     });
 
-    // Attach event handler to search input
-    const searchInputElement = document.getElementById("search-input") as HTMLInputElement;
-    if (searchInputElement) {
-      searchInputElement.addEventListener("input", async (e) => {
-        const target = e.target as HTMLInputElement;
-        const query = target.value.trim();
-
-        clearTimeout(debounceTimer);
-
-        // Remove existing results
-        const existingResults = searchSection.querySelector('[class*="absolute top-full"]');
-        if (existingResults) {
-          existingResults.remove();
-        }
-
-        if (query.length < 2) {
-          currentResults = null;
-          return;
-        }
-
-        // Wait 300ms before searching
-        debounceTimer = setTimeout(async () => {
-          const results = await searchRepo.search(query);
-          currentResults = results;
-
-          // Render search results
-          const resultsHtml = SearchResults({
-            tracks: results.tracks,
-            playlists: results.playlists,
-          });
-
-          // Insert results into DOM
-          const searchContainer = searchSection.querySelector('[class*="relative w-full"]');
-          if (searchContainer) {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = resultsHtml;
-            searchContainer.appendChild(tempDiv.firstElementChild!);
-
-
-            const trackItems = searchContainer.querySelectorAll('[data-track-index]');
-            trackItems.forEach((item) => {
-              const index = parseInt((item as HTMLElement).dataset.trackIndex || '0', 10);
-              item.addEventListener('click', () => {
-                trackPlayer.playSingleTrack(currentResults!.tracks[index]);
-
-                const resultsElement = searchSection.querySelector('[class*="absolute top-full"]');
-                if (resultsElement) {
-                  resultsElement.remove();
-                }
-                currentResults = null;
-              });
-            });
-
-
-            const playlistItems = searchContainer.querySelectorAll('[data-playlist-index]');
-            playlistItems.forEach((item) => {
-              const index = parseInt((item as HTMLElement).dataset.playlistIndex || '0', 10);
-              item.addEventListener('click', () => {
-                trackPlayer.setPlaylist(currentResults!.playlists[index]);
-                trackPlayer.playTrack(0);
-
-                const resultsElement = searchSection.querySelector('[class*="absolute top-full"]');
-                if (resultsElement) {
-                  resultsElement.remove();
-                }
-                currentResults = null;
-              });
-            });
-          }
-        }, 300);
-      });
-    }
+    initSearchBar();
   }
 
-  // Re-attach event handlers after DOM is updated
-  const cardElements = container.querySelectorAll('[data-link]');
-  cardElements.forEach((link, index) => {
-    const p = playlists[index];
-    const iconElement = link.querySelector('img[alt="Play icon"]');
-    if (iconElement) {
-      iconElement.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (trackPlayer.playlist.idPlaylist !== p.idPlaylist) {
-          trackPlayer.setPlaylist(p);
-        }
-        trackPlayer.playTrack(0);
-      });
-    }
-  });
+  // Initialize card interactions
+  initCardsElements(container, [...personalPlaylists, ...publicPlaylists, ...openPlaylists]);
+
+  // Specific handler for empty state button if present
+  const createFirstBtn = document.getElementById('create-first-playlist-btn');
+  if (createFirstBtn) {
+    createFirstBtn.addEventListener('click', () => {
+      // Trigger the add playlist modal
+      // This might need adjustment depending on how AddPlaylistModal is implemented
+      // identifying the button that usually opens it:
+      const addPlaylistBtn = document.querySelector('[data-action="create-playlist"]');
+      if (addPlaylistBtn instanceof HTMLElement) {
+        addPlaylistBtn.click();
+      } else {
+        // Fallback or todo: verify how to trigger modal programmatically if needed
+        console.log("Create playlist clicked");
+      }
+    });
+  }
 }

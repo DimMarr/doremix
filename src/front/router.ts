@@ -1,5 +1,6 @@
 import { Sanitize } from '@utils/sanitize';
 import { NoInternetPage } from "@pages/noInternet";
+import { authService } from '@utils/authentication';
 
 export class Router {
   constructor(container, trackPlayer) {
@@ -23,13 +24,39 @@ export class Router {
     this.routes[path] = handler;
   }
 
-  onRouteChange() {
-    if(navigator.onLine === false){
+  async onRouteChange() {
+    if (navigator.onLine === false) {
       this.container.innerHTML = NoInternetPage();
       return;
     }
 
+    // Gestion de l'authentification
     let path = window.location.pathname;
+    const publicRoutes = ['/login', '/signup'];
+    let isAuth = false;
+    try {
+      isAuth = await authService.isAuthenticated();
+    } catch (e) {
+      console.error("Auth check failed, assuming not authenticated:", e);
+      isAuth = false;
+    }
+
+    if (!publicRoutes.includes(path) && !isAuth) {
+      window.history.pushState({}, "", "/login");
+      if (this.routes["/login"]) {
+        this.routes["/login"](this.container, {}, {});
+      }
+      return;
+    }
+
+    if (publicRoutes.includes(path) && isAuth) {
+      window.history.pushState({}, "", "/");
+      if (this.routes["/"]) {
+        this.routes["/"](this.container, {}, {});
+      }
+      return;
+    }
+
     if (path === "") path = "/";
 
     if (!(new Sanitize()).isValidPath(path)) {
@@ -74,7 +101,7 @@ export class Router {
     return (new Sanitize()).sanitizeParams(params);
   }
 
-  navigate(path) {
+  async navigate(path) {
     if (!(new Sanitize()).isValidPath(path)) {
       console.warn('Invalid navigation path:', path);
       return;
@@ -88,6 +115,6 @@ export class Router {
     }
 
     window.history.pushState({}, "", sanitizedPath);
-    this.onRouteChange();
+    await this.onRouteChange();
   }
 }

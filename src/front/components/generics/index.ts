@@ -1,14 +1,13 @@
 // Components
 export { Button, type ButtonProps } from './button';
 export { Card, type CardProps } from './card';
+export { Input } from './input';
 export { Header, type HeaderProps } from './header';
+export { Testimony } from './testimony';
 export { Text, type TextProps } from './text';
 export { Badge } from './badge';
 export { Footer } from './footer';
-export { PlayIcon } from './play-icon';
-export { PauseIcon } from './pause-icon';
-export { WifiOffIcon } from './wifi-off-icon';
 
 // Search components
-export * from '@components/generics/SearchBar';
-export * from '@components/generics/SearchResults';
+export * from '@components/generics/searchBar';
+export * from '@components/generics/searchResults';

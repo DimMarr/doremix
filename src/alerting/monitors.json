@@ -1,0 +1,13 @@
+[
+  {
+    "name": "Production API",
+    "type": "http",
+    "url": "http://vulpecula.dopolytech.fr",
+    "interval": 60,
+    "maxretries": 3,
+    "notificationIDList": [1],
+    "upsideDown": false,
+    "ignoreTls": false,
+    "expiryNotification": false
+  }
+]

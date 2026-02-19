@@ -4,7 +4,10 @@ uvicorn
 psycopg2-binary
 sqlalchemy
 pydantic
+pydantic[email]
 Pillow
 python-multipart
 yt_dlp
 slowapi
+passlib
+bcrypt==3.2.2

@@ -3,13 +3,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from database import Base
 import enum
-
-
-class PlaylistVisibility(enum.Enum):
-    PUBLIC = "PUBLIC"
-    PRIVATE = "PRIVATE"
-    OPEN = "OPEN"
-    SHARED = "SHARED"
+from .enums import PlaylistVisibility
 
 
 class Playlist(Base):
@@ -36,6 +30,8 @@ class Playlist(Base):
     updatedAt = Column(
         "updatedat", TIMESTAMP, server_default=func.now(), onupdate=func.now()
     )
+
+    genre = relationship("Genre", foreign_keys=[idGenre])
 
     tracks = relationship(
         "Track", secondary="track_playlist", back_populates="playlists"

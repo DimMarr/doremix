@@ -1,4 +1,4 @@
 // Components
-export { TrackPlayer, type TrackPlayerProps } from './track-player';
+export { TrackPlayer } from './trackPlayer';
 export { PlaylistCard, type CardPlaylistProps } from './card';
-export * from './add-track-modal';
+export *  from './addModal';

@@ -1,23 +1,55 @@
-TRUNCATE USER_PLAYLIST, TRACK_PLAYLIST, TRACK_ARTIST, PLAYLIST, TRACK, ARTIST, GENRE, USERS RESTART IDENTITY CASCADE;
+TRUNCATE
+    USER_PLAYLIST, TRACK_PLAYLIST, TRACK_ARTIST, PLAYLIST_RIGHTS, ROLE_RIGHTS,
+    GROUP_USER, GROUP_PLAYLIST, PLAYLIST, TRACK, ARTIST, GENRE,
+    USERS, USER_GROUP, RIGHTS, ROLE
+RESTART IDENTITY CASCADE;
 
 BEGIN;
 
+INSERT INTO ROLE (roleName) VALUES
+('USER'),
+('MODERATOR'),
+('ADMIN');
+
+INSERT INTO RIGHTS (rightName) VALUES
+('CREATE'),
+('READ'),
+('EDIT'),
+('DELETE'),
+('BAN_USER');
+
+
+INSERT INTO ROLE_RIGHTS (idRole, idRight) VALUES
+(3, 1), (3, 2), (3, 3), (3, 4), (3, 5);
+
+INSERT INTO ROLE_RIGHTS (idRole, idRight) VALUES
+(2, 2), (2, 4), (2, 5);
+
+INSERT INTO ROLE_RIGHTS (idRole, idRight) VALUES
+(1, 1), (1, 2), (1, 3);
+
 INSERT INTO GENRE (label) VALUES
-('Sans genre'), ('Rock'), ('Pop'), ('Hip-Hop'), ('Jazz'),
-('Electro'), ('Metal'), ('Classical'), ('Reggae');
+('Rock'), ('Pop'), ('Hip-Hop'), ('Classique'), ('Electro'), ('Jazz');
 
 INSERT INTO ARTIST (name) VALUES
-('Queen'), ('Daft Punk'), ('Pharrell Williams'), ('Eminem'),
-('Miles Davis'), ('Metallica'), ('Mozart'), ('Adele'),
-('The Weeknd'), ('Kendrick Lamar'), ('Rihanna'), ('Hans Zimmer');
+('Queen'), ('Daft Punk'), ('Eminem'), ('Mozart'), ('Adele'), ('Hans Zimmer');
 
-INSERT INTO USERS (username, email, password, role, banned) VALUES
-('AdminSys', 'admin@platform.com', 'admin123', 'ADMIN', FALSE),
-('ModSarah', 'sarah@modo.com', 'secureMod', 'MODERATOR', FALSE),
-('AliceMusic', 'alice@gmail.com', 'passA', 'USER', FALSE),
-('BobRocker', 'bob@yahoo.com', 'passB', 'USER', FALSE),
-('CharliePro', 'charlie@pro.com', 'passC', 'USER', FALSE),
-('DaveBanned', 'dave@bad.com', 'passD', 'USER', TRUE);
+INSERT INTO USER_GROUP (groupName) VALUES
+('Les Etudiants'),
+('Staff Admin'),
+('Fans de Rock');
+
+INSERT INTO USERS (username, email, password, idRole, isverified) VALUES
+('SuperAdmin', 'admin@umontpellier.fr', '$2b$12$xnS.JxXR0Rij1Cw/60901Of0vVcowP8t1C5.TVB4ZGGjaS5XeUCSK', 3, TRUE),
+('ModoSarah', 'sarah@etu.umontpellier.fr', '$2b$12$MfGljJQRrXEFoIXXniPzFueRzeO.wSwElO8U1uRqmq.f15VHw7kIK', 2, TRUE),
+('AliceEtudiante', 'alice@etu.umontpellier.fr', '$2b$12$j538y6ALuA4i/ZN.N/xxjObHVeb5NnB9HNYIZo4tKfNfvEAIMzoJu', 1, TRUE),
+('Charlie', 'charlie@umontpellier.fr', '$2b$12$fnRwsmyffcI00XeKK15W/.2/lsUvSN/7PThyDCbyboWuIkczRA5Ha', 1, FALSE);
+
+INSERT INTO GROUP_USER (idUser, idGroup) VALUES
+(1, 2),
+(3, 1),
+(4, 3),
+(3, 3);
 
 INSERT INTO TRACK (title, youtubeLink, listeningCount, durationSeconds) VALUES
 ('Bohemian Rhapsody', 'https://www.youtube.com/watch?v=fJ9rUzIMcZQ', 15000000, 354),
@@ -38,34 +70,48 @@ INSERT INTO TRACK (title, youtubeLink, listeningCount, durationSeconds) VALUES
 ('Blue in Green', 'https://www.youtube.com/watch?v=PoPL7BExSQU', 30000, 327),
 ('Requiem', 'https://www.youtube.com/watch?v=Zi8vJ_lMxQI', 800000, 300),
 ('Inception Time', 'https://www.youtube.com/watch?v=YoHD9XEInc0', 150000, 275),
-('Interstellar Main Theme', 'https://www.youtube.com/watch?v=zSWdZVtXT7E', 200000, 250),
-('One', 'https://www.youtube.com/watch?v=ktvTqknDobU', 1200, 435);
+('Interstellar Main Theme', 'https://www.youtube.com/watch?v=zSWdZVtXT7E', 200000, 250);
 
 
 INSERT INTO TRACK_ARTIST (idTrack, idArtist) VALUES
-(1, 1), (2, 1), (3, 6), (4, 6), (5, 2), (5, 3),
-(6, 2), (7, 8), (8, 8), (9, 9), (10, 9), (10, 2),
-(11, 4), (12, 4), (13, 10), (14, 11), (15, 5),
-(16, 5), (17, 7), (18, 12), (19, 12), (20, 6);
+(1, 1), (6, 1),
+(2, 2),
+(3, 3),
+(4, 4),
+(5, 6);
 
-INSERT INTO PLAYLIST (name, idGenre, idOwner, visibility, vote) VALUES
-('Alice Roadtrip', 2, 3, 'PUBLIC', 150),
-('Bob Metal Fest', 6, 4, 'PUBLIC', 666),
-('Study Session', 7, 3, 'PRIVATE', 40),
-('Staff Picks', 5, 1, 'PUBLIC', 999),
-('Open Community Jams', 4, 2, 'OPEN', 50),
-('Team Project Focus', 5, 5, 'SHARED', 10);
+INSERT INTO PLAYLIST (name, idGenre, idOwner, visibility, vote, coverImage) VALUES
+('Top 50 Polytech', 2, 1, 'PUBLIC', 999, 'asset:playlist1.jpg'),
+('Chill Lofi Study', 3, 1, 'PRIVATE', 150, 'asset:playlist2.jpg'),
+('Deep Focus', 4, 1, 'PRIVATE', 85, 'asset:playlist3.jpg'),
+('Focus Travail', 4, 3, 'PRIVATE', 0, NULL),
+('Mega Rock Party', 1, 4, 'PRIVATE', 50, 'asset:playlist1.jpg'),
+('Découvertes Semaine', 5, 2, 'PUBLIC', 12, NULL),
+('Best of 2023', 2, 1, 'PUBLIC', 500, 'asset:playlist2.jpg'),
+('Workout Motivation', 5, 1, 'PUBLIC', 320, 'asset:playlist3.jpg'),
+('Secret Guitara', 1, 1, 'PRIVATE', 10, NULL),
+('Morning Coffee', 6, 3, 'PRIVATE', 45, 'asset:playlist1.jpg'),
+('Coding Session', 5, 3, 'PRIVATE', 100, NULL),
+('Hard Rock Essentials', 1, 4, 'PUBLIC', 666, 'asset:playlist2.jpg'),
+('Gym Playlist', 3, 4, 'PRIVATE', 88, NULL),
+('Classical Masterpieces', 4, 4, 'OPEN', 200, NULL),
+('Late Night Jazz', 6, 4, 'PRIVATE', 30, NULL),
+('Moderation Queue', 2, 2, 'PRIVATE', 0, NULL),
+('Electro Vibes', 5, 1, 'PRIVATE', 210, NULL),
+('Piano Dreams', 4, 3, 'OPEN', 150, 'asset:playlist3.jpg'),
+('Rap US Gold', 3, 4, 'OPEN', 420, 'asset:playlist1.jpg'),
+('Indie Pop Mix', 2, 4, 'PRIVATE', 75, NULL);
 
-INSERT INTO TRACK_PLAYLIST (idTrack, idPlaylist) VALUES
-(5, 1), (9, 1), (14, 1),
-(3, 2), (4, 2), (20, 2),
-(15, 3), (17, 3),
-(5, 4), (10, 4),
-(13, 5), (1, 5), (19, 5),
-(18, 6), (6, 6);
+INSERT INTO TRACK_PLAYLIST (idTrack, idPlaylist, nameInPlaylist) VALUES
+(2, 1, NULL),
+(18, 1, 'Inception (Best OST)'),
+(4, 2, NULL),
+(5, 2, NULL),
+(1, 3, NULL),
+(2, 3, 'L hymne du stade');
 
-INSERT INTO USER_PLAYLIST (idUser, idPlaylist, editor) VALUES
-(3, 6, TRUE),
-(4, 5, TRUE);
+INSERT INTO GROUP_PLAYLIST (idGroup, idPlaylist) VALUES (3, 3);
+INSERT INTO USER_PLAYLIST (idUser, idPlaylist, editor) VALUES (3, 3, TRUE);
+INSERT INTO PLAYLIST_RIGHTS (idPlaylist, idRight) VALUES (1, 2);
 
 COMMIT;

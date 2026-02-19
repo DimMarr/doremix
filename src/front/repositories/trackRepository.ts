@@ -1,16 +1,19 @@
 import { API_BASE_URL } from "@config/index";
-import { AlertManager } from "@utils/AlertManager";
+import { AlertManager } from "@utils/alertManager";
 
 export class TrackRepository {
-  static async getTrackByUrl(url: string) {
-    const response = await fetch(`${API_BASE_URL}/tracks/by-url?url=${encodeURIComponent(url)}`);
+  async getByUrl(url: string) {
+    const response = await fetch(`${API_BASE_URL}/tracks/by-url?url=${encodeURIComponent(url)}`, {
+      credentials: 'include'
+    });
+
     if (!response.ok) {
       throw new Error("Track not found");
     }
     return response.json();
   }
 
-  static async addTrackByUrl(playlistId: number, url: string, title: string) {
+  async create(playlistId: number, url: string, title: string) {
     try {
       const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/tracks/by-url`, {
         method: 'POST',
@@ -18,23 +21,28 @@ export class TrackRepository {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ url, title }),
+        credentials: 'include'
       });
+
 
       if (!response.ok) {
         throw new Error("Failed to add track by URL");
       }
-    } catch (err){
+      return response.json();
+    } catch (err) {
       new AlertManager().error("Failed to add track");
     }
   }
 
-  static async removeTrackFromPlaylist(playlistId: number, trackId: number) {
+  async delete(playlistId: number, trackId: number) {
     try {
       const response = await fetch(
         `${API_BASE_URL}/playlists/${playlistId}/track/${trackId}`,
         {
           method: "DELETE",
+          credentials: 'include'
         },
+
       );
 
       if (!response.ok) {
@@ -42,7 +50,7 @@ export class TrackRepository {
         throw new Error("Failed to remove track from playlist");
       }
       return response.json();
-    } catch (err){
+    } catch (err) {
       throw err
     }
   }
