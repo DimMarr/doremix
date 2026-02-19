@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
 from repositories.genre_repository import GenreRepository
 from models.genre import Genre
 from typing import List, Optional
@@ -19,8 +20,26 @@ class GenreController:
 
     @staticmethod
     def update_genre(db: Session, genre_id: int, label: str) -> Genre:
-        return GenreRepository.update(db, genre_id, label)
+        genre = GenreRepository.update(db, genre_id, label)
+        if not genre:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Genre {genre_id} not found",
+            )
+        return genre
 
     @staticmethod
     def delete_genre(db: Session, genre_id: int) -> bool:
-        return GenreRepository.delete(db, genre_id)
+        deleted, reason = GenreRepository.delete(db, genre_id)
+        if not deleted:
+            if reason == "not_found":
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Genre {genre_id} not found",
+                )
+            if reason == "in_use":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Cannot delete genre: it is still used by one or more playlists",
+                )
+        return deleted

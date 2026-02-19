@@ -1,6 +1,4 @@
 from typing import Optional, cast
-
-from fastapi import HTTPException, status
 from models.genre import Genre
 from sqlalchemy.orm import Session
 
@@ -26,35 +24,26 @@ class GenreRepository:
         return genre
 
     @staticmethod
-    def update(db: Session, genre_id: int, label: str) -> Genre:
+    def update(db: Session, genre_id: int, label: str) -> Optional[Genre]:
         genre = GenreRepository.get_by_id(db, genre_id)
         if not genre:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Genre {genre_id} not found",
-            )
+            return None
         genre.label = label
         db.commit()
         db.refresh(genre)
         return genre
 
     @staticmethod
-    def delete(db: Session, genre_id: int) -> bool:
+    def delete(db: Session, genre_id: int) -> tuple[bool, str]:
         genre = GenreRepository.get_by_id(db, genre_id)
         if not genre:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Genre {genre_id} not found",
-            )
+            return False, "not_found"
         # Check FK constraint: any playlist still using this genre?
         from models.playlist import Playlist
 
         in_use = db.query(Playlist).filter(Playlist.idGenre == genre_id).first()
         if in_use:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot delete genre: it is still used by one or more playlists",
-            )
+            return False, "in_use"
         db.delete(genre)
         db.commit()
-        return True
+        return True, "deleted"
