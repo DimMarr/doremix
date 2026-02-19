@@ -1,5 +1,5 @@
 import { TrackRepository } from "@repositories/trackRepository";
-import { Button, AddTrackModal } from "@components/index";
+import { Button, AddTrackModal, ShareModal } from "@components/index";
 import { TrackListHeader } from "@components/tracks/header";
 import { TrackRow } from "@components/tracks/row";
 import { AlertManager } from "@utils/alertManager";
@@ -211,6 +211,19 @@ export async function PlaylistDetailPage(
     render(modalContainer);
   };
 
+  const handleShare = () => {
+    const modalContainer = container.querySelector('#modal-container');
+    if (!modalContainer) return;
+
+    const { render } = ShareModal({
+      playlistId: playlist.idPlaylist,
+      onClose: () => {
+        modalContainer.innerHTML = '';
+      }
+    });
+    render(modalContainer);
+  };
+
   const handleDeleteTrack = async (trackIndex: number) => {
     const track = tracks[trackIndex];
     if (!track) return;
@@ -275,6 +288,7 @@ export async function PlaylistDetailPage(
           {await getVisibilityElement(repo, playlist) as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
+          { await canEdit(repo, playlist) && <Button id="share-button" variant="outline" size="md">Share Playlist</Button> }
         </div>
       </div>
 
@@ -330,6 +344,11 @@ export async function PlaylistDetailPage(
 
     if (target.closest('#add-track-button')) {
       handleAddTrack();
+      return;
+    }
+
+    if (target.closest('#share-button')) {
+      handleShare();
       return;
     }
 

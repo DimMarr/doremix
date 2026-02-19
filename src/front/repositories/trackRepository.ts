@@ -54,4 +54,25 @@ export class TrackRepository {
       throw err
     }
   }
+
+  async share(playlistId: number, email: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/share/user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ "target_email": email, "is_editor": false  }),
+        credentials: 'include'
+      });
+
+
+      if (!response.ok) {
+        throw new Error("Failed to share");
+      }
+      return response.status;
+    } catch (err) {
+      new AlertManager().error("Failed to share playlist");
+    }
+  }
 }
