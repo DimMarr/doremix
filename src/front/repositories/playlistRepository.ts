@@ -77,14 +77,16 @@ export class PlaylistRepository {
         }
     }
 
-    async create(name: string) {
+    async create(name: string, idGenre?: number) {
         try {
+            const body: Record<string, unknown> = { name };
+            if (idGenre !== undefined) body.idGenre = idGenre;
             const response = await fetch(`${API_BASE_URL}/playlists/`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ name }),
+                body: JSON.stringify(body),
                 credentials: 'include'
             });
 
@@ -160,6 +162,7 @@ export class PlaylistRepository {
 
                 return new Playlist({
                     ...item,
+                    genreLabel: item.genre?.label,
                     image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
                     visibility: visibility,
                     tracks: tracks,
@@ -195,6 +198,7 @@ export class PlaylistRepository {
 
                 return new Playlist({
                     ...item,
+                    genreLabel: item.genre?.label,
                     image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
                     visibility: visibility,
                     tracks: tracks,
@@ -218,6 +222,7 @@ export class PlaylistRepository {
 
         return new Playlist({
             ...rawData,
+            genreLabel: rawData.genre?.label,
             image: rawData.coverImage ? this.getCoverUrl(rawData.coverImage) : img1,
             visibility: rawData.visibility ? rawData.visibility.toLowerCase() as Visibility : Visibility.public,
             tracks: tracks,
