@@ -4,22 +4,20 @@ services:
     container_name: web
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8080:80"
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:80"]
+      test: [ "CMD", "wget", "-qO-", "http://localhost:80" ]
       interval: 1m30s
       timeout: 10s
       retries: 3
       start_period: 30s
-    environment:
-      - NODE_ENV=production
     deploy:
       resources:
         limits:
-          cpus: "1"
+          cpus: '1'
           memory: 512M
         reservations:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 256M
     networks:
       - frontend-network
@@ -29,7 +27,7 @@ services:
 
   db:
     image: postgres:17.1
-
+    container_name: database
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -40,17 +38,17 @@ services:
       - ./build/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
       - ./build/database/insert.sql:/docker-entrypoint-initdb.d/02-insert.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
       interval: 5s
       timeout: 5s
       retries: 5
     deploy:
       resources:
         limits:
-          cpus: "1"
+          cpus: '1'
           memory: 1G
         reservations:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 512M
     networks:
       - backend-network
@@ -66,7 +64,7 @@ services:
     volumes:
       - ./uploads/covers:/app/uploads/covers
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/docs" ]
       interval: 1m30s
       timeout: 10s
       retries: 3
@@ -74,10 +72,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1"
+          cpus: '1'
           memory: 512M
         reservations:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 256M
     networks:
       - frontend-network
