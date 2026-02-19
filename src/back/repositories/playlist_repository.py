@@ -65,7 +65,9 @@ class PlaylistRepository:
     @staticmethod
     def get_shared_playlist(db: Session, user_id: int):
         playlists: List[Playlist] = (
-            db.query(UserPlaylist).filter(UserPlaylist.idUser == user_id).all()
+            db.query(Playlist)
+            .filter(UserPlaylist.idPlaylist == Playlist.idPlaylist)
+            .all()
         )
         return playlists
 
