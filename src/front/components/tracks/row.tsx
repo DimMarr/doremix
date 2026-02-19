@@ -1,8 +1,12 @@
 import { secondsToReadableTime } from "@components/utils";
 import { Track } from "@models/track";
+import { PlaylistRepository } from "@repositories/playlistRepository";
+import { canEdit } from "@utils/rights";
 
-export function TrackRow({ track, index, current_track }: { track: Track; index: number, current_track?: Track }) {
+export async function TrackRow({ track, index, current_track, playlistId }: { track: Track; index: number, current_track?: Track, playlistId: number }) {
   const artistText = track.artists?.map(a => a.name).join(', ') || 'Unknown';
+  const repo = new PlaylistRepository();
+  let playlist = await repo.getById(playlistId);
 
   return (
     <div
@@ -17,6 +21,7 @@ export function TrackRow({ track, index, current_track }: { track: Track; index:
       <span safe class="font-medium track-title">{track.title}</span>
       <span safe>{artistText}</span>
       <span safe>{secondsToReadableTime(track.durationSeconds)}</span>
+      { await canEdit(repo, playlist) &&
       <button
         class="opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive flex items-center justify-center cursor-pointer delete-track"
         data-track-id={track.idTrack}
@@ -28,6 +33,7 @@ export function TrackRow({ track, index, current_track }: { track: Track; index:
           <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
         </svg>
       </button>
+      }
     </div>
   );
 }

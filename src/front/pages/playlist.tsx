@@ -9,6 +9,7 @@ import { PlaylistRepository } from "@repositories/index";
 import Playlist, { Visibility } from "@models/playlist";
 import type { Track } from "@models/track";
 import { authService } from "@utils/authentication";
+import { canEdit } from "@utils/rights";
 
 interface PageParams {
   id: string;
@@ -22,46 +23,6 @@ async function isShared(repo: PlaylistRepository, playlist: Playlist) {
   const users = await repo.sharedWith(playlist.idPlaylist)
   const shared_users = users.map(user => user.idUser)
   return shared_users.includes(currentUserId)
-}
-
-// True if is editor of a shared playlist, else false
-async function isEditor(repo: PlaylistRepository, playlist: Playlist) {
-  const userInfos = await authService.infos();
-  const currentUserId = userInfos.id
-
-  const users = await repo.sharedWith(playlist.idPlaylist)
-  const editors = users.filter(user => user.editor === true).map(user => user.idUser)
-  return editors.includes(currentUserId)
-}
-
-// True if can edit (Owner, Editor, Admin), else false
-async function canEdit (repo: PlaylistRepository, playlist: Playlist) {
-  const userInfos = await authService.infos();
-  const currentUserRole = userInfos.role
-  const currentUserId = userInfos.id
-
-  const idOwner = playlist.idOwner
-  if (currentUserId == idOwner){
-    console.log("isOwner")
-    return true
-  }
-  if (await isEditor(repo, playlist)){
-    console.log("isEditor")
-    return true
-  }
-  if (currentUserRole == "ADMIN"){
-    console.log("isAdmin")
-    return true
-  }
-  return false
-}
-
-// True if can add track (Owner, Editor, Admin, Public playlist), else false
-async function canAddTrack (repo: PlaylistRepository, playlist: Playlist) {
-  if (await canEdit(repo, playlist) || playlist.visibility == Visibility.public){
-    return true
-  }
-  return false
 }
 
 function getIconForVisibility(visibility: Visibility) {
@@ -155,7 +116,6 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
   );
 }
 
-
 function renderTrackList(playlist: Playlist): string {
   const tracks = playlist.tracks || [];
   const currentTrack = trackPlayerInstance.getCurrentTrack();
@@ -164,11 +124,11 @@ function renderTrackList(playlist: Playlist): string {
   return (
     <div>
       <TrackListHeader />
-      {tracks.map((track, index) => (
+      {tracks.map(async (track, index) => ( await
         <TrackRow
           track={track}
           index={index}
-          playlist={playlist}
+          playlistId={playlist.idPlaylist}
           trackPlayer={trackPlayerInstance}
           current_track={[YoutubePlayerState.UNSTARTED, YoutubePlayerState.CUED].includes(playerState) ? null : currentTrack}
         />
@@ -225,10 +185,10 @@ export async function PlaylistDetailPage(
     }
   };
 
-  const updateTrackListDisplay = () => {
+  const updateTrackListDisplay = async () => {
     const trackListContainer = container.querySelector('#track-list-container');
     if (trackListContainer) {
-      trackListContainer.innerHTML = renderTrackList({ ...playlist, tracks });
+      trackListContainer.innerHTML = await renderTrackList({ ...playlist, tracks });
     }
   };
 
@@ -309,7 +269,7 @@ export async function PlaylistDetailPage(
             class="w-48 h-48 rounded-md object-cover shadow-2xl"
             alt={playlist.name}
           />
-          { await canAddTrack(repo, playlist) && <Button id="add-track-button" variant="outline" size="md">Add Track</Button> }
+          { await canEdit(repo, playlist) && <Button id="add-track-button" variant="outline" size="md">Add Track</Button> }
         </div>
         <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
           {await getVisibilityElement(repo, playlist) as 'safe'}
@@ -319,7 +279,7 @@ export async function PlaylistDetailPage(
       </div>
 
       <div id="track-list-container" class="flex flex-col gap-4">
-        {renderTrackList({ ...playlist, tracks }) as 'safe'}
+        {await renderTrackList({ ...playlist, tracks }) as 'safe'}
       </div>
     </div>
   );
