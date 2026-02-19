@@ -169,7 +169,8 @@ deploy_prod:
       --exclude='uploads/covers/'
       --exclude='src/'
       .
-      $SSH_USER_PROD@$SSH_HOST_PROD:$DEPLOY_PATH    - ssh $SSH_USER_PROD@$SSH_HOST_PROD "cd $DEPLOY_PATH && sed -i 's/server_name localhost;/server_name $HOST_FQDN;/' build/frontend/nginx.conf && docker compose -f docker-compose_prod.yml up -d --build --remove-orphans"
+      $SSH_USER_PROD@$SSH_HOST_PROD:$DEPLOY_PATH
+    - ssh $SSH_USER_PROD@$SSH_HOST_PROD "cd $DEPLOY_PATH && sed -i 's/server_name localhost;/server_name $HOST_FQDN;/' build/frontend/nginx.conf && docker compose -f docker-compose_prod.yml up -d --build --remove-orphans"
 
     - echo "🚀 Déploiement des images prod..."
       - ssh $SSH_USER_PROD@$SSH_HOST_PROD "
