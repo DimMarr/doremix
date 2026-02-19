@@ -94,12 +94,12 @@ INSERT INTO PLAYLIST (name, idGenre, idOwner, visibility, vote, coverImage) VALU
 ('Coding Session', 5, 3, 'PRIVATE', 100, NULL),
 ('Hard Rock Essentials', 1, 4, 'PUBLIC', 666, 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?q=80&w=1000&auto=format&fit=crop'),
 ('Gym Playlist', 3, 4, 'PRIVATE', 88, NULL),
-('Classical Masterpieces', 4, 4, 'OPEN', 200, NULL),
+('Classical Masterpieces', 4, 1, 'OPEN', 200, NULL),
 ('Late Night Jazz', 6, 4, 'PRIVATE', 30, NULL),
 ('Moderation Queue', 2, 2, 'PRIVATE', 0, NULL),
 ('Electro Vibes', 5, 1, 'PRIVATE', 210, NULL),
-('Piano Dreams', 4, 3, 'OPEN', 150, 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?q=80&w=1000&auto=format&fit=crop'),
-('Rap US Gold', 3, 4, 'OPEN', 420, 'https://images.unsplash.com/photo-1581368135153-a506cf13b1e1?q=80&w=1000&auto=format&fit=crop'),
+('Piano Dreams', 4, 1, 'OPEN', 150, 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?q=80&w=1000&auto=format&fit=crop'),
+('Rap US Gold', 3, 1, 'OPEN', 420, 'https://images.unsplash.com/photo-1581368135153-a506cf13b1e1?q=80&w=1000&auto=format&fit=crop'),
 ('Indie Pop Mix', 2, 4, 'PRIVATE', 75, NULL);
 
 INSERT INTO TRACK_PLAYLIST (idTrack, idPlaylist, nameInPlaylist) VALUES
