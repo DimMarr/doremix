@@ -67,7 +67,9 @@ def test_get_ban_candidates_filters_self_admin_and_banned(
 ):
     actor = create_user(db, "mod@etu.umontpellier.fr", "mod_actor", 2)
     candidate_user = create_user(db, "user1@etu.umontpellier.fr", "candidate_user", 1)
-    candidate_moderator = create_user(db, "mod2@etu.umontpellier.fr", "candidate_mod", 2)
+    candidate_moderator = create_user(
+        db, "mod2@etu.umontpellier.fr", "candidate_mod", 2
+    )
     admin = create_user(db, "admin@umontpellier.fr", "admin_user", 3)
     banned_user = create_user(
         db, "banned@etu.umontpellier.fr", "already_banned", 1, banned=True
@@ -115,7 +117,9 @@ def test_ban_user_sets_banned_and_revokes_all_tokens(
 
     db.refresh(target)
     assert target.banned is True
-    assert db.query(AccessToken).filter(AccessToken.idUser == target.idUser).count() == 0
+    assert (
+        db.query(AccessToken).filter(AccessToken.idUser == target.idUser).count() == 0
+    )
     assert (
         db.query(RefreshToken).filter(RefreshToken.idUser == target.idUser).count() == 0
     )

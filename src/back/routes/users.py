@@ -17,7 +17,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
     description="Retourne la liste complète des utilisateurs enregistrés.",
 )
 
-#assure que que les admin peuvent acceder a la liste des users (pas utilisé pour le moment)
+# assure que que les admin peuvent acceder a la liste des users (pas utilisé pour le moment)
 
 def get_users(
     db: Session = Depends(get_db),

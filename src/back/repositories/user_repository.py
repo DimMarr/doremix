@@ -4,7 +4,7 @@ from models.user import User, UserRole
 
 
 class UserRepository:
-    ADMIN_ROLE_ID = 3 #harcodé pour que les moderators ne puisse pas ban les admin
+    ADMIN_ROLE_ID = 3  # harcodé pour que les moderators ne puisse pas ban les admin
 
     @staticmethod
     def create(db: Session, user: User) -> User:
