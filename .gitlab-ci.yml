@@ -7,6 +7,8 @@ variables:
   PRE_COMMIT_HOME: ${CI_PROJECT_DIR}/.cache/pre-commit
   BACKEND_IMAGE: ${CI_REGISTRY_IMAGE}/backend
   FRONTEND_IMAGE: ${CI_REGISTRY_IMAGE}/frontend
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  UV_CACHE_DIR: "$CI_PROJECT_DIR/.cache/uv"
 
 pre_commit_check:
   stage: test
@@ -40,53 +42,59 @@ pre_commit_check:
 test:
   stage: test
   image: python:3.13-slim
+  cache:
+    key: python-deps
+    paths:
+      - .cache/pip
+      - .cache/uv
   script:
     - pip install uv
     - uv sync
     - uv run pytest --cov -v
 
-
-build_beta:
+.build_template: &build_template
   stage: build
   image: docker:27
   services:
     - docker:27-dind
-  only:
-    - beta
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+build_backend_beta:
+  <<: *build_template
+  only:
+    - beta
   script:
     - echo "🔨 Build backend beta..."
     - docker build
+      --cache-from $BACKEND_IMAGE:beta
       -f build/backend/Dockerfile
       -t $BACKEND_IMAGE:beta
-      -t $BACKEND_IMAGE:beta-$CI_COMMIT_SHORT_SHA
       .
     - docker push $BACKEND_IMAGE:beta
-    - docker push $BACKEND_IMAGE:beta-$CI_COMMIT_SHORT_SHA
 
+build_frontend_beta:
+  <<: *build_template
+  only:
+    - beta
+  script:
     - echo "🔨 Build frontend beta..."
     - docker build
+      --cache-from $FRONTEND_IMAGE:beta
       -f build/frontend/Dockerfile-beta
       -t $FRONTEND_IMAGE:beta
-      -t $FRONTEND_IMAGE:beta-$CI_COMMIT_SHORT_SHA
       .
     - docker push $FRONTEND_IMAGE:beta
-    - docker push $FRONTEND_IMAGE:beta-$CI_COMMIT_SHORT_SHA
 
-build_prod:
-  stage: build
-  image: docker:27
-  services:
-    - docker:27-dind
+build_backend_prod:
+  <<: *build_template
   rules:
-    - if: '$CI_COMMIT_TAG'
+    - if: "$CI_COMMIT_TAG"
       when: on_success
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
     - echo "🔨 Build backend prod..."
     - docker build
+      --cache-from $BACKEND_IMAGE:latest
       -f build/backend/Dockerfile
       -t $BACKEND_IMAGE:latest
       -t $BACKEND_IMAGE:$CI_COMMIT_TAG
@@ -94,15 +102,21 @@ build_prod:
     - docker push $BACKEND_IMAGE:latest
     - docker push $BACKEND_IMAGE:$CI_COMMIT_TAG
 
+build_frontend_prod:
+  <<: *build_template
+  rules:
+    - if: "$CI_COMMIT_TAG"
+      when: on_success
+  script:
     - echo "🔨 Build frontend prod..."
     - docker build
+      --cache-from $FRONTEND_IMAGE:latest
       -f build/frontend/Dockerfile-prod
       -t $FRONTEND_IMAGE:latest
       -t $FRONTEND_IMAGE:$CI_COMMIT_TAG
       .
     - docker push $FRONTEND_IMAGE:latest
     - docker push $FRONTEND_IMAGE:$CI_COMMIT_TAG
-
 
 deploy_beta:
   stage: deploy
@@ -111,7 +125,7 @@ deploy_beta:
     - beta
   variables:
     DEPLOY_PATH: "/home/$SSH_USER_BETA/doremix"
-    IMAGE_TAG: "beta-$CI_COMMIT_SHORT_SHA"
+    IMAGE_TAG: "beta"
   before_script:
     - apk add --no-cache openssh-client rsync bash
     - eval $(ssh-agent -s)
@@ -130,7 +144,7 @@ deploy_beta:
       --exclude='node_modules/'
       --exclude='uploads/covers/'
       --exclude='src/'
-       .
+      .
       $SSH_USER_BETA@$SSH_HOST_BETA:$DEPLOY_PATH
 
     - echo "🚀 Déploiement des images beta..."
@@ -145,7 +159,7 @@ deploy_prod:
   stage: deploy
   image: alpine:3.23.2
   rules:
-    - if: '$CI_COMMIT_TAG'
+    - if: "$CI_COMMIT_TAG"
       when: on_success
   variables:
     DEPLOY_PATH: "/home/$SSH_USER_PROD/doremix"
