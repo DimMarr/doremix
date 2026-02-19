@@ -170,10 +170,9 @@ deploy_prod:
       --exclude='src/'
       .
       $SSH_USER_PROD@$SSH_HOST_PROD:$DEPLOY_PATH
-    - ssh $SSH_USER_PROD@$SSH_HOST_PROD "cd $DEPLOY_PATH && sed -i 's/server_name localhost;/server_name $HOST_FQDN;/' build/frontend/nginx.conf && docker compose -f docker-compose_prod.yml up -d --build --remove-orphans"
 
     - echo "🚀 Déploiement des images prod..."
-      - ssh $SSH_USER_PROD@$SSH_HOST_PROD "
+    - ssh $SSH_USER_PROD@$SSH_HOST_PROD "
       cd $DEPLOY_PATH &&
       docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
       sed -i 's/server_name localhost;/server_name $HOST_FQDN;/' build/frontend/nginx.conf &&
