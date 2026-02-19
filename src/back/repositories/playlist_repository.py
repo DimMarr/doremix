@@ -41,7 +41,7 @@ class PlaylistRepository:
                     Playlist.idOwner == user_id,
                     Playlist.visibility == PlaylistVisibility.PUBLIC,
                     Playlist.visibility == PlaylistVisibility.OPEN,
-                    Playlist.idOwner.is_(None),
+                    Playlist.idOwner is None,
                     Playlist.idPlaylist.in_(direct_shared_subquery),
                     Playlist.idPlaylist.in_(group_shared_subquery),
                 )
@@ -130,6 +130,10 @@ class PlaylistRepository:
             .first()
         )
 
+        if track:
+            db.delete(track)
+            db.commit()
+            return True
         if track:
             db.delete(track)
             db.commit()
@@ -264,7 +268,7 @@ class PlaylistRepository:
             .filter(
                 UserPlaylist.idPlaylist == playlist_id,
                 UserPlaylist.idUser == user_id,
-                UserPlaylist.editor.is_(True),
+                UserPlaylist.editor is True,
             )
             .first()
         )
