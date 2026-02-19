@@ -76,11 +76,13 @@ export function secondsToReadableTime(seconds: number): string {
     return '∞';
   }
 
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
+  const totalSeconds = Math.floor(seconds);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
 
-  const formattedMinutes = String(minutes).padStart(1, '0');
-  const formattedSeconds = String(remainingSeconds).padStart(2, '0');
-
-  return `${formattedMinutes}:${formattedSeconds}`;
+  if (h > 0) {
+    return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }

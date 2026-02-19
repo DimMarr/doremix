@@ -1,4 +1,4 @@
-import YoutubePlayer from '@store/trackPlayer';
+import YoutubePlayer, { formatTime } from '@store/trackPlayer';
 import playlist1 from '@assets/images/playlist1.jpg';
 import playIcon from '@assets/icons/play.svg';
 import pauseIcon from '@assets/icons/pause.svg';
@@ -89,7 +89,7 @@ const setupControlButtons = (container: HTMLElement, playerStore: YoutubePlayer)
 
     const elapsedTime = container.querySelector('#trackElapsedTime') as HTMLElement;
     if (elapsedTime) {
-      elapsedTime.textContent = new Date(Number(target.value) * 1000).toISOString().substr(14, 5);
+      elapsedTime.textContent = formatTime(Number(target.value));
     }
 
     // Update CSS variable for Chrome progress styling

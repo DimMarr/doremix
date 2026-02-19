@@ -38,14 +38,7 @@ def create_playlist(
     db: Session = Depends(get_db),
     user_id: int = Depends(get_current_user_id),
 ):
-    # TODO: Quand l'auth sera en place :
-    # def create_playlist(playlist: PlaylistCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    #     return PlaylistController.create_playlist(db, playlist.model_dump(), current_user)
     return PlaylistController.create_playlist(db, playlist.model_dump(), user_id)
-
-
-# MOCK USER ID (En attendant l'authentification JWT)
-CURRENT_USER_ID = 1
 
 
 @router.get(
@@ -54,8 +47,10 @@ CURRENT_USER_ID = 1
     summary="Lister toutes les playlists accessibles par l'utilisateur courrant",
     description="Retourne la liste complète des playlists visibles.",
 )
-def get_accessible_playlists(db: Session = Depends(get_db)):
-    playlists = PlaylistController.get_accessible_playlists(db, CURRENT_USER_ID)
+def get_accessible_playlists(
+    db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)
+):
+    playlists = PlaylistController.get_accessible_playlists(db, user_id)
     return playlists
 
 
@@ -76,14 +71,22 @@ def get_public_playlists(db: Session = Depends(get_db)):
     summary="Récupérer une playlist",
     description="Retourne les informations détaillées d'une playlist à partir de son identifiant.",
 )
-def get_playlist(idPlaylist: int, db: Session = Depends(get_db)):
-    playlist = PlaylistController.get_playlist(db, idPlaylist)
+def get_playlist(
+    idPlaylist: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    playlist = PlaylistController.get_playlist(db, idPlaylist, user_id)
     return playlist
 
 
 @router.get("/{playlist_id}/tracks", response_model=List[TrackSchema])
-def get_playlist_tracks(playlist_id: int, db: Session = Depends(get_db)):
-    tracks = PlaylistController.get_playlist_tracks(db, playlist_id)
+def get_playlist_tracks(
+    playlist_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    tracks = PlaylistController.get_playlist_tracks(db, playlist_id, user_id)
     return tracks
 
 
@@ -96,10 +99,10 @@ def add_playlist_track_by_url(
     playlist_id: int,
     body: AddTrackBody,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user_id: User = Depends(get_current_user_id),
 ):
     track = PlaylistController.add_playlist_track_secure(
-        db, body.title, body.url, playlist_id, CURRENT_USER_ID
+        db, body.title, body.url, playlist_id, user_id
     )
 
     if not track:
@@ -109,9 +112,12 @@ def add_playlist_track_by_url(
 
 @router.post("/{playlist_id}/cover", response_model=PlaylistSchema)
 def upload_playlist_cover(
-    playlist_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)
+    playlist_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
-    updated_playlist = PlaylistController.upload_cover(db, playlist_id, file)
+    updated_playlist = PlaylistController.upload_cover(db, playlist_id, file, user_id)
     return updated_playlist
 
 
@@ -131,17 +137,28 @@ def get_cover_image(filename: str):
     summary="Delete a playlist",
     description="Deletes a playlist by its ID.",
 )
-def delete_playlist(playlist_id: int, db: Session = Depends(get_db)):
+def delete_playlist(
+    playlist_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
     # TODO: Quand l'auth sera en place :
     # def delete_playlist(playlist_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     #     return PlaylistController.delete_playlist(db, playlist_id, current_user.id)
 
-    return PlaylistController.delete_playlist(db, playlist_id)
+    return PlaylistController.delete_playlist(db, playlist_id, user_id)
 
 
 @router.delete("/{playlist_id}/track/{track_id}", response_model=PlaylistSchema)
-def remove_track(playlist_id: int, track_id: int, db: Session = Depends(get_db)):
-    updated_playlist = PlaylistController.remove_track(db, playlist_id, track_id)
+def remove_track(
+    playlist_id: int,
+    track_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    updated_playlist = PlaylistController.remove_track(
+        db, playlist_id, track_id, user_id
+    )
 
     return updated_playlist
 
@@ -153,30 +170,33 @@ def remove_track(playlist_id: int, track_id: int, db: Session = Depends(get_db))
     description="Updates a playlist by its ID.",
 )
 def update_playlist(
-    playlist_id: int, playlist_data: PlaylistUpdate, db: Session = Depends(get_db)
+    playlist_id: int,
+    playlist_data: PlaylistUpdate,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
-    # TODO: Quand l'auth sera en place :
-    # def update_playlist(playlist_id: int, playlist_data: PlaylistUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    #     return PlaylistController.update_playlist(db, playlist_id, playlist_data.model_dump(exclude_unset=True), current_user.id)
-
     return PlaylistController.update_playlist(
-        db, playlist_id, playlist_data.model_dump(exclude_unset=True)
+        db, playlist_id, playlist_data.model_dump(exclude_unset=True), user_id
     )
 
 
 @router.post("/{playlist_id}/share/user", summary="Partager avec un utilisateur")
 def share_playlist_user(
-    playlist_id: int, req: SharePlaylistRequest, db: Session = Depends(get_db)
+    playlist_id: int,
+    req: SharePlaylistRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
     return PlaylistController.share_user(
-        db, playlist_id, CURRENT_USER_ID, req.target_email, req.is_editor
+        db, playlist_id, user_id, req.target_email, req.is_editor
     )
 
 
 @router.post("/{playlist_id}/share/group", summary="Partager avec un groupe")
 def share_playlist_group(
-    playlist_id: int, req: ShareGroupRequest, db: Session = Depends(get_db)
+    playlist_id: int,
+    req: ShareGroupRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
-    return PlaylistController.share_group(
-        db, playlist_id, CURRENT_USER_ID, req.group_name
-    )
+    return PlaylistController.share_group(db, playlist_id, user_id, req.group_name)

@@ -8,6 +8,7 @@ from .track_playlist import TrackPlaylist
 from .user_playlists import UserPlaylist
 
 __all__ = [
+    "Genre",
     "Playlist",
     "Track",
     "Artist",
