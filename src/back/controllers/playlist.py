@@ -12,30 +12,30 @@ class PlaylistController:
         return PlaylistRepository.get_accessible_playlists(db, user_id)
 
     @staticmethod
-    def get_public_playlists(db: Session):
-        return PlaylistRepository.get_public_playlists(db)
+    def get_public_playlists(db: Session, user: User):
+        return PlaylistRepository.get_public_playlists(db, user)
 
     @staticmethod
     def get_shared_playlists(db: Session, user_id: int):
         return PlaylistRepository.get_shared_playlist(db, user_id)
 
     @staticmethod
-    def get_playlist(db: Session, playlist_id: int, user_id: int):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id, user_id)
+    def get_playlist(db: Session, playlist_id: int, user: User):
+        playlist = PlaylistRepository.get_by_id(db, playlist_id, user)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
         return playlist
 
     @staticmethod
-    def get_playlist_tracks(db: Session, playlist_id: int, user_id: int):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id, user_id)
+    def get_playlist_tracks(db: Session, playlist_id: int, user: User):
+        playlist = PlaylistRepository.get_by_id(db, playlist_id, user)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
         return PlaylistRepository.get_playlist_tracks(db, playlist_id)
 
     @staticmethod
-    def upload_cover(db: Session, playlist_id: int, file: UploadFile, user_id: int):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id, user_id)
+    def upload_cover(db: Session, playlist_id: int, file: UploadFile, user: User):
+        playlist = PlaylistRepository.get_by_id(db, playlist_id, user)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
 
@@ -48,8 +48,8 @@ class PlaylistController:
         return updated_playlist
 
     @staticmethod
-    def remove_track(db: Session, playlist_id: int, track_id: int, user_id: int):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id, user_id)
+    def remove_track(db: Session, playlist_id: int, track_id: int, user: User):
+        playlist = PlaylistRepository.get_by_id(db, playlist_id, user)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
         if not PlaylistRepository.remove_track(db, playlist_id, track_id):
@@ -84,7 +84,7 @@ class PlaylistController:
 
     @staticmethod
     def delete_playlist(db: Session, playlist_id: int, user: User):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id, user.idUser)
+        playlist = PlaylistRepository.get_by_id(db, playlist_id, user)
 
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
@@ -101,7 +101,7 @@ class PlaylistController:
 
     @staticmethod
     def update_playlist(db: Session, playlist_id: int, update_data: dict, user: User):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id, user.idUser)
+        playlist = PlaylistRepository.get_by_id(db, playlist_id, user)
         users, _ = PlaylistRepository.list_shared_user(db, playlist_id, user.idUser)
         editors = [user.idUser for user in users if user.editor]
 

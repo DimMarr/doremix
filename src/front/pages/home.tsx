@@ -15,11 +15,9 @@ export async function HomePage(container) {
   const userInfos = await authService.infos();
   const currentUserId = userInfos.id;
   const isAdmin = userInfos.role === "ADMIN";
-  const personalPlaylists = allPlaylists.filter(p => p.idOwner === currentUserId);
+  const personalPlaylists = allPlaylists.filter(p => p.idOwner === currentUserId && p.visibility != Visibility.open);
   const sharedPlaylists = await repo.getShared();
-  console.log(sharedPlaylists)
   const publicPlaylists = await repo.getPublic();
-  console.log(publicPlaylists)
   const openPlaylists = allPlaylists.filter(p => p.visibility === Visibility.open);
 
   const personalCards = buildCardsFromPlaylists(personalPlaylists);

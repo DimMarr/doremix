@@ -60,8 +60,10 @@ def get_accessible_playlists(
     summary="Lister toutes les playlists publiques",
     description="Retourne la liste complète des playlists disponibles.",
 )
-def get_public_playlists(db: Session = Depends(get_db)):
-    playlists = PlaylistController.get_public_playlists(db)
+def get_public_playlists(
+    db: Session = Depends(get_db), user: User = Depends(get_current_user)
+):
+    playlists = PlaylistController.get_public_playlists(db, user)
     return playlists
 
 
@@ -86,9 +88,9 @@ def get_shared_playlists(
 def get_playlist(
     idPlaylist: int,
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
-    playlist = PlaylistController.get_playlist(db, idPlaylist, user_id)
+    playlist = PlaylistController.get_playlist(db, idPlaylist, user)
     return playlist
 
 
@@ -96,9 +98,9 @@ def get_playlist(
 def get_playlist_tracks(
     playlist_id: int,
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
-    tracks = PlaylistController.get_playlist_tracks(db, playlist_id, user_id)
+    tracks = PlaylistController.get_playlist_tracks(db, playlist_id, user)
     return tracks
 
 
@@ -127,9 +129,9 @@ def upload_playlist_cover(
     playlist_id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
-    updated_playlist = PlaylistController.upload_cover(db, playlist_id, file, user_id)
+    updated_playlist = PlaylistController.upload_cover(db, playlist_id, file, user)
     return updated_playlist
 
 
@@ -162,11 +164,9 @@ def remove_track(
     playlist_id: int,
     track_id: int,
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
-    updated_playlist = PlaylistController.remove_track(
-        db, playlist_id, track_id, user_id
-    )
+    updated_playlist = PlaylistController.remove_track(db, playlist_id, track_id, user)
 
     return updated_playlist
 
