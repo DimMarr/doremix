@@ -19,17 +19,19 @@ class AuthService {
                 credentials: 'include'
             })
 
-            if (response.status == 200) {
+            if (response.status === 200) {
                 return true
             }
-        } catch {
-            const refresh = await this.refreshAccessToken()
-            console.log(`refresh: ${refresh}`)
-            if (refresh) {
-                return true
-            }
-            return false
+        } catch (e) {
+            console.error("Network error during token check:", e);
         }
+
+        const refresh = await this.refreshAccessToken()
+        console.log(`refresh: ${refresh}`)
+        if (refresh) {
+            return true
+        }
+        return false
     }
 
     // Login provides a new accessToken
