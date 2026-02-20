@@ -9,7 +9,7 @@ import { PlaylistRepository } from "@repositories/index";
 import Playlist, { Visibility } from "@models/playlist";
 import type { Track } from "@models/track";
 import { authService } from "@utils/authentication";
-import { canEdit, isOwner } from "@utils/rights";
+import { canEdit, isAdmin, isOwner } from "@utils/rights";
 
 interface PageParams {
   id: string;
@@ -77,7 +77,7 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
   }
 
   let canEditVisibility = false;
-  if (await canEdit(repo, playlist) && playlist.visibility != Visibility.open) {
+  if (await canEdit(repo, playlist) && (playlist.visibility != Visibility.open || isAdmin())) {
     canEditVisibility = true;
   }
 
@@ -97,18 +97,24 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
       {canEditVisibility &&
         <div id="visibility-menu" class="hidden absolute top-full left-0 mt-2 w-48 bg-neutral-900 border border-white/10 rounded-xl shadow-xl overflow-hidden backdrop-blur-md origin-top-left transition-all z-50 animate-in fade-in zoom-in-95 duration-200">
           <div class="flex flex-col py-1">
-            {visibility === Visibility.public && (
+            { visibility !== Visibility.private && (
               <button class={menuOptionClass} data-visibility-option={Visibility.private}>
                 {getIconForVisibility(Visibility.private) as 'safe'}
                 <span>Private</span>
               </button>
             )}
-            {visibility === Visibility.private && (
+            { visibility !== Visibility.public && (
               <button class={menuOptionClass} data-visibility-option={Visibility.public}>
                 {getIconForVisibility(Visibility.public) as 'safe'}
                 <span>Public</span>
               </button>
             )}
+            { visibility !== Visibility.open && await isAdmin() &&
+              <button class={menuOptionClass} data-visibility-option={Visibility.open}>
+                {getIconForVisibility(Visibility.open) as 'safe'}
+                <span>OPEN</span>
+              </button>
+            }
           </div>
         </div>
       }
@@ -173,7 +179,7 @@ export async function PlaylistDetailPage(
     updateHeader();
 
     // Determine backend enum value (uppercase)
-    const backendVis = newVis === Visibility.public ? "PUBLIC" : "PRIVATE";
+    const backendVis = newVis === Visibility.public ? "PUBLIC" : newVis === Visibility.private ? "PRIVATE" : "OPEN";
 
     try {
       await repo.update(playlist.idPlaylist!, { visibility: backendVis as any });
