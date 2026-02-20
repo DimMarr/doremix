@@ -23,7 +23,7 @@ class Playlist(Base):
     owner = relationship("User", foreign_keys=[idOwner])
     vote = Column("vote", Integer, default=0)
     visibility = Column(
-        "visibility", Enum(PlaylistVisibility), default=PlaylistVisibility.PUBLIC
+        "visibility", Enum(PlaylistVisibility), default=PlaylistVisibility.PRIVATE
     )
     coverImage = Column("coverimage", String(500), nullable=True)
     createdAt = Column("createdat", TIMESTAMP, server_default=func.now())

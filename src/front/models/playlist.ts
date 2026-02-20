@@ -9,7 +9,7 @@ export default class Playlist {
     public createdAt?: string;
     public updatedAt?: string;
     public vote?: number;
-    public visibility: Visibility = Visibility.public;
+    public visibility: Visibility = Visibility.private;
     public image?: string;
     public description?: string;
     public tracks: Track[] = [];
