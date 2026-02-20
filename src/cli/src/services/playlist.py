@@ -6,6 +6,7 @@ from src.models.playlist import PlaylistSchema
 from src.models.track import TrackSchema
 from src.services import auth_service
 from src.utils.http_client import make_authenticated_request
+from src.utils.youtube_validator import is_valid_youtube_link
 
 PlaylistScope = Literal["accessible", "mine", "open", "public"]
 
@@ -215,6 +216,9 @@ def update_playlist(
 def add_track_to_playlist(
     playlist_id: str, title: str, youtube_link: str
 ) -> TrackSchema:
+    if not is_valid_youtube_link(youtube_link):
+        raise Exception("Invalid YouTube link")
+
     user_id = _get_current_user_id()
     playlist = _get_playlist_from_api(playlist_id)
     _assert_owner(playlist, user_id)
