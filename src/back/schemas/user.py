@@ -23,6 +23,22 @@ class UserSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ModerationUserSchema(BaseModel):
+    idUser: int
+    email: str
+    username: str
+    role: UserRole
+    banned: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class BanUserResponse(BaseModel):
+    idUser: int
+    banned: bool
+    detail: str
+
+
 class UserRegisterSchema(BaseModel):
     email: str
     password: str

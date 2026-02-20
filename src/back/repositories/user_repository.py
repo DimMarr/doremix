@@ -4,6 +4,8 @@ from models.user import User, UserRole
 
 
 class UserRepository:
+    ADMIN_ROLE_ID = 3  # harcodé pour que les moderators ne puisse pas ban les admin
+
     @staticmethod
     def create(db: Session, user: User) -> User:
         db.add(user)
@@ -79,3 +81,16 @@ class UserRepository:
             db.commit()
             db.refresh(user)
         return user
+
+    @staticmethod
+    def get_non_admin_ban_candidates(db: Session, current_user_id: int):
+        return (
+            db.query(User)
+            .filter(
+                User.idUser != current_user_id,
+                User.idRole != UserRepository.ADMIN_ROLE_ID,
+                User.banned.is_(False),
+            )
+            .order_by(User.idUser.asc())
+            .all()
+        )

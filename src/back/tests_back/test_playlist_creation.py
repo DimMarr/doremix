@@ -230,8 +230,8 @@ class TestPlaylistCreation:
         # Peut réussir ou échouer selon les validations
         assert response.status_code in [200, 422]
 
-    def test_create_playlist_default_visibility_is_public(self, client, sample_genre):
-        """Test que la visibilité par défaut est PUBLIC."""
+    def test_create_playlist_default_visibility_is_private(self, client, sample_genre):
+        """Test que la visibilité par défaut est PRIVATE."""
         playlist_data = {
             "name": "Default Visibility Playlist",
             "idGenre": sample_genre.idGenre,
@@ -241,4 +241,4 @@ class TestPlaylistCreation:
         assert response.status_code == 200
 
         data = response.json()
-        assert data["visibility"] == "PUBLIC"
+        assert data["visibility"] == "PRIVATE"
