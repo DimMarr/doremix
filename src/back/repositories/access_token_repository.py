@@ -49,15 +49,17 @@ class AccessTokenRepository:
         return cast(AccessToken, result) if result else None
 
     @staticmethod
-    def revoke_token(db: Session, cookieTokenStr: str):
+    def revoke_token(db: Session, cookieTokenStr: str, commit: bool = True):
         hashedToken = AccessTokenRepository.hash_token(cookieTokenStr)
         db.query(AccessToken).filter(AccessToken.token == hashedToken).delete()
-        db.commit()
+        if commit:
+            db.commit()
 
     @staticmethod
-    def revoke_all_user_tokens(db: Session, userId: int):
+    def revoke_all_user_tokens(db: Session, userId: int, commit: bool = True):
         db.query(AccessToken).filter(AccessToken.idUser == userId).delete()
-        db.commit()
+        if commit:
+            db.commit()
 
     @staticmethod
     def clean_expired_tokens(db: Session):

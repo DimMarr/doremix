@@ -118,7 +118,7 @@ def create(
         help="Genre ID (1=Sans genre, 2=Rock, 3=Pop, 4=Hip-Hop, 5=Jazz, 6=Electro, 7=Metal, 8=Classical, 9=Reggae)",
     ),
     visibility: str = typer.Option(
-        "PUBLIC",
+        "PRIVATE",
         "--visibility",
         "-v",
         help="Visibility (PUBLIC, PRIVATE, OPEN)",

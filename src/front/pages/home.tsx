@@ -2,30 +2,42 @@ import { initSearchBar, SearchBar } from "@components/generics";
 import { buildCardsFromPlaylists, initCardsElements } from "@components/generics/card";
 import { setupPlaylistAndTrackModals } from "@components/playlists";
 import { PlaylistRepository } from "@repositories/index";
-import { Visibility } from "@models/playlist";
+import Playlist, { Visibility } from "@models/playlist";
 import { authService } from "@utils/authentication";
 
-export async function HomePage(container) {
+interface CurrentUserInfo {
+  id: number;
+  role: "USER" | "MODERATOR" | "ADMIN";
+}
+
+export async function HomePage(container: HTMLElement | null) {
+  if (!container) return;
+
   container.innerHTML = "";
 
   // Fetch all playlists to separate them
   const repo = new PlaylistRepository()
   const allPlaylists = await repo.getAll();
 
-  const userInfos = await authService.infos();
+  const userInfos = await authService.infos() as CurrentUserInfo;
   const currentUserId = userInfos.id;
-  const isAdmin = userInfos.role === "ADMIN";
-  const personalPlaylists = allPlaylists.filter(p => p.idOwner === currentUserId);
-  const sharedPlaylists = await repo.getShared();
-  console.log(sharedPlaylists)
+  const canManage = userInfos.role === "ADMIN" || userInfos.role === "MODERATOR";
+  const personalPlaylists = allPlaylists.filter(
+    (playlist: Playlist) => playlist.idOwner === currentUserId
+  );
   const publicPlaylists = await repo.getPublic();
-  console.log(publicPlaylists)
-  const openPlaylists = allPlaylists.filter(p => p.visibility === Visibility.open);
+  const sharedPlaylists = await repo.getShared();
+  const openPlaylists = allPlaylists.filter(
+    (playlist: Playlist) => playlist.visibility === Visibility.open
+  );
 
   const personalCards = buildCardsFromPlaylists(personalPlaylists);
   const sharedCards = buildCardsFromPlaylists(sharedPlaylists);
   const publicCards = buildCardsFromPlaylists(publicPlaylists);
   const openCards = buildCardsFromPlaylists(openPlaylists);
+  const personalCardsSafe = personalCards as unknown as "safe";
+  const publicCardsSafe = publicCards as unknown as "safe";
+  const openCardsSafe = openCards as unknown as "safe";
 
   const pageHtml = (
     <div class="px-4 py-6 md:px-8 space-y-12">
@@ -40,7 +52,7 @@ export async function HomePage(container) {
             <p class="text-white/60 mt-1 text-sm">Your personal collection</p>
           </div>
           <div class="flex items-center gap-3">
-            {isAdmin && (
+            {canManage && (
               <a href="/admin" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">
                 Manage
               </a>
@@ -51,11 +63,11 @@ export async function HomePage(container) {
 
         {personalPlaylists.length > 0 ? (
           <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6">
-            {personalCards as 'safe'}
+            {personalCardsSafe}
           </div>
         ) : (
           <div class="bg-white/5 rounded-lg p-8 text-center border border-white/10">
-            <p class="text-white/60 mb-4">You haven't created any playlists yet.</p>
+            <p class="text-white/60 mb-4">You haven&apos;t created any playlists yet.</p>
           </div>
         )}
       </section>
@@ -85,7 +97,7 @@ export async function HomePage(container) {
 
         {publicPlaylists.length > 0 ? (
           <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6">
-            {publicCards as 'safe'}
+            {publicCardsSafe}
           </div>
         ) : (
           <p class="text-white/60">No public playlists available at the moment.</p>
@@ -100,7 +112,7 @@ export async function HomePage(container) {
             <p class="text-white/60 mt-1 text-sm">Curated by Doremix</p>
           </div>
           <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6">
-            {openCards as 'safe'}
+            {openCardsSafe}
           </div>
         </section>
       )}
@@ -109,16 +121,16 @@ export async function HomePage(container) {
     </div>
   );
 
-  container.innerHTML = pageHtml;
+  container.innerHTML = await pageHtml;
 
 
   // Setup modals d'ajout de track et de playlist.
   setupPlaylistAndTrackModals();
 
   // Setup composant de recherche.
-  const searchSection = document.getElementById("searchSection");
+  const searchSection = container.querySelector("#searchSection") as HTMLElement | null;
   if (searchSection) {
-    searchSection.innerHTML = SearchBar({
+    searchSection.innerHTML = await SearchBar({
       placeholder: "Search tracks, artists, or playlists...",
       className: "w-full bg-white/10 border-none h-12 rounded-full shadow-lg backdrop-blur-sm focus-within:ring-2 focus-within:ring-primary",
       inputClassName: "text-white placeholder:text-white/50"
@@ -131,7 +143,7 @@ export async function HomePage(container) {
   initCardsElements(container, [...personalPlaylists, ...publicPlaylists, ...openPlaylists]);
 
   // Specific handler for empty state button if present
-  const createFirstBtn = document.getElementById('create-first-playlist-btn');
+  const createFirstBtn = container.querySelector('#create-first-playlist-btn') as HTMLElement | null;
   if (createFirstBtn) {
     createFirstBtn.addEventListener('click', () => {
       // Trigger the add playlist modal

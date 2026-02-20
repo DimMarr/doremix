@@ -24,7 +24,7 @@ class PlaylistSchema(BaseModel):
 class PlaylistCreate(BaseModel):
     name: str
     idGenre: int = 1
-    visibility: PlaylistVisibility = PlaylistVisibility.PUBLIC
+    visibility: PlaylistVisibility = PlaylistVisibility.PRIVATE
     # idOwner: int  # TODO: À récupérer depuis le token JWT quand l'auth sera en place
 
 
