@@ -22,6 +22,8 @@ BASH_PAYLOADS = [
 
 FORBIDDEN_OUTPUTS = ["uid=", "gid=", "root:", "/bin/", "/usr/bin"]
 
+VALID_YOUTUBE_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+
 
 def assert_no_system_execution(result):
     """Verify that no system command execution traces are present in the output."""
@@ -148,46 +150,18 @@ def test_bash_playlist_update_name(mock_api_calls):
     assert_no_system_execution(result)
 
 
-def test_bash_playlist_add_track_url(mock_api_calls):
-    """Test bash injection on the URL of a track"""
-    payload = "https://youtube.com/watch?v=abc; whoami"
-
-    # Mock la réponse d'ajout de track
-    mock_api_calls["responses"]["post"].json.return_value = {
-        "idTrack": 1,
-        "title": "test",
-        "youtubeLink": payload,
-        "durationSeconds": 180,
-        "artists": [],
-    }
-
-    # Mock for get_playlist and get_playlist_tracks
-    mock_api_calls["responses"]["get"].json.side_effect = [
-        {
-            "idPlaylist": 2,
-            "name": "Test",
-            "vote": 0,
-            "createdAt": "2024-01-01T00:00:00",
-            "idGenre": 1,
-            "visibility": "PUBLIC",
-        },
-        [
-            {
-                "idTrack": 1,
-                "title": "test",
-                "youtubeLink": payload,
-                "durationSeconds": 180,
-                "artists": [],
-            }
-        ],
-    ]
+@pytest.mark.parametrize("payload", BASH_PAYLOADS)
+def test_bash_playlist_add_track_url_injection(payload, mock_api_calls):
+    """Test bash injection on the URL of a track - should be rejected by validation"""
+    invalid_url = f"https://youtube.com/watch?v=abc{payload}"
 
     result = runner.invoke(
         app,
-        ["playlist", "add-track", "1", "--url", payload, "--title", "test"],
+        ["playlist", "add-track", "1", "--url", invalid_url, "--title", "test"],
     )
 
-    assert mock_api_calls["request"].called
+    # La validation YouTube doit rejeter ce lien
+    assert "Invalid YouTube link" in result.output
     assert_no_system_execution(result)
 
 
@@ -199,8 +173,10 @@ def test_bash_playlist_add_track_title(mock_api_calls):
     mock_api_calls["responses"]["post"].json.return_value = {
         "idTrack": 2,
         "title": payload,
-        "youtubeLink": "https://youtube.com/watch?v=abc",
+        "youtubeLink": VALID_YOUTUBE_URL,
         "durationSeconds": 180,
+        "listeningCount": 0,
+        "createdAt": "2024-01-01T00:00:00",
         "artists": [],
     }
 
@@ -211,15 +187,19 @@ def test_bash_playlist_add_track_title(mock_api_calls):
             "name": "Test",
             "vote": 0,
             "createdAt": "2024-01-01T00:00:00",
+            "updatedAt": "2024-01-01T00:00:00",
             "idGenre": 1,
+            "idOwner": 1,
             "visibility": "PUBLIC",
         },
         [
             {
                 "idTrack": 1,
                 "title": payload,
-                "youtubeLink": "https://youtube.com/watch?v=abc",
+                "youtubeLink": VALID_YOUTUBE_URL,
                 "durationSeconds": 180,
+                "listeningCount": 0,
+                "createdAt": "2024-01-01T00:00:00",
                 "artists": [],
             }
         ],
@@ -232,11 +212,67 @@ def test_bash_playlist_add_track_title(mock_api_calls):
             "add-track",
             "1",
             "--url",
-            "https://youtube.com/watch?v=abc",
+            VALID_YOUTUBE_URL,
             "--title",
             payload,
         ],
     )
 
     assert mock_api_calls["request"].called
+    assert_no_system_execution(result)
+
+
+def test_valid_youtube_url_accepted(mock_api_calls):
+    """Test that valid YouTube URLs are accepted"""
+    # Mock the response of adding track
+    mock_api_calls["responses"]["post"].json.return_value = {
+        "idTrack": 1,
+        "title": "Test Track",
+        "youtubeLink": VALID_YOUTUBE_URL,
+        "durationSeconds": 180,
+        "listeningCount": 0,
+        "createdAt": "2024-01-01T00:00:00",
+        "artists": [],
+    }
+
+    # Mock the get_playlist and get_playlist_tracks responses
+    mock_api_calls["responses"]["get"].json.side_effect = [
+        {
+            "idPlaylist": 2,
+            "name": "Test",
+            "vote": 0,
+            "createdAt": "2024-01-01T00:00:00",
+            "updatedAt": "2024-01-01T00:00:00",
+            "idGenre": 1,
+            "idOwner": 1,
+            "visibility": "PUBLIC",
+        },
+        [
+            {
+                "idTrack": 1,
+                "title": "Test Track",
+                "youtubeLink": VALID_YOUTUBE_URL,
+                "durationSeconds": 180,
+                "listeningCount": 0,
+                "createdAt": "2024-01-01T00:00:00",
+                "artists": [],
+            }
+        ],
+    ]
+
+    result = runner.invoke(
+        app,
+        [
+            "playlist",
+            "add-track",
+            "1",
+            "--url",
+            VALID_YOUTUBE_URL,
+            "--title",
+            "Test Track",
+        ],
+    )
+
+    assert mock_api_calls["request"].called
+    assert "Invalid YouTube link" not in result.output
     assert_no_system_execution(result)
