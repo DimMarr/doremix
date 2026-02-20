@@ -234,7 +234,9 @@ def test_add_track_denies_non_owner_open_playlist(mock_auth_and_http):
     )
 
     with pytest.raises(Exception, match="permission to edit"):
-        add_track_to_playlist("40", "new-track", "https://youtu.be/abc")
+        add_track_to_playlist(
+            "40", "new-track", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        )
 
 
 def test_search_playlists_excludes_other_private(mock_auth_and_http):
