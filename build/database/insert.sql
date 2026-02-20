@@ -98,8 +98,8 @@ INSERT INTO PLAYLIST (name, idGenre, idOwner, visibility, vote, coverImage) VALU
 ('Late Night Jazz', 6, 4, 'PRIVATE', 30, NULL),
 ('Moderation Queue', 2, 2, 'PRIVATE', 0, NULL),
 ('Electro Vibes', 5, 1, 'PRIVATE', 210, NULL),
-('Piano Dreams', 4, 1, 'OPEN', 150, 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?q=80&w=1000&auto=format&fit=crop'),
-('Rap US Gold', 3, 1, 'OPEN', 420, 'https://images.unsplash.com/photo-1581368135153-a506cf13b1e1?q=80&w=1000&auto=format&fit=crop'),
+('Piano Dreams', 4, 1, 'OPEN', 150, 'asset:playlist3.jpg'),
+('Rap US Gold', 3, 1, 'OPEN', 420, 'asset:playlist1.jpg'),
 ('Indie Pop Mix', 2, 4, 'PRIVATE', 75, NULL);
 
 INSERT INTO TRACK_PLAYLIST (idTrack, idPlaylist, nameInPlaylist) VALUES
