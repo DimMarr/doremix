@@ -94,12 +94,12 @@ INSERT INTO PLAYLIST (name, idGenre, idOwner, visibility, vote, coverImage) VALU
 ('Coding Session', 5, 3, 'PRIVATE', 100, NULL),
 ('Hard Rock Essentials', 1, 4, 'PUBLIC', 666, 'asset:playlist2.jpg'),
 ('Gym Playlist', 3, 4, 'PRIVATE', 88, NULL),
-('Classical Masterpieces', 4, 4, 'OPEN', 200, NULL),
+('Classical Masterpieces', 4, 1, 'OPEN', 200, NULL),
 ('Late Night Jazz', 6, 4, 'PRIVATE', 30, NULL),
 ('Moderation Queue', 2, 2, 'PRIVATE', 0, NULL),
 ('Electro Vibes', 5, 1, 'PRIVATE', 210, NULL),
-('Piano Dreams', 4, 3, 'OPEN', 150, 'asset:playlist3.jpg'),
-('Rap US Gold', 3, 4, 'OPEN', 420, 'asset:playlist1.jpg'),
+('Piano Dreams', 4, 1, 'OPEN', 150, 'asset:playlist3.jpg'),
+('Rap US Gold', 3, 1, 'OPEN', 420, 'asset:playlist1.jpg'),
 ('Indie Pop Mix', 2, 4, 'PRIVATE', 75, NULL);
 
 INSERT INTO TRACK_PLAYLIST (idTrack, idPlaylist, nameInPlaylist) VALUES

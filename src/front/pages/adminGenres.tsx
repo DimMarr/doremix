@@ -39,6 +39,89 @@ function renderGenreRows(genres: Genre[], editingId: number | null): string {
     .join("");
 }
 
+export async function AdminPage(container: HTMLElement | null) {
+  if (!container) return;
+
+  const userInfos = await authService.infos();
+  const isAdmin = userInfos.role === "ADMIN";
+  const isModerator = userInfos.role === "MODERATOR";
+
+  if (!isAdmin && !isModerator) {
+    container.innerHTML = (
+      <div class="py-12 text-center">
+        <h1 class="text-2xl font-bold mb-2">Forbidden</h1>
+        <p class="text-muted-foreground mb-6">Only admins and moderators can access this page.</p>
+        <a href="/" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">Back to Home</a>
+      </div>
+    );
+    return;
+  }
+
+  if (isAdmin) {
+    container.innerHTML = (
+      <div class="px-4 py-6 md:px-8">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-3xl font-bold tracking-tight text-white/90">Admin</h1>
+            <p class="text-white/60 mt-1 text-sm">Manage genres</p>
+          </div>
+          <a href="/" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">
+            Back
+          </a>
+        </div>
+
+        <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full max-w-2xl shadow-2xl">
+          <h2 class="text-xl font-semibold text-white mb-4">Genres</h2>
+          <div id="genre-list" class="space-y-2 mb-6 max-h-96 overflow-y-auto">
+            <p class="text-muted-foreground text-sm">Loading...</p>
+          </div>
+
+          <form id="add-genre-form" class="flex gap-2 mt-4">
+            <input
+              type="text"
+              name="label"
+              id="new-genre-input"
+              placeholder="New genre name"
+              required
+              class="flex-1 px-4 py-2 rounded-lg bg-input border border-border text-foreground focus:ring-2 focus:ring-ring outline-none text-sm"
+            />
+            <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/80 transition-colors">
+              Add
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+    await initGenreManagement(container);
+    return;
+  }
+
+  container.innerHTML = (
+    <div class="px-4 py-6 md:px-8">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-3xl font-bold tracking-tight text-white/90">Moderation</h1>
+          <p class="text-white/60 mt-1 text-sm">Ban non-admin users and revoke their tokens</p>
+        </div>
+        <a href="/" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">
+          Back
+        </a>
+      </div>
+
+      <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full shadow-2xl min-h-[70vh]">
+        <h2 class="text-xl font-semibold text-white mb-4">Ban candidates</h2>
+        <div id="ban-user-list" class="space-y-3 overflow-y-auto h-[calc(70vh-5rem)]">
+          <p class="text-muted-foreground text-sm">Loading...</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  await initModerationPanel(container);
+}
+
+
+
 function renderBanRows(users: ModerationUser[]): string {
   if (users.length === 0) {
     return '<p class="text-muted-foreground text-sm">No ban candidates available.</p>';
@@ -191,85 +274,4 @@ async function initModerationPanel(container: HTMLElement) {
   });
 
   await refresh();
-}
-
-export async function AdminPage(container: HTMLElement | null) {
-  if (!container) return;
-
-  const userInfos = await authService.iduser();
-  const isAdmin = userInfos.role === "ADMIN";
-  const isModerator = userInfos.role === "MODERATOR";
-
-  if (!isAdmin && !isModerator) {
-    container.innerHTML = (
-      <div class="py-12 text-center">
-        <h1 class="text-2xl font-bold mb-2">Forbidden</h1>
-        <p class="text-muted-foreground mb-6">Only admins and moderators can access this page.</p>
-        <a href="/" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">Back to Home</a>
-      </div>
-    );
-    return;
-  }
-
-  if (isAdmin) {
-    container.innerHTML = (
-      <div class="px-4 py-6 md:px-8">
-        <div class="flex items-center justify-between mb-6">
-          <div>
-            <h1 class="text-3xl font-bold tracking-tight text-white/90">Admin</h1>
-            <p class="text-white/60 mt-1 text-sm">Manage genres</p>
-          </div>
-          <a href="/" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">
-            Back
-          </a>
-        </div>
-
-        <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full max-w-2xl shadow-2xl">
-          <h2 class="text-xl font-semibold text-white mb-4">Genres</h2>
-          <div id="genre-list" class="space-y-2 mb-6 max-h-96 overflow-y-auto">
-            <p class="text-muted-foreground text-sm">Loading...</p>
-          </div>
-
-          <form id="add-genre-form" class="flex gap-2 mt-4">
-            <input
-              type="text"
-              name="label"
-              id="new-genre-input"
-              placeholder="New genre name"
-              required
-              class="flex-1 px-4 py-2 rounded-lg bg-input border border-border text-foreground focus:ring-2 focus:ring-ring outline-none text-sm"
-            />
-            <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/80 transition-colors">
-              Add
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-    await initGenreManagement(container);
-    return;
-  }
-
-  container.innerHTML = (
-    <div class="px-4 py-6 md:px-8">
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <h1 class="text-3xl font-bold tracking-tight text-white/90">Moderation</h1>
-          <p class="text-white/60 mt-1 text-sm">Ban non-admin users and revoke their tokens</p>
-        </div>
-        <a href="/" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">
-          Back
-        </a>
-      </div>
-
-      <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full shadow-2xl min-h-[70vh]">
-        <h2 class="text-xl font-semibold text-white mb-4">Ban candidates</h2>
-        <div id="ban-user-list" class="space-y-3 overflow-y-auto h-[calc(70vh-5rem)]">
-          <p class="text-muted-foreground text-sm">Loading...</p>
-        </div>
-      </div>
-    </div>
-  );
-
-  await initModerationPanel(container);
 }

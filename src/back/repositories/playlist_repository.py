@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, exists
 from re import findall as regex_match
 from models.playlist import Playlist, PlaylistVisibility
 from models.track_playlist import TrackPlaylist
@@ -59,6 +59,17 @@ class PlaylistRepository:
             db.query(Playlist)
             .options(joinedload(Playlist.genre))
             .filter(Playlist.visibility == PlaylistVisibility.PUBLIC)
+            .filter(~exists().where(UserPlaylist.idPlaylist == Playlist.idPlaylist))
+            .all()
+        )
+        return playlists
+
+    @staticmethod
+    def get_shared_playlist(db: Session, user_id: int):
+        playlists: List[Playlist] = (
+            db.query(Playlist)
+            .filter(UserPlaylist.idPlaylist == Playlist.idPlaylist)
+            .filter(UserPlaylist.idUser == user_id)
             .all()
         )
         return playlists
@@ -244,7 +255,12 @@ class PlaylistRepository:
                         Playlist.visibility == PlaylistVisibility.PUBLIC,
                         Playlist.visibility == PlaylistVisibility.OPEN,
                         Playlist.idOwner == idUser,
-                        # TODO: Quand l'auth sera en place, rajouter les playlists de l'utilsateur connecté
+                        exists().where(
+                            and_(
+                                UserPlaylist.idPlaylist == Playlist.idPlaylist,
+                                UserPlaylist.idUser == idUser,
+                            )
+                        ),
                     ),
                 )
             )
@@ -271,15 +287,32 @@ class PlaylistRepository:
             .filter(
                 UserPlaylist.idPlaylist == playlist_id,
                 UserPlaylist.idUser == user_id,
-                UserPlaylist.editor is True,
+                UserPlaylist.editor,
             )
-            .first()
+            .all()
         )
 
+        print(direct_right)
         if direct_right:
             return True
 
         return False
+
+    @staticmethod
+    def list_shared_user(db: Session, playlist_id: int, current_user_id: int):
+        users = (
+            db.query(UserPlaylist).filter(UserPlaylist.idPlaylist == playlist_id).all()
+        )
+        if current_user_id != db.query(Playlist.idOwner).filter(
+            Playlist.idPlaylist == playlist_id
+        ).scalar() and current_user_id not in [
+            user_playlist.idUser for user_playlist in users
+        ]:
+            return [], "You're not allowed to see shared users for this playlist"
+        if users:
+            return users, None
+        else:
+            return [], None
 
     @staticmethod
     def share_with_user(

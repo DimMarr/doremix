@@ -66,6 +66,18 @@ def get_public_playlists(db: Session = Depends(get_db)):
 
 
 @router.get(
+    "/shared",
+    summary="Lister toutes les playlists partagées",
+    description="Retourne la liste complète des playlists partagées.",
+)
+def get_shared_playlists(
+    db: Session = Depends(get_db), user_id=Depends(get_current_user_id)
+):
+    playlists = PlaylistController.get_shared_playlists(db, user_id)
+    return playlists
+
+
+@router.get(
     "/{idPlaylist}",
     response_model=PlaylistSchema,
     summary="Récupérer une playlist",
@@ -140,13 +152,9 @@ def get_cover_image(filename: str):
 def delete_playlist(
     playlist_id: int,
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
-    # TODO: Quand l'auth sera en place :
-    # def delete_playlist(playlist_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    #     return PlaylistController.delete_playlist(db, playlist_id, current_user.id)
-
-    return PlaylistController.delete_playlist(db, playlist_id, user_id)
+    return PlaylistController.delete_playlist(db, playlist_id, user)
 
 
 @router.delete("/{playlist_id}/track/{track_id}", response_model=PlaylistSchema)
@@ -173,11 +181,23 @@ def update_playlist(
     playlist_id: int,
     playlist_data: PlaylistUpdate,
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
     return PlaylistController.update_playlist(
-        db, playlist_id, playlist_data.model_dump(exclude_unset=True), user_id
+        db, playlist_id, playlist_data.model_dump(exclude_unset=True), user
     )
+
+
+@router.get(
+    "/{playlist_id}/shared-with",
+    summary="Lister la liste des utilisateurs partagées et leurs droits",
+)
+def shared_with(
+    playlist_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    return PlaylistController.shared_with(db, playlist_id, current_user_id)
 
 
 @router.post("/{playlist_id}/share/user", summary="Partager avec un utilisateur")

@@ -16,24 +16,23 @@ export async function HomePage(container: HTMLElement | null) {
   container.innerHTML = "";
 
   // Fetch all playlists to separate them
-  const allPlaylists = await new PlaylistRepository().getAll();
+  const repo = new PlaylistRepository()
+  const allPlaylists = await repo.getAll();
 
-  const userInfos = (await authService.iduser()) as CurrentUserInfo;
+  const userInfos = await authService.infos() as CurrentUserInfo;
   const currentUserId = userInfos.id;
   const canManage = userInfos.role === "ADMIN" || userInfos.role === "MODERATOR";
   const personalPlaylists = allPlaylists.filter(
     (playlist: Playlist) => playlist.idOwner === currentUserId
   );
-  const publicPlaylists = allPlaylists.filter(
-    (playlist: Playlist) =>
-      playlist.visibility === Visibility.public &&
-      playlist.idOwner !== currentUserId
-  );
+  const publicPlaylists = await repo.getPublic();
+  const sharedPlaylists = await repo.getShared();
   const openPlaylists = allPlaylists.filter(
     (playlist: Playlist) => playlist.visibility === Visibility.open
   );
 
   const personalCards = buildCardsFromPlaylists(personalPlaylists);
+  const sharedCards = buildCardsFromPlaylists(sharedPlaylists);
   const publicCards = buildCardsFromPlaylists(publicPlaylists);
   const openCards = buildCardsFromPlaylists(openPlaylists);
   const personalCardsSafe = personalCards as unknown as "safe";
@@ -72,6 +71,22 @@ export async function HomePage(container: HTMLElement | null) {
           </div>
         )}
       </section>
+
+      {/* Shared Playlists Section */}
+        {sharedPlaylists.length > 0 ? (
+          <section>
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h2 class="text-3xl font-bold tracking-tight text-white/90">Shared Playlists</h2>
+                <p class="text-white/60 mt-1 text-sm">Discover what people want you to hear.</p>
+              </div>
+              <div id="addPlaylistSection"></div>
+            </div>
+              <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6">
+                {sharedCards as 'safe'}
+              </div>
+          </section>
+        ) : ""}
 
       {/* Public Playlists Section */}
       <section>
