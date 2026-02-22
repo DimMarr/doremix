@@ -1,12 +1,12 @@
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, exists
 from re import findall as regex_match
 from models.playlist import Playlist, PlaylistVisibility
 from models.track_playlist import TrackPlaylist
 from models.track import Track
 from models.artist import Artist
 from models.user_playlists import UserPlaylist
-from models.user import User
+from models.user import User, UserRole
 from models.group import GroupUser, GroupPlaylist, UserGroup
 from typing import Optional, List
 from repositories.track_repository import TrackRepository
@@ -21,6 +21,7 @@ from utils.youtube_utils import (
 class PlaylistRepository:
     # get_all() supprimée pour la notion d'accès
 
+    # Toutes les playlists auxquelles l'utilisateur a accès
     @staticmethod
     def get_accessible_playlists(db: Session, user_id: int) -> List[Playlist]:
         # Playlists partagées avec l'utilisateur
@@ -53,18 +54,34 @@ class PlaylistRepository:
 
         return playlists
 
+    # Toutes les playlists publiques qui n'appartiennent pas à l'utilisateur
     @staticmethod
-    def get_public_playlists(db: Session) -> List[Playlist]:
+    def get_public_playlists(db: Session, user: User) -> List[Playlist]:
         playlists: List[Playlist] = (
             db.query(Playlist)
             .options(joinedload(Playlist.genre))
             .filter(Playlist.visibility == PlaylistVisibility.PUBLIC)
+            .filter(Playlist.idOwner != user.idUser)
+            .filter(~exists().where(UserPlaylist.idPlaylist == Playlist.idPlaylist))
+            .all()
+        )
+        return playlists
+
+    # Toutes les playlists partagées à l'utilisateur
+    @staticmethod
+    def get_shared_playlist(db: Session, user_id: int):
+        playlists: List[Playlist] = (
+            db.query(Playlist)
+            .filter(UserPlaylist.idPlaylist == Playlist.idPlaylist)
+            .filter(UserPlaylist.idUser == user_id)
             .all()
         )
         return playlists
 
     @staticmethod
-    def get_by_id(db: Session, playlist_id: int, user_id: int) -> Optional[Playlist]:
+    def get_by_id(db: Session, playlist_id: int, user: User) -> Optional[Playlist]:
+        user_id = user.idUser
+        user_role = user.role
         direct_shared_subquery = db.query(UserPlaylist.idPlaylist).filter(
             UserPlaylist.idUser == user_id
         )
@@ -91,6 +108,24 @@ class PlaylistRepository:
             .first()
         )
 
+        if user_role == UserRole.ADMIN:
+            playlist = (
+                db.query(Playlist)
+                .options(joinedload(Playlist.genre))
+                .filter(Playlist.idPlaylist == playlist_id)
+                .first()
+            )
+
+        return playlist
+
+    @staticmethod
+    def get_by_id_raw(db: Session, playlist_id: int) -> Optional[Playlist]:
+        playlist: Optional[Playlist] = (
+            db.query(Playlist)
+            .options(joinedload(Playlist.genre))
+            .filter(Playlist.idPlaylist == playlist_id)
+            .first()
+        )
         return playlist
 
     @staticmethod
@@ -244,7 +279,12 @@ class PlaylistRepository:
                         Playlist.visibility == PlaylistVisibility.PUBLIC,
                         Playlist.visibility == PlaylistVisibility.OPEN,
                         Playlist.idOwner == idUser,
-                        # TODO: Quand l'auth sera en place, rajouter les playlists de l'utilsateur connecté
+                        exists().where(
+                            and_(
+                                UserPlaylist.idPlaylist == Playlist.idPlaylist,
+                                UserPlaylist.idUser == idUser,
+                            )
+                        ),
                     ),
                 )
             )
@@ -271,15 +311,32 @@ class PlaylistRepository:
             .filter(
                 UserPlaylist.idPlaylist == playlist_id,
                 UserPlaylist.idUser == user_id,
-                UserPlaylist.editor is True,
+                UserPlaylist.editor,
             )
-            .first()
+            .all()
         )
 
+        print(direct_right)
         if direct_right:
             return True
 
         return False
+
+    @staticmethod
+    def list_shared_user(db: Session, playlist_id: int, current_user_id: int):
+        users = (
+            db.query(UserPlaylist).filter(UserPlaylist.idPlaylist == playlist_id).all()
+        )
+        if current_user_id != db.query(Playlist.idOwner).filter(
+            Playlist.idPlaylist == playlist_id
+        ).scalar() and current_user_id not in [
+            user_playlist.idUser for user_playlist in users
+        ]:
+            return [], "You're not allowed to see shared users for this playlist"
+        if users:
+            return users, None
+        else:
+            return [], None
 
     @staticmethod
     def share_with_user(

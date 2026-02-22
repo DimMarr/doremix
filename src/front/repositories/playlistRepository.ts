@@ -206,6 +206,49 @@ export class PlaylistRepository {
         }
     }
 
+    async getShared(): Promise<Playlist[]> {
+        const img1 = new URL("../assets/images/playlist1.jpg", import.meta.url).href;
+        try {
+            const response = await fetch(`${API_BASE_URL}/playlists/shared`, {
+            method: "GET",
+            credentials: "include",
+            });
+
+            if (!response.ok) {
+            throw new Error("Failed to get shared playlists");
+            }
+
+            const rawDataPlaylists = await response.json();
+            return Promise.all(
+            rawDataPlaylists.map(async (item: any) => {
+                const rawDatatracks = await this._fetchTracks(item.idPlaylist);
+                const tracks = rawDatatracks.map((data: any) => new Track(data));
+
+                let visibility: Visibility = Visibility.public;
+                if (item.visibility) {
+                const vizLower = item.visibility.toLowerCase();
+                if (Object.values(Visibility).includes(vizLower as Visibility)) {
+                    visibility = vizLower as Visibility;
+                }
+                }
+
+                return new Playlist({
+                ...item,
+                image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
+                visibility,
+                tracks,
+                });
+            })
+            );
+        } catch (error) {
+            if (error instanceof TypeError) {
+            new AlertManager().error("Network error. Check your connection.");
+            }
+            console.error("Error fetching shared playlists:", error);
+            throw error;
+        }
+    }
+
     async getTracks(playlistId: number): Promise<Track[]> {
         const rawDatatracks = await this._fetchTracks(playlistId);
         const tracks: Track[] = [];
@@ -233,6 +276,33 @@ export class PlaylistRepository {
         });
     }
 
+    async sharedWith(playlist_id: Number) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/playlists/${playlist_id}/shared-with`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: 'include',
+            });
+
+            if (response.status == 403){
+                return []
+            }
+
+            if (!response.ok) {
+                throw new Error("Failed to get shared users");
+            }
+            return response.json();
+        } catch (error) {
+            if (error instanceof TypeError) {
+                new AlertManager().error("Network error. Check your connection.");
+            }
+            console.error("Error getting shared users for a playlist:", error);
+            throw error;
+        }
+    }
+
     async update(id: number, data: Partial<Playlist>) {
         try {
             const response = await fetch(`${API_BASE_URL}/playlists/${id}`, {
@@ -254,6 +324,26 @@ export class PlaylistRepository {
                 new AlertManager().error("Network error. Check your connection.");
             }
             console.error("Error updating playlist:", error);
+            throw error;
+        }
+    }
+
+    async delete(id: number): Promise<void> {
+        try {
+            const response = await fetch(`${API_BASE_URL}/playlists/${id}`, {
+                method: "DELETE",
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                handleHttpError(response, "Delete playlist");
+                throw new Error("Failed to delete playlist");
+            }
+        } catch (error) {
+            if (error instanceof TypeError) {
+                new AlertManager().error("Network error. Check your connection.");
+            }
+            console.error("Error deleting playlist:", error);
             throw error;
         }
     }

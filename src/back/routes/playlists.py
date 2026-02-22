@@ -60,8 +60,22 @@ def get_accessible_playlists(
     summary="Lister toutes les playlists publiques",
     description="Retourne la liste complète des playlists disponibles.",
 )
-def get_public_playlists(db: Session = Depends(get_db)):
-    playlists = PlaylistController.get_public_playlists(db)
+def get_public_playlists(
+    db: Session = Depends(get_db), user: User = Depends(get_current_user)
+):
+    playlists = PlaylistController.get_public_playlists(db, user)
+    return playlists
+
+
+@router.get(
+    "/shared",
+    summary="Lister toutes les playlists partagées",
+    description="Retourne la liste complète des playlists partagées.",
+)
+def get_shared_playlists(
+    db: Session = Depends(get_db), user_id=Depends(get_current_user_id)
+):
+    playlists = PlaylistController.get_shared_playlists(db, user_id)
     return playlists
 
 
@@ -74,9 +88,9 @@ def get_public_playlists(db: Session = Depends(get_db)):
 def get_playlist(
     idPlaylist: int,
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
-    playlist = PlaylistController.get_playlist(db, idPlaylist, user_id)
+    playlist = PlaylistController.get_playlist(db, idPlaylist, user)
     return playlist
 
 
@@ -84,9 +98,9 @@ def get_playlist(
 def get_playlist_tracks(
     playlist_id: int,
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
-    tracks = PlaylistController.get_playlist_tracks(db, playlist_id, user_id)
+    tracks = PlaylistController.get_playlist_tracks(db, playlist_id, user)
     return tracks
 
 
@@ -115,9 +129,9 @@ def upload_playlist_cover(
     playlist_id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
-    updated_playlist = PlaylistController.upload_cover(db, playlist_id, file, user_id)
+    updated_playlist = PlaylistController.upload_cover(db, playlist_id, file, user)
     return updated_playlist
 
 
@@ -140,13 +154,9 @@ def get_cover_image(filename: str):
 def delete_playlist(
     playlist_id: int,
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
-    # TODO: Quand l'auth sera en place :
-    # def delete_playlist(playlist_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    #     return PlaylistController.delete_playlist(db, playlist_id, current_user.id)
-
-    return PlaylistController.delete_playlist(db, playlist_id, user_id)
+    return PlaylistController.delete_playlist(db, playlist_id, user)
 
 
 @router.delete("/{playlist_id}/track/{track_id}", response_model=PlaylistSchema)
@@ -154,11 +164,9 @@ def remove_track(
     playlist_id: int,
     track_id: int,
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
-    updated_playlist = PlaylistController.remove_track(
-        db, playlist_id, track_id, user_id
-    )
+    updated_playlist = PlaylistController.remove_track(db, playlist_id, track_id, user)
 
     return updated_playlist
 
@@ -173,11 +181,23 @@ def update_playlist(
     playlist_id: int,
     playlist_data: PlaylistUpdate,
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
     return PlaylistController.update_playlist(
-        db, playlist_id, playlist_data.model_dump(exclude_unset=True), user_id
+        db, playlist_id, playlist_data.model_dump(exclude_unset=True), user
     )
+
+
+@router.get(
+    "/{playlist_id}/shared-with",
+    summary="Lister la liste des utilisateurs partagées et leurs droits",
+)
+def shared_with(
+    playlist_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db),
+):
+    return PlaylistController.shared_with(db, playlist_id, current_user_id)
 
 
 @router.post("/{playlist_id}/share/user", summary="Partager avec un utilisateur")
