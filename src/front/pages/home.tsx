@@ -23,7 +23,8 @@ export async function HomePage(container: HTMLElement | null) {
   const currentUserId = userInfos.id;
   const canManage = userInfos.role === "ADMIN" || userInfos.role === "MODERATOR";
   const personalPlaylists = allPlaylists.filter(
-    (playlist: Playlist) => playlist.idOwner === currentUserId
+    (playlist: Playlist) => playlist.idOwner === currentUserId &&
+    playlist.visibility !== Visibility.open
   );
   const publicPlaylists = await repo.getPublic();
   const sharedPlaylists = await repo.getShared();
