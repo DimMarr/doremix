@@ -23,7 +23,8 @@ export async function HomePage(container: HTMLElement | null) {
   const currentUserId = userInfos.id;
   const canManage = userInfos.role === "ADMIN" || userInfos.role === "MODERATOR";
   const personalPlaylists = allPlaylists.filter(
-    (playlist: Playlist) => playlist.idOwner === currentUserId
+    (playlist: Playlist) => playlist.idOwner === currentUserId &&
+    playlist.visibility !== Visibility.open
   );
   const publicPlaylists = await repo.getPublic();
   const sharedPlaylists = await repo.getShared();
@@ -38,6 +39,7 @@ export async function HomePage(container: HTMLElement | null) {
   const personalCardsSafe = personalCards as unknown as "safe";
   const publicCardsSafe = publicCards as unknown as "safe";
   const openCardsSafe = openCards as unknown as "safe";
+
 
   const pageHtml = (
     <div class="px-4 py-6 md:px-8 space-y-12">

@@ -6,7 +6,7 @@ from models.track_playlist import TrackPlaylist
 from models.track import Track
 from models.artist import Artist
 from models.user_playlists import UserPlaylist
-from models.user import User
+from models.user import User, UserRole
 from models.group import GroupUser, GroupPlaylist, UserGroup
 from typing import Optional, List
 from repositories.track_repository import TrackRepository
@@ -21,6 +21,7 @@ from utils.youtube_utils import (
 class PlaylistRepository:
     # get_all() supprimée pour la notion d'accès
 
+    # Toutes les playlists auxquelles l'utilisateur a accès
     @staticmethod
     def get_accessible_playlists(db: Session, user_id: int) -> List[Playlist]:
         # Playlists partagées avec l'utilisateur
@@ -53,17 +54,20 @@ class PlaylistRepository:
 
         return playlists
 
+    # Toutes les playlists publiques qui n'appartiennent pas à l'utilisateur
     @staticmethod
-    def get_public_playlists(db: Session) -> List[Playlist]:
+    def get_public_playlists(db: Session, user: User) -> List[Playlist]:
         playlists: List[Playlist] = (
             db.query(Playlist)
             .options(joinedload(Playlist.genre))
             .filter(Playlist.visibility == PlaylistVisibility.PUBLIC)
+            .filter(Playlist.idOwner != user.idUser)
             .filter(~exists().where(UserPlaylist.idPlaylist == Playlist.idPlaylist))
             .all()
         )
         return playlists
 
+    # Toutes les playlists partagées à l'utilisateur
     @staticmethod
     def get_shared_playlist(db: Session, user_id: int):
         playlists: List[Playlist] = (
@@ -75,7 +79,9 @@ class PlaylistRepository:
         return playlists
 
     @staticmethod
-    def get_by_id(db: Session, playlist_id: int, user_id: int) -> Optional[Playlist]:
+    def get_by_id(db: Session, playlist_id: int, user: User) -> Optional[Playlist]:
+        user_id = user.idUser
+        user_role = user.role
         direct_shared_subquery = db.query(UserPlaylist.idPlaylist).filter(
             UserPlaylist.idUser == user_id
         )
@@ -101,6 +107,14 @@ class PlaylistRepository:
             )
             .first()
         )
+
+        if user_role == UserRole.ADMIN:
+            playlist = (
+                db.query(Playlist)
+                .options(joinedload(Playlist.genre))
+                .filter(Playlist.idPlaylist == playlist_id)
+                .first()
+            )
 
         return playlist
 

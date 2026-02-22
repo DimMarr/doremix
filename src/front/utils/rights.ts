@@ -42,3 +42,14 @@ export async function isOwner (playlist: Playlist) {
   }
   return false
 }
+
+// True if currentUser is admin
+export async function isAdmin () {
+  const userInfos = await authService.infos();
+  const currentUserRole = userInfos.role
+
+  if (currentUserRole == "ADMIN"){
+    return true
+  }
+  return false
+}
