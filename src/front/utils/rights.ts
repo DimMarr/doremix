@@ -53,3 +53,8 @@ export async function isAdmin () {
   }
   return false
 }
+
+// True if currentUser can delete playlist (Owner or Admin)
+export async function canDeletePlaylist(playlist: Playlist) {
+  return (await isOwner(playlist)) || (await isAdmin())
+}

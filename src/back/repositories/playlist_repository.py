@@ -119,6 +119,16 @@ class PlaylistRepository:
         return playlist
 
     @staticmethod
+    def get_by_id_raw(db: Session, playlist_id: int) -> Optional[Playlist]:
+        playlist: Optional[Playlist] = (
+            db.query(Playlist)
+            .options(joinedload(Playlist.genre))
+            .filter(Playlist.idPlaylist == playlist_id)
+            .first()
+        )
+        return playlist
+
+    @staticmethod
     def create(db: Session, playlist: Playlist) -> Playlist:
         db.add(playlist)
         db.commit()

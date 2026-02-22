@@ -85,7 +85,7 @@ class PlaylistController:
 
     @staticmethod
     def delete_playlist(db: Session, playlist_id: int, user: User):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id, user)
+        playlist = PlaylistRepository.get_by_id_raw(db, playlist_id)
 
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
@@ -93,7 +93,7 @@ class PlaylistController:
         # Only playlist owner and admin can delete playlist
         if not (playlist.idOwner == user.idUser or user.idRole == 3):
             raise HTTPException(
-                status_code=404, detail="You're not allowed to delete this playlist."
+                status_code=403, detail="You're not allowed to delete this playlist."
             )
 
         PlaylistRepository.delete(db, playlist)

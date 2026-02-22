@@ -327,4 +327,24 @@ export class PlaylistRepository {
             throw error;
         }
     }
+
+    async delete(id: number): Promise<void> {
+        try {
+            const response = await fetch(`${API_BASE_URL}/playlists/${id}`, {
+                method: "DELETE",
+                credentials: 'include',
+            });
+
+            if (!response.ok) {
+                handleHttpError(response, "Delete playlist");
+                throw new Error("Failed to delete playlist");
+            }
+        } catch (error) {
+            if (error instanceof TypeError) {
+                new AlertManager().error("Network error. Check your connection.");
+            }
+            console.error("Error deleting playlist:", error);
+            throw error;
+        }
+    }
 }
