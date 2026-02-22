@@ -22,6 +22,7 @@ from routes import (
     registerRouter,
     genresRouter,
     adminGenresRouter,
+    moderationRouter,
 )
 
 routers = [
@@ -34,6 +35,7 @@ routers = [
     registerRouter,
     genresRouter,
     adminGenresRouter,
+    moderationRouter,
 ]
 
 app = FastAPI()
