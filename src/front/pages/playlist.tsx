@@ -9,7 +9,7 @@ import { PlaylistRepository } from "@repositories/index";
 import Playlist, { Visibility } from "@models/playlist";
 import type { Track } from "@models/track";
 import { authService } from "@utils/authentication";
-import { canEdit, isAdmin, isOwner } from "@utils/rights";
+import { canDeletePlaylist, canEdit, isAdmin, isOwner } from "@utils/rights";
 
 interface PageParams {
   id: string;
@@ -160,13 +160,19 @@ export async function PlaylistDetailPage(
   const updateHeader = async () => {
     const headerContainer = container.querySelector('#playlist-header-info');
     if (headerContainer) {
+      const canDeleteCurrentPlaylist = await canDeletePlaylist(playlist);
+      const isPlaylistOwner = await isOwner(playlist);
+
       headerContainer.innerHTML = (
         <>
           {await getVisibilityElement(repo, playlist) as 'safe'}
           {renderGenreSection() as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
-          { await isOwner(playlist) && <Button id="share-button" variant="outline" size="md">Share Playlist</Button> }
+          <div class="flex flex-wrap gap-2 mt-1">
+            {isPlaylistOwner && <Button id="share-button" variant="outline" size="md">Share Playlist</Button>}
+            {canDeleteCurrentPlaylist && <Button id="delete-playlist-button" variant="destructive" size="md">Delete Playlist</Button>}
+          </div>
         </>
       );
     }
@@ -232,6 +238,30 @@ export async function PlaylistDetailPage(
     render(modalContainer);
   };
 
+  const handleDeletePlaylist = async () => {
+    if (!playlist.idPlaylist) return;
+    if (!(await canDeletePlaylist(playlist))) return;
+
+    if (!confirm(`Delete "${playlist.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await repo.delete(playlist.idPlaylist);
+
+      if (trackPlayerInstance.playlist?.idPlaylist === playlist.idPlaylist) {
+        trackPlayerInstance.stopVideo();
+        trackPlayerInstance.setPlaylist(new Playlist({ tracks: [] }));
+      }
+
+      new AlertManager().success("Playlist deleted");
+      onBack();
+    } catch (err) {
+      console.error("Failed to delete playlist", err);
+      new AlertManager().error("Failed to delete playlist");
+    }
+  };
+
   const handleDeleteTrack = async (trackIndex: number) => {
     const track = tracks[trackIndex];
     if (!track) return;
@@ -275,9 +305,6 @@ export async function PlaylistDetailPage(
   };
 
   // Render page
-  const userInfos = await authService.infos();
-  const currentUserRole = userInfos.role;
-
   function renderGenreSection() {
     if (!playlist.genreLabel) return '';
 
@@ -287,6 +314,9 @@ export async function PlaylistDetailPage(
       </span>
     );
   }
+
+  const canDeleteCurrentPlaylist = await canDeletePlaylist(playlist);
+  const isPlaylistOwner = await isOwner(playlist);
 
   container.innerHTML = (
     <div>
@@ -310,7 +340,10 @@ export async function PlaylistDetailPage(
           {renderGenreSection() as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
-          { await isOwner(playlist) && <Button id="share-button" variant="outline" size="md">Share Playlist</Button> }
+          <div class="flex flex-wrap gap-2 mt-1">
+            {isPlaylistOwner && <Button id="share-button" variant="outline" size="md">Share Playlist</Button>}
+            {canDeleteCurrentPlaylist && <Button id="delete-playlist-button" variant="destructive" size="md">Delete Playlist</Button>}
+          </div>
         </div>
       </div>
 
@@ -371,6 +404,11 @@ export async function PlaylistDetailPage(
 
     if (target.closest('#share-button')) {
       handleShare();
+      return;
+    }
+
+    if (target.closest('#delete-playlist-button')) {
+      handleDeletePlaylist();
       return;
     }
 
