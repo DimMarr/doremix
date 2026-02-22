@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from repositories import PlaylistRepository
 from fastapi import HTTPException, UploadFile, Response
+from models.enums import PlaylistVisibility
 from utils.image_processor import save_cover_image
 from models.playlist import Playlist
 from models import User
@@ -117,6 +118,9 @@ class PlaylistController:
             raise HTTPException(
                 status_code=404, detail="You're not allowed to update this playlist."
             )
+
+        if update_data["visibility"] == PlaylistVisibility.OPEN:
+            update_data["idOwner"] = 1
 
         return PlaylistRepository.update_playlist(db, playlist, update_data)
 
