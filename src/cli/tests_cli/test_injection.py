@@ -24,6 +24,34 @@ FORBIDDEN_OUTPUTS = ["uid=", "gid=", "root:", "/bin/", "/usr/bin"]
 
 VALID_YOUTUBE_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
+VALID_YOUTUBE_URLS = [
+    "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "https://youtube.com/watch?v=dQw4w9WgXcQ",
+    "https://youtu.be/dQw4w9WgXcQ",
+    "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    "http://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "http://youtube.com/watch?v=dQw4w9WgXcQ",
+    "http://youtu.be/dQw4w9WgXcQ",
+    "http://www.youtube.com/embed/dQw4w9WgXcQ",
+]
+
+INVALID_YOUTUBE_URLS = [
+    "https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=120",  # Paramètres supplémentaires
+    "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PLtest",  # Paramètres supplémentaires
+    "https://www.youtube.com/watch?v=abc",  # ID trop court
+    "https://www.youtube.com/watch?v=abcdefghijklmno",  # ID trop long
+    "https://vimeo.com/123456789",  # Pas YouTube
+    "https://dailymotion.com/video/x123456",  # Pas YouTube
+    "https://www.youtube.com/",  # Pas de vidéo
+    "https://www.youtube.com/watch",  # Pas d'ID
+    "https://www.youtube.com/watch?v=",  # ID vide
+    "youtube.com/watch?v=dQw4w9WgXcQ",  # Pas de protocole
+    "https://www.youtubee.com/watch?v=dQw4w9WgXcQ",  # Typo dans le domaine
+    "https://www.youtube.com/watchh?v=dQw4w9WgXcQ",  # Typo dans le path
+    "not_a_url",  # Pas une URL
+    "",  # Vide
+]
+
 
 def assert_no_system_execution(result):
     """Verify that no system command execution traces are present in the output."""
@@ -276,3 +304,210 @@ def test_valid_youtube_url_accepted(mock_api_calls):
     assert mock_api_calls["request"].called
     assert "Invalid YouTube link" not in result.output
     assert_no_system_execution(result)
+
+
+@pytest.mark.parametrize("valid_url", VALID_YOUTUBE_URLS)
+def test_add_track_accepts_valid_youtube_urls(valid_url, mock_api_calls):
+    """Test that all valid YouTube URL formats are accepted"""
+    # Mock the response of adding track
+    mock_api_calls["responses"]["post"].json.return_value = {
+        "idTrack": 1,
+        "title": "Test Track",
+        "youtubeLink": valid_url,
+        "durationSeconds": 180,
+        "listeningCount": 0,
+        "createdAt": "2024-01-01T00:00:00",
+        "artists": [],
+    }
+
+    # Mock the get_playlist and get_playlist_tracks responses
+    mock_api_calls["responses"]["get"].json.side_effect = [
+        {
+            "idPlaylist": 1,
+            "name": "Test Playlist",
+            "vote": 0,
+            "createdAt": "2024-01-01T00:00:00",
+            "updatedAt": "2024-01-01T00:00:00",
+            "idGenre": 1,
+            "idOwner": 1,
+            "visibility": "PUBLIC",
+        },
+        [
+            {
+                "idTrack": 1,
+                "title": "Test Track",
+                "youtubeLink": valid_url,
+                "durationSeconds": 180,
+                "listeningCount": 0,
+                "createdAt": "2024-01-01T00:00:00",
+                "artists": [],
+            }
+        ],
+    ]
+
+    result = runner.invoke(
+        app,
+        [
+            "playlist",
+            "add-track",
+            "1",
+            "--url",
+            valid_url,
+            "--title",
+            "Test Track",
+        ],
+    )
+
+    assert (
+        "Invalid YouTube link" not in result.output
+    ), f"URL should be valid: {valid_url}"
+    assert_no_system_execution(result)
+
+
+@pytest.mark.parametrize("invalid_url", INVALID_YOUTUBE_URLS)
+def test_add_track_rejects_invalid_youtube_urls(invalid_url, mock_api_calls):
+    """Test that all invalid YouTube URL formats are rejected"""
+    result = runner.invoke(
+        app,
+        [
+            "playlist",
+            "add-track",
+            "1",
+            "--url",
+            invalid_url,
+            "--title",
+            "Test Track",
+        ],
+    )
+
+    assert (
+        "Invalid YouTube link" in result.output
+    ), f"URL should be invalid: {invalid_url}"
+    assert_no_system_execution(result)
+
+
+def test_add_track_rejects_url_with_extra_parameters(mock_api_calls):
+    """Test that YouTube URLs with extra parameters are rejected"""
+    urls_with_params = [
+        "https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=120",
+        "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PLtest123",
+        "https://www.youtube.com/watch?v=dQw4w9WgXcQ&index=5",
+        "https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=120&list=PLtest",
+        "https://youtu.be/dQw4w9WgXcQ?t=120",
+        "https://youtu.be/dQw4w9WgXcQ?si=abc123",
+    ]
+
+    for url in urls_with_params:
+        result = runner.invoke(
+            app,
+            [
+                "playlist",
+                "add-track",
+                "1",
+                "--url",
+                url,
+                "--title",
+                "Test Track",
+            ],
+        )
+
+        assert (
+            "Invalid YouTube link" in result.output
+        ), f"URL with params should be rejected: {url}"
+        assert_no_system_execution(result)
+
+
+def test_add_track_rejects_non_youtube_video_platforms(mock_api_calls):
+    """Test that non-YouTube video platform URLs are rejected"""
+    non_youtube_urls = [
+        "https://vimeo.com/123456789",
+        "https://dailymotion.com/video/x123456",
+        "https://twitch.tv/videos/123456789",
+        "https://facebook.com/watch?v=123456789",
+        "https://tiktok.com/@user/video/123456789",
+    ]
+
+    for url in non_youtube_urls:
+        result = runner.invoke(
+            app,
+            [
+                "playlist",
+                "add-track",
+                "1",
+                "--url",
+                url,
+                "--title",
+                "Test Track",
+            ],
+        )
+
+        assert (
+            "Invalid YouTube link" in result.output
+        ), f"Non-YouTube URL should be rejected: {url}"
+        assert_no_system_execution(result)
+
+
+def test_add_track_rejects_malformed_youtube_urls(mock_api_calls):
+    """Test that malformed YouTube URLs are rejected"""
+    malformed_urls = [
+        "https://www.youtube.com/watch?v=",  # Empty video ID
+        "https://www.youtube.com/watch?v=abc",  # Too short video ID
+        "https://www.youtube.com/watch?v=abcdefghijklmnop",  # Too long video ID
+        "https://www.youtube.com/watch",  # Missing video ID parameter
+        "https://www.youtube.com/",  # No path
+        "https://youtu.be/",  # Empty short URL
+        "https://youtu.be/abc",  # Too short video ID
+        "www.youtube.com/watch?v=dQw4w9WgXcQ",  # Missing protocol
+        "youtube.com/watch?v=dQw4w9WgXcQ",  # Missing protocol
+    ]
+
+    for url in malformed_urls:
+        result = runner.invoke(
+            app,
+            [
+                "playlist",
+                "add-track",
+                "1",
+                "--url",
+                url,
+                "--title",
+                "Test Track",
+            ],
+        )
+
+        assert (
+            "Invalid YouTube link" in result.output
+        ), f"Malformed URL should be rejected: {url}"
+        assert_no_system_execution(result)
+
+
+def test_add_track_rejects_youtube_lookalike_domains(mock_api_calls):
+    """Test that YouTube lookalike domains are rejected"""
+    lookalike_urls = [
+        "https://www.youtubee.com/watch?v=dQw4w9WgXcQ",
+        "https://www.youtube.org/watch?v=dQw4w9WgXcQ",
+        "https://www.youtube.net/watch?v=dQw4w9WgXcQ",
+        "https://www.youtubecom.com/watch?v=dQw4w9WgXcQ",
+        "https://www.fakeyoutube.com/watch?v=dQw4w9WgXcQ",
+        "https://youtube.malicious.com/watch?v=dQw4w9WgXcQ",
+        "https://youtu.bee/dQw4w9WgXcQ",
+    ]
+
+    for url in lookalike_urls:
+        result = runner.invoke(
+            app,
+            [
+                "playlist",
+                "add-track",
+                "1",
+                "--url",
+                url,
+                "--title",
+                "Test Track",
+            ],
+        )
+
+        assert (
+            "Invalid YouTube link" in result.output
+        ), f"Lookalike URL should be rejected: {url}"
+        assert_no_system_execution(result)
