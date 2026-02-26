@@ -85,7 +85,7 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
 
   return (
     <div class="relative z-20 w-fit">
-      <div id="visibility-trigger" class={`${badgeBase} ${colorClass} ${ canEditVisibility ? interactable : locked}`} data-visibility-trigger>
+      <div id="visibility-trigger" class={`${badgeBase} ${colorClass} ${canEditVisibility ? interactable : locked}`} data-visibility-trigger>
         <div class="flex items-center gap-2 pointer-events-none">
           {getIconForVisibility(visibility) as 'safe'}
           <span>{visibility} {await isShared(repo, playlist) ? "(SHARED)" : ""}</span>
@@ -97,19 +97,19 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
       {canEditVisibility &&
         <div id="visibility-menu" class="hidden absolute top-full left-0 mt-2 w-48 bg-neutral-900 border border-white/10 rounded-xl shadow-xl overflow-hidden backdrop-blur-md origin-top-left transition-all z-50 animate-in fade-in zoom-in-95 duration-200">
           <div class="flex flex-col py-1">
-            { visibility !== Visibility.private && (
+            {visibility !== Visibility.private && (
               <button class={menuOptionClass} data-visibility-option={Visibility.private}>
                 {getIconForVisibility(Visibility.private) as 'safe'}
                 <span>Private</span>
               </button>
             )}
-            { visibility !== Visibility.public && (
+            {visibility !== Visibility.public && (
               <button class={menuOptionClass} data-visibility-option={Visibility.public}>
                 {getIconForVisibility(Visibility.public) as 'safe'}
                 <span>Public</span>
               </button>
             )}
-            { visibility !== Visibility.open && await isAdmin() &&
+            {visibility !== Visibility.open && await isAdmin() &&
               <button class={menuOptionClass} data-visibility-option={Visibility.open}>
                 {getIconForVisibility(Visibility.open) as 'safe'}
                 <span>OPEN</span>
@@ -122,7 +122,7 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
   );
 }
 
-function renderTrackList(playlist: Playlist): string {
+async function renderTrackList(playlist: Playlist): Promise<string> {
   const tracks = playlist.tracks || [];
   const currentTrack = trackPlayerInstance.getCurrentTrack();
   const playerState = trackPlayerInstance.getPlayerState();
@@ -130,15 +130,14 @@ function renderTrackList(playlist: Playlist): string {
   return (
     <div>
       <TrackListHeader />
-      {tracks.map(async (track, index) => ( await
+      {(await Promise.all(tracks.map(async (track, index) => (
         <TrackRow
           track={track}
           index={index}
           playlistId={playlist.idPlaylist}
-          trackPlayer={trackPlayerInstance}
-          current_track={[YoutubePlayerState.UNSTARTED, YoutubePlayerState.CUED].includes(playerState) ? null : currentTrack}
+          current_track={(playerState === YoutubePlayerState.UNSTARTED || playerState === YoutubePlayerState.CUED) ? undefined : currentTrack}
         />
-      )) as 'safe'}
+      )))) as unknown as 'safe'}
     </div>
   );
 }
@@ -333,7 +332,7 @@ export async function PlaylistDetailPage(
             class="w-48 h-48 rounded-md object-cover shadow-2xl"
             alt={playlist.name}
           />
-          { await canEdit(repo, playlist) && <Button id="add-track-button" variant="outline" size="md">Add Track</Button> }
+          {await canEdit(repo, playlist) && <Button id="add-track-button" variant="outline" size="md">Add Track</Button>}
         </div>
         <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
           {await getVisibilityElement(repo, playlist) as 'safe'}
@@ -430,4 +429,107 @@ export async function PlaylistDetailPage(
       }
     }
   };
+
+  // Drag & Drop Event Delegation
+  let draggedTrackIndex: number | null = null;
+  let draggedTrackId: number | null = null;
+
+  container.addEventListener('dragstart', (e: DragEvent) => {
+    const target = e.target as HTMLElement;
+    const row = target.closest('[data-track-index]') as HTMLElement;
+    if (row && e.dataTransfer) {
+      draggedTrackIndex = Number(row.getAttribute('data-track-index'));
+      draggedTrackId = Number(row.getAttribute('data-track-id'));
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', draggedTrackIndex.toString());
+      setTimeout(() => row.classList.add('opacity-50', 'bg-neutral-700'), 0);
+    }
+  });
+
+  container.addEventListener('dragover', (e: DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    const target = e.target as HTMLElement;
+    const row = target.closest('[data-track-index]') as HTMLElement;
+    if (row && Number(row.getAttribute('data-track-index')) !== draggedTrackIndex) {
+      const rect = row.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      row.style.borderTop = '';
+      row.style.borderBottom = '';
+      if (e.clientY < midY) {
+        row.style.borderTop = '2px solid #3b82f6';
+      } else {
+        row.style.borderBottom = '2px solid #3b82f6';
+      }
+    }
+  });
+
+  container.addEventListener('dragleave', (e: DragEvent) => {
+    const target = e.target as HTMLElement;
+    const row = target.closest('[data-track-index]') as HTMLElement;
+    if (row) {
+      row.style.borderTop = '';
+      row.style.borderBottom = '';
+    }
+  });
+
+  container.addEventListener('dragend', (e: DragEvent) => {
+    const target = e.target as HTMLElement;
+    const row = target.closest('[data-track-index]') as HTMLElement;
+    if (row) {
+      row.classList.remove('opacity-50', 'bg-neutral-700');
+    }
+    container.querySelectorAll('[data-track-index]').forEach(el => {
+      (el as HTMLElement).style.borderTop = '';
+      (el as HTMLElement).style.borderBottom = '';
+    });
+  });
+
+  container.addEventListener('drop', async (e: DragEvent) => {
+    e.preventDefault();
+    const target = e.target as HTMLElement;
+    const row = target.closest('[data-track-index]') as HTMLElement;
+
+    container.querySelectorAll('[data-track-index]').forEach(el => {
+      (el as HTMLElement).style.borderTop = '';
+      (el as HTMLElement).style.borderBottom = '';
+    });
+
+    if (row && draggedTrackIndex !== null && draggedTrackId !== null) {
+      const dropIndex = Number(row.getAttribute('data-track-index'));
+      if (dropIndex === draggedTrackIndex) return;
+
+      const rect = row.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      let newIndex = dropIndex;
+      if (e.clientY > midY) {
+        newIndex = dropIndex + 1;
+      }
+
+      if (draggedTrackIndex < newIndex) {
+        newIndex -= 1;
+      }
+
+      if (newIndex === draggedTrackIndex) return;
+
+      const trackToMove = tracks[draggedTrackIndex];
+      tracks.splice(draggedTrackIndex, 1);
+      tracks.splice(newIndex, 0, trackToMove);
+
+      playlist.tracks = [...tracks];
+      trackPlayerInstance.setPlaylist({ ...playlist });
+      updateTrackListDisplay();
+
+      const afterTrackId = newIndex > 0 ? tracks[newIndex - 1].idTrack : null;
+
+      try {
+        await repo.reorderTrack(playlist.idPlaylist, draggedTrackId, afterTrackId);
+      } catch (err) {
+        console.error("Failed to reorder tracks", err);
+        new AlertManager().error("Failed to save reorder");
+      }
+      draggedTrackIndex = null;
+      draggedTrackId = null;
+    }
+  });
 }

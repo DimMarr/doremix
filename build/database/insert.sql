@@ -102,13 +102,13 @@ INSERT INTO PLAYLIST (name, idGenre, idOwner, visibility, vote, coverImage) VALU
 ('Rap US Gold', 3, 1, 'OPEN', 420, 'asset:playlist1.jpg'),
 ('Indie Pop Mix', 2, 4, 'PRIVATE', 75, NULL);
 
-INSERT INTO TRACK_PLAYLIST (idTrack, idPlaylist, nameInPlaylist) VALUES
-(2, 1, NULL),
-(18, 1, 'Inception (Best OST)'),
-(4, 2, NULL),
-(5, 2, NULL),
-(1, 3, NULL),
-(2, 3, 'L hymne du stade');
+INSERT INTO TRACK_PLAYLIST (idTrack, idPlaylist, nameInPlaylist, next_track_id) VALUES
+(2, 1, NULL, 18),
+(18, 1, 'Inception (Best OST)', NULL),
+(4, 2, NULL, 5),
+(5, 2, NULL, NULL),
+(1, 3, NULL, 2),
+(2, 3, 'L hymne du stade', NULL);
 
 INSERT INTO GROUP_PLAYLIST (idGroup, idPlaylist) VALUES (3, 3);
 INSERT INTO USER_PLAYLIST (idUser, idPlaylist, editor) VALUES (3, 3, TRUE);

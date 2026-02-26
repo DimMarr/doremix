@@ -17,3 +17,9 @@ class TrackPlaylist(Base):
         ForeignKey("playlist.idplaylist", ondelete="CASCADE"),
         primary_key=True,
     )
+    next_track_id = Column(
+        "next_track_id",
+        Integer,
+        ForeignKey("track.idtrack"),
+        nullable=True,
+    )

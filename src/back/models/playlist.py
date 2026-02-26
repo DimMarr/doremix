@@ -34,7 +34,11 @@ class Playlist(Base):
     genre = relationship("Genre", foreign_keys=[idGenre])
 
     tracks = relationship(
-        "Track", secondary="track_playlist", back_populates="playlists"
+        "Track",
+        secondary="track_playlist",
+        primaryjoin="Playlist.idPlaylist == foreign(TrackPlaylist.idPlaylist)",
+        secondaryjoin="Track.idTrack == foreign(TrackPlaylist.idTrack)",
+        back_populates="playlists",
     )
 
     users = relationship("User", secondary="user_playlist", back_populates="playlists")

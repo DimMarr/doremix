@@ -42,3 +42,8 @@ class SharePlaylistRequest(BaseModel):
 
 class ShareGroupRequest(BaseModel):
     group_name: str
+
+
+class ReorderTrackRequest(BaseModel):
+    track_id: int
+    after_track_id: Optional[int] = None

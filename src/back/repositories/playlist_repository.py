@@ -161,33 +161,66 @@ class PlaylistRepository:
 
     @staticmethod
     def remove_track(db: Session, playlist_id: int, track_id: int) -> bool:
-        track = (
+        track_to_remove = (
             db.query(TrackPlaylist)
             .filter(TrackPlaylist.idPlaylist == playlist_id)
             .filter(TrackPlaylist.idTrack == track_id)
             .first()
         )
 
-        if track:
-            db.delete(track)
-            db.commit()
-            return True
-        if track:
-            db.delete(track)
+        if track_to_remove:
+            prev_track = (
+                db.query(TrackPlaylist)
+                .filter(TrackPlaylist.idPlaylist == playlist_id)
+                .filter(TrackPlaylist.next_track_id == track_id)
+                .first()
+            )
+            if prev_track:
+                prev_track.next_track_id = track_to_remove.next_track_id
+            db.delete(track_to_remove)
             db.commit()
             return True
         return False
 
     @staticmethod
     def get_playlist_tracks(db: Session, playlist_id: int) -> List[Track]:
-        tracks: List[Track] = (
-            db.query(Track)
-            .join(TrackPlaylist)
+        track_playlists = (
+            db.query(TrackPlaylist, Track)
+            .join(Track, TrackPlaylist.idTrack == Track.idTrack)
             .filter(TrackPlaylist.idPlaylist == playlist_id)
-            .order_by(TrackPlaylist.idTrack)
             .all()
         )
-        return tracks
+
+        if not track_playlists:
+            return []
+
+        by_id = {tp.idTrack: (tp, track) for tp, track in track_playlists}
+        next_ids = {
+            tp.next_track_id
+            for tp, _ in track_playlists
+            if tp.next_track_id is not None
+        }
+
+        head_id = None
+        for tp, _ in track_playlists:
+            if tp.idTrack not in next_ids:
+                head_id = tp.idTrack
+                break
+
+        ordered_tracks = []
+        curr_id = head_id
+        while curr_id is not None and curr_id in by_id:
+            tp, track = by_id[curr_id]
+            ordered_tracks.append(track)
+            curr_id = tp.next_track_id
+
+        # In case of broken links, append unvisited
+        visited = {t.idTrack for t in ordered_tracks}
+        for tp, track in track_playlists:
+            if track.idTrack not in visited:
+                ordered_tracks.append(track)
+
+        return ordered_tracks
 
     @staticmethod
     def add_track(
@@ -244,11 +277,85 @@ class PlaylistRepository:
         if existing:
             return track, "already_exists"
 
+        tail = (
+            db.query(TrackPlaylist)
+            .filter(TrackPlaylist.idPlaylist == playlist_id)
+            .filter(TrackPlaylist.next_track_id.is_(None))
+            .first()
+        )
+
         trackPlaylist = TrackPlaylist(idPlaylist=playlist_id, idTrack=track.idTrack)
         db.add(trackPlaylist)
+        if tail:
+            tail.next_track_id = track.idTrack
         db.commit()
         db.refresh(trackPlaylist)
         return track, "added"
+
+    @staticmethod
+    def reorder_track(
+        db: Session, playlist_id: int, track_id: int, after_track_id: Optional[int]
+    ) -> bool:
+        if track_id == after_track_id:
+            return True
+
+        track_to_move = (
+            db.query(TrackPlaylist)
+            .filter(TrackPlaylist.idPlaylist == playlist_id)
+            .filter(TrackPlaylist.idTrack == track_id)
+            .first()
+        )
+        if not track_to_move:
+            return False
+
+        old_prev = (
+            db.query(TrackPlaylist)
+            .filter(TrackPlaylist.idPlaylist == playlist_id)
+            .filter(TrackPlaylist.next_track_id == track_id)
+            .first()
+        )
+
+        if old_prev:
+            old_prev.next_track_id = track_to_move.next_track_id
+
+        if after_track_id is None:
+            all_tps = (
+                db.query(TrackPlaylist)
+                .filter(TrackPlaylist.idPlaylist == playlist_id)
+                .all()
+            )
+            next_ids = {
+                tp.next_track_id
+                for tp in all_tps
+                if tp.next_track_id is not None and tp.idTrack != track_id
+            }
+            head = next(
+                (
+                    tp
+                    for tp in all_tps
+                    if tp.idTrack not in next_ids and tp.idTrack != track_id
+                ),
+                None,
+            )
+            if head:
+                track_to_move.next_track_id = head.idTrack
+            else:
+                track_to_move.next_track_id = None
+        else:
+            new_prev = (
+                db.query(TrackPlaylist)
+                .filter(TrackPlaylist.idPlaylist == playlist_id)
+                .filter(TrackPlaylist.idTrack == after_track_id)
+                .first()
+            )
+            if new_prev:
+                track_to_move.next_track_id = new_prev.next_track_id
+                new_prev.next_track_id = track_to_move.idTrack
+            else:
+                return False
+
+        db.commit()
+        return True
 
     @staticmethod
     def get_by_name(db: Session, name: str) -> List[Playlist]:

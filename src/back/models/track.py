@@ -15,7 +15,11 @@ class Track(Base):
     createdAt = Column("createdat", TIMESTAMP, server_default=func.now())
 
     playlists = relationship(
-        "Playlist", secondary="track_playlist", back_populates="tracks"
+        "Playlist",
+        secondary="track_playlist",
+        primaryjoin="Track.idTrack == foreign(TrackPlaylist.idTrack)",
+        secondaryjoin="Playlist.idPlaylist == foreign(TrackPlaylist.idPlaylist)",
+        back_populates="tracks",
     )
 
     artists = relationship("Artist", secondary="track_artist", back_populates="tracks")

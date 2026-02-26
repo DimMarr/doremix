@@ -181,3 +181,22 @@ class PlaylistController:
         if msg == "group_not_found":
             raise HTTPException(404, "Group not found")
         return {"message": "Shared with group successfully"}
+
+    @staticmethod
+    def reorder_tracks(
+        db: Session,
+        playlist_id: int,
+        track_id: int,
+        after_track_id: int | None,
+        user_id: int,
+    ):
+        if not PlaylistRepository.can_edit_playlist(db, playlist_id, user_id):
+            raise HTTPException(403, "Permission denied")
+
+        success = PlaylistRepository.reorder_track(
+            db, playlist_id, track_id, after_track_id
+        )
+        if not success:
+            raise HTTPException(400, "Track reorder failed")
+
+        return {"message": "Reordered successfully"}

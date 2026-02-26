@@ -13,6 +13,7 @@ from schemas import (
     PlaylistUpdate,
     SharePlaylistRequest,
     ShareGroupRequest,
+    ReorderTrackRequest,
 )
 from database import get_db
 import os
@@ -122,6 +123,18 @@ def add_playlist_track_by_url(
     if not track:
         raise HTTPException(status_code=500, detail="Failed to add track")
     return track
+
+
+@router.put("/{playlist_id}/tracks/reorder", summary="Rearrange track order")
+def reorder_playlist_tracks(
+    playlist_id: int,
+    req: ReorderTrackRequest,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    return PlaylistController.reorder_tracks(
+        db, playlist_id, req.track_id, req.after_track_id, user_id
+    )
 
 
 @router.post("/{playlist_id}/cover", response_model=PlaylistSchema)

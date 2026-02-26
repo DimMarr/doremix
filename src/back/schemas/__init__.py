@@ -4,6 +4,7 @@ from .playlist import (
     PlaylistUpdate,
     SharePlaylistRequest,
     ShareGroupRequest,
+    ReorderTrackRequest,
 )
 from .track import TrackSchema
 from .user import UserSchema, ModerationUserSchema, BanUserResponse
