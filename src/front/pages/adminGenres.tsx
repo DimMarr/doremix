@@ -187,7 +187,6 @@ async function initGenreManagement(container: HTMLElement) {
       const newLabel = input?.value.trim();
       if (!newLabel) return;
 
-      // NOUVEAU: Vérification client anti-doublon (sauf s'il garde le même nom)
       if (genres.some((g) => g.label.toLowerCase() === newLabel.toLowerCase() && g.idGenre !== id)) {
         new AlertManager().error("This genre already exists");
         return;
@@ -228,7 +227,6 @@ async function initGenreManagement(container: HTMLElement) {
     const label = newGenreInput.value.trim();
     if (!label) return;
 
-    // NOUVEAU: Vérification client anti-doublon
     if (genres.some((g) => g.label.toLowerCase() === label.toLowerCase())) {
       new AlertManager().error("This genre already exists");
       return;
