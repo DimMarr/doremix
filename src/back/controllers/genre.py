@@ -16,10 +16,22 @@ class GenreController:
 
     @staticmethod
     def create_genre(db: Session, label: str) -> Genre:
+        if GenreRepository.get_by_label(db, label):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Genre already exists",
+            )
         return GenreRepository.create(db, label)
 
     @staticmethod
     def update_genre(db: Session, genre_id: int, label: str) -> Genre:
+        existing = GenreRepository.get_by_label(db, label)
+        if existing and existing.idGenre != genre_id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Genre already exists",
+            )
+
         genre = GenreRepository.update(db, genre_id, label)
         if not genre:
             raise HTTPException(

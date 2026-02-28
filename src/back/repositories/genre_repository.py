@@ -1,6 +1,7 @@
 from typing import Optional, cast
 from models.genre import Genre
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 
 class GenreRepository:
@@ -13,6 +14,13 @@ class GenreRepository:
         return cast(
             Optional[Genre],
             db.query(Genre).filter(Genre.idGenre == genre_id).first(),
+        )
+
+    @staticmethod
+    def get_by_label(db: Session, label: str) -> Optional[Genre]:
+        return cast(
+            Optional[Genre],
+            db.query(Genre).filter(func.lower(Genre.label) == label.lower()).first(),
         )
 
     @staticmethod
