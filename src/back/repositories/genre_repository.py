@@ -1,20 +1,27 @@
 from typing import Optional, cast
 from models.genre import Genre
-from models.playlist import Playlist
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 
 class GenreRepository:
     @staticmethod
-    async def get_all(db: AsyncSession) -> list[Genre]:
-        result = await db.execute(select(Genre))
-        return cast(list[Genre], result.scalars().all())
+    def get_all(db: Session) -> list[Genre]:
+        return cast(list[Genre], db.query(Genre).all())
 
     @staticmethod
-    async def get_by_id(db: AsyncSession, genre_id: int) -> Optional[Genre]:
-        result = await db.execute(select(Genre).filter(Genre.idGenre == genre_id))
-        return cast(Optional[Genre], result.scalars().first())
+    def get_by_id(db: Session, genre_id: int) -> Optional[Genre]:
+        return cast(
+            Optional[Genre],
+            db.query(Genre).filter(Genre.idGenre == genre_id).first(),
+        )
+
+    @staticmethod
+    def get_by_label(db: Session, label: str) -> Optional[Genre]:
+        return cast(
+            Optional[Genre],
+            db.query(Genre).filter(func.lower(Genre.label) == label.lower()).first(),
+        )
 
     @staticmethod
     async def create(db: AsyncSession, label: str) -> Genre:
