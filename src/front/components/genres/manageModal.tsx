@@ -125,13 +125,24 @@ export function setupGenreManageModal() {
       const input = document.getElementById(`edit-input-${id}`) as HTMLInputElement | null;
       const newLabel = input?.value.trim();
       if (!newLabel) return;
+
+      // NOUVEAU: Vérification client anti-doublon
+      if (genres.some((g) => g.label.toLowerCase() === newLabel.toLowerCase() && g.idGenre !== id)) {
+        new AlertManager().error("This genre already exists");
+        return;
+      }
+
       try {
         await repo.update(id, newLabel);
         new AlertManager().success("Genre updated");
         editingId = null;
         await refresh();
-      } catch {
-        new AlertManager().error("Failed to update genre");
+      } catch (error: any) {
+        if (error.message === "Conflict") {
+          new AlertManager().error("This genre already exists");
+        } else {
+          new AlertManager().error("Failed to update genre");
+        }
       }
       return;
     }
@@ -154,13 +165,24 @@ export function setupGenreManageModal() {
     e.preventDefault();
     const label = newGenreInput.value.trim();
     if (!label) return;
+
+    // NOUVEAU: Vérification client anti-doublon
+    if (genres.some((g) => g.label.toLowerCase() === label.toLowerCase())) {
+      new AlertManager().error("This genre already exists");
+      return;
+    }
+
     try {
       await repo.create(label);
       new AlertManager().success("Genre created");
       newGenreInput.value = "";
       await refresh();
-    } catch {
-      new AlertManager().error("Failed to create genre");
+    } catch (error: any) {
+      if (error.message === "Conflict") {
+        new AlertManager().error("This genre already exists");
+      } else {
+        new AlertManager().error("Failed to create genre");
+      }
     }
   });
 }
