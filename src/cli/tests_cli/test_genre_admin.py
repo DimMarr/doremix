@@ -7,12 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.utils.exceptions import NotAuthenticatedError
-from src.services.genre import (
-    get_all,
-    create,
-    update,
-    delete
-)
+from src.services.genre import get_all, create, update, delete
 
 
 def _response(status_code: int, payload, text: str = "ok") -> MagicMock:
@@ -29,7 +24,10 @@ def mock_auth_and_http():
         patch("requests.request") as mock_request,
         patch("src.utils.http_client.get_access_token", return_value="access-token"),
         patch("src.utils.http_client.get_refresh_token", return_value="refresh-token"),
-        patch("src.utils.http_client.auth_service.refresh", side_effect=NotAuthenticatedError("Session expired")),
+        patch(
+            "src.utils.http_client.auth_service.refresh",
+            side_effect=NotAuthenticatedError("Session expired"),
+        ),
         patch("src.services.playlist.auth_service.whoami", return_value={"id": 1}),
     ):
         yield mock_request
@@ -71,7 +69,6 @@ def test_get_all_raises_on_403(mock_auth_and_http):
         get_all()
 
 
-
 def test_create_genre_success(mock_auth_and_http):
     mock_auth_and_http.return_value = _response(201, {"idGenre": 10, "label": "Metal"})
 
@@ -102,9 +99,10 @@ def test_create_genre_raises_on_403(mock_auth_and_http):
         create(label="Blues")
 
 
-
 def test_update_genre_success(mock_auth_and_http):
-    mock_auth_and_http.return_value = _response(200, {"idGenre": 5, "label": "Classical"})
+    mock_auth_and_http.return_value = _response(
+        200, {"idGenre": 5, "label": "Classical"}
+    )
 
     genre = update(genre_id=5, label="Classical")
 
@@ -154,7 +152,9 @@ def test_delete_genre_success_on_204(mock_auth_and_http):
 
 
 def test_delete_genre_raises_on_400_linked_to_playlists(mock_auth_and_http):
-    mock_auth_and_http.return_value = _response(400, {}, text="Genre linked to playlists")
+    mock_auth_and_http.return_value = _response(
+        400, {}, text="Genre linked to playlists"
+    )
 
     with pytest.raises(Exception, match="linked"):
         delete(genre_id=3)
