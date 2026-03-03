@@ -4,12 +4,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from src.services.genre import (
-    get_all,
-    create,
-    update,
-    delete
-)
+from src.services.genre import get_all, create, update, delete
 from src.utils.token_storage import get_user
 from src.utils.exceptions import (
     ApiRequestError,
@@ -27,7 +22,9 @@ def _require_admin() -> None:
     try:
         user = get_user()
         if user.get("role") != "ADMIN":
-            raise ForbiddenError("Access denied. This command requires Administrator privileges.")
+            raise ForbiddenError(
+                "Access denied. This command requires Administrator privileges."
+            )
     except NotAuthenticatedError as exc:
         console.print(f"[yellow]⚠ {exc}[/yellow]")
         raise typer.Exit(code=1)
@@ -39,13 +36,13 @@ def _require_admin() -> None:
 @app.command("list", help="List all available musical genres.")
 def list_command() -> None:
     _require_admin()
-    
+
     try:
         genres = get_all()
         if not genres:
             console.print("[yellow]No genres found in the database.[/yellow]")
             return
-            
+
         table = Table(title="Available Genres")
         table.add_column("id", style="cyan")
         table.add_column("label", style="magenta")
@@ -54,19 +51,21 @@ def list_command() -> None:
             table.add_row(str(genre.idGenre), genre.label)
 
         console.print(table)
-            
+
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")
 
 
 @app.command("add", help="Create a new genre.")
 def add_command(
-    label: str = typer.Option(..., "--label", "-l", prompt=True, help="The name of the new genre."),
+    label: str = typer.Option(
+        ..., "--label", "-l", prompt=True, help="The name of the new genre."
+    ),
 ) -> None:
     _require_admin()
-    
+
     clean_label = label.strip()
-    
+
     try:
         existing_genres = get_all()
         if any(g.label.strip().lower() == clean_label.lower() for g in existing_genres):
@@ -74,8 +73,10 @@ def add_command(
             return
 
         new_genre = create(label=clean_label)
-        console.print(f"[green]✓ Genre '{new_genre.label}' created successfully![/green]")
-        
+        console.print(
+            f"[green]✓ Genre '{new_genre.label}' created successfully![/green]"
+        )
+
         table = Table(show_header=False)
         table.add_column("Field", style="cyan")
         table.add_column("Value", style="magenta")
@@ -94,31 +95,43 @@ def add_command(
 @app.command("update", help="Update an existing genre's label.")
 def update_command(
     genre_id: int = typer.Argument(..., help="The ID of the genre to update."),
-    label: str = typer.Option(..., "--label", "-l", prompt=True, help="The new name for the genre."),
+    label: str = typer.Option(
+        ..., "--label", "-l", prompt=True, help="The new name for the genre."
+    ),
 ) -> None:
     _require_admin()
-    
+
     clean_label = label.strip()
-    
+
     try:
         existing_genres = get_all()
-        current_genre = next((g for g in existing_genres if g.idGenre == genre_id), None)
-        
+        current_genre = next(
+            (g for g in existing_genres if g.idGenre == genre_id), None
+        )
+
         if not current_genre:
             console.print(f"[yellow]⚠ Genre with ID {genre_id} not found.[/yellow]")
             return
-            
+
         if current_genre.label.strip().lower() == clean_label.lower():
-            console.print(f"[yellow] No changes needed. The genre is already named '{current_genre.label}'.[/yellow]")
+            console.print(
+                f"[yellow] No changes needed. The genre is already named '{current_genre.label}'.[/yellow]"
+            )
             return
-            
-        if any(g.label.strip().lower() == clean_label.lower() for g in existing_genres if g.idGenre != genre_id):
-            console.print(f"[yellow]⚠ Another genre already uses the name '{clean_label}'.[/yellow]")
+
+        if any(
+            g.label.strip().lower() == clean_label.lower()
+            for g in existing_genres
+            if g.idGenre != genre_id
+        ):
+            console.print(
+                f"[yellow]⚠ Another genre already uses the name '{clean_label}'.[/yellow]"
+            )
             return
 
         updated_genre = update(genre_id=genre_id, label=clean_label)
         console.print("[green]✓ Genre successfully updated![/green]")
-        
+
         table = Table(show_header=False)
         table.add_column("Field", style="cyan")
         table.add_column("Value", style="magenta")
@@ -140,13 +153,15 @@ def delete_command(
     force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
 ) -> None:
     _require_admin()
-    
+
     try:
         existing_genres = get_all()
         target_genre = next((g for g in existing_genres if g.idGenre == genre_id), None)
-        
+
         if not target_genre:
-            console.print(f"[yellow]⚠ Genre with ID {genre_id} not found. Deletion aborted.[/yellow]")
+            console.print(
+                f"[yellow]⚠ Genre with ID {genre_id} not found. Deletion aborted.[/yellow]"
+            )
             return
 
         if not force:
@@ -158,18 +173,21 @@ def delete_command(
                 raise typer.Abort()
 
         delete(genre_id=genre_id)
-        console.print(f"[green]✓ Genre '{target_genre.label}' (ID: {genre_id}) deleted successfully.[/green]")
-        
+        console.print(
+            f"[green]✓ Genre '{target_genre.label}' (ID: {genre_id}) deleted successfully.[/green]"
+        )
+
     except typer.Abort:
         pass
     except ApiRequestError as exc:
         if "linked" in str(exc) or "used" in str(exc):
             console.print(f"[bold red]✗ Constraint Error:[/bold red] [red]{exc}[/red]")
-            console.print("[red]Suggestion: Remove this genre from all playlists before trying to delete it.[/red]")
+            console.print(
+                "[red]Suggestion: Remove this genre from all playlists before trying to delete it.[/red]"
+            )
         else:
             console.print(f"[red]✗ API Error: {exc}[/red]")
     except (GenreNotFoundError, NotAuthenticatedError) as exc:
         console.print(f"[yellow]⚠ {exc}[/yellow]")
     except Exception as e:
         console.print(f"[red]✗ Unexpected Error: {e}[/red]")
-
