@@ -19,3 +19,11 @@ class PlaylistSchema(BaseModel):
     coverImage: str | None = None
     createdAt: datetime
     updatedAt: datetime
+
+
+class SharedUserSchema(BaseModel):
+    idUser: int
+    idPlaylist: int
+    editor: bool
+    username: str
+    email: str
