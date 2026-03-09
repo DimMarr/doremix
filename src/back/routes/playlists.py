@@ -13,6 +13,7 @@ from schemas import (
     PlaylistUpdate,
     SharePlaylistRequest,
     ShareGroupRequest,
+    SharedUserSchema,
 )
 from database import get_db
 import os
@@ -190,6 +191,7 @@ def update_playlist(
 
 @router.get(
     "/{playlist_id}/shared-with",
+    response_model=List[SharedUserSchema],
     summary="Lister la liste des utilisateurs partagées et leurs droits",
 )
 def shared_with(
@@ -197,7 +199,8 @@ def shared_with(
     current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ):
-    return PlaylistController.shared_with(db, playlist_id, current_user_id)
+    users = PlaylistController.shared_with(db, playlist_id, current_user_id)
+    return [SharedUserSchema.from_user_playlist(u) for u in users]
 
 
 @router.post("/{playlist_id}/share/user", summary="Partager avec un utilisateur")
@@ -220,3 +223,19 @@ def share_playlist_group(
     user_id: int = Depends(get_current_user_id),
 ):
     return PlaylistController.share_group(db, playlist_id, user_id, req.group_name)
+
+
+@router.delete(
+    "/{playlist_id}/share/user/{target_user_id}",
+    response_model=dict,
+    summary="Retirer un utilisateur du partage d'une playlist",
+)
+def unshare_playlist_user(
+    playlist_id: int,
+    target_user_id: int,
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    return PlaylistController.unshare_user(
+        db, playlist_id, target_user_id, current_user_id
+    )

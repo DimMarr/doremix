@@ -1,4 +1,4 @@
-import { TrackRepository } from "@repositories/index";
+import {PlaylistRepository, TrackRepository} from "@repositories/index";
 import { Button, Input } from "@components/generics";
 import { isValidEmail } from "@utils/authentication";
 import { AlertManager } from "@utils/alertManager";
@@ -153,41 +153,43 @@ export function AddTrackModal({ playlistId, onClose, onTrackAdded }) {
 }
 
 
-export function ShareModal({ playlistId, onClose }) {
+export function ShareModal({ playlistId, isOwnerOrAdmin, onClose }) {
   const modalHtml = (
-    <div id="share-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-      <div class="bg-neutral-900 border border-border rounded-lg p-8 max-w-md w-full flex flex-col gap-5">
-        <h2 class="text-2xl font-bold text-foreground mb-4">Share Playlist</h2>
-        <form id="share-form">
-          <div class="mb-4 flex flex-col gap-5">
-            <Input label="Email address" placeholder="vincent.berry@umontpellier.fr" id="email"/>
-            <Input label="Is Editor ?" id="editor" type="checkbox"/>
+      <div id="share-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-neutral-900 border border-border rounded-lg p-8 max-w-md w-full flex flex-col gap-5">
+          <div class="flex items-center justify-between">
+            <h2 class="text-2xl font-bold text-foreground">Share Playlist</h2>
+            <button id="cancel-share" class="text-muted-foreground hover:text-white transition-colors">✕</button>
           </div>
 
-          <div class="flex justify-end gap-4">
-            <Button type="button" id="cancel-share" variant="secondary">
-              Cancel
-            </Button>
-            <Button type="submit" id="submit-share" disabled>
-              Share
-            </Button>
+          {isOwnerOrAdmin && (
+              <form id="share-form" class="flex flex-col gap-3">
+                <Input label="Email address" placeholder="vincent.berry@umontpellier.fr" id="email"/>
+                <Input label="Is Editor ?" id="editor" type="checkbox"/>
+                <div class="flex justify-end gap-4">
+                  <Button type="submit" id="submit-share" disabled>Share</Button>
+                </div>
+              </form>
+          )}
+
+          <div class="flex flex-col gap-2">
+            <p class="text-sm font-semibold text-muted-foreground uppercase tracking-wider">People with access</p>
+            <div id="shared-users-list" class="flex flex-col gap-2 max-h-64 overflow-y-auto">
+              <p class="text-sm text-muted-foreground">Loading...</p>
+            </div>
           </div>
-        </form>
+        </div>
       </div>
-    </div>
   );
 
   function render(container) {
     container.innerHTML = modalHtml;
 
-    const emailInput = container.querySelector('#email');
-    const editorInput = container.querySelector('#editor');
-    const submitButton = container.querySelector('#submit-share');
+    const usersList = container.querySelector('#shared-users-list');
+    const playlistRepo = new PlaylistRepository();
 
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        cleanupAndClose();
-      }
+      if (e.key === 'Escape') cleanupAndClose();
     };
 
     const cleanupAndClose = () => {
@@ -196,57 +198,114 @@ export function ShareModal({ playlistId, onClose }) {
     };
 
     window.addEventListener('keydown', handleKeyDown);
+    container.querySelector('#cancel-share').onclick = () => cleanupAndClose();
 
-    container.querySelector('#cancel-share').onclick = () => {
-      cleanupAndClose();
+    const loadUsers = async () => {
+      try {
+        const users = await playlistRepo.sharedWith(playlistId);
+
+        if (users.length === 0) {
+          usersList.innerHTML = `<p class="text-sm text-muted-foreground">No users have access yet.</p>`;
+          return;
+        }
+
+        usersList.innerHTML = users.map((u) => `
+          <div class="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-white/5 border border-white/8" data-user-id="${u.idUser}">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="flex items-center justify-center w-9 h-9 rounded-full bg-neutral-700 text-sm font-semibold text-white shrink-0">
+                ${u.username.charAt(0).toUpperCase()}
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-white truncate">${u.username}</p>
+                <p class="text-xs text-muted-foreground truncate">${u.email}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              ${u.editor
+            ? `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/20">Editor</span>`
+            : `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/20">Viewer</span>`
+        }
+              ${isOwnerOrAdmin
+            ? `<button class="remove-user flex items-center justify-center w-7 h-7 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors" data-user-id="${u.idUser}">✕</button>`
+            : ''
+        }
+            </div>
+          </div>
+        `).join('');
+
+        if (isOwnerOrAdmin) {
+          usersList.querySelectorAll('.remove-user').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+              const userId = Number(btn.getAttribute('data-user-id'));
+              btn.disabled = true;
+
+              try {
+                await playlistRepo.removeSharedUser(playlistId, userId);
+                const row = usersList.querySelector(`[data-user-id="${userId}"]`);
+                row?.remove();
+                if (usersList.children.length === 0) {
+                  usersList.innerHTML = `<p class="text-sm text-muted-foreground">No users have access yet.</p>`;
+                }
+                new AlertManager().success("User removed successfully");
+              } catch {
+                new AlertManager().error("Failed to remove user");
+                btn.disabled = false;
+              }
+            });
+          });
+        }
+
+      } catch {
+        usersList.innerHTML = `<p class="text-sm text-red-400">Failed to load users.</p>`;
+      }
     };
 
-        container.querySelector('#share-form').onsubmit = async (e) => {
-          e.preventDefault();
-          const email = emailInput.value;
-          const editor = editorInput.checked;
-          const submitButton = container.querySelector('#submit-share');
-          const originalButtonContent = submitButton.innerHTML;
-          submitButton.disabled = true;
-          submitButton.innerHTML = `
-            <svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Sharing...`;
+    loadUsers();
 
-            try {
-              console.log(editor)
-              const response = await new TrackRepository().share(playlistId, email, editor);
-              console.log(response)
-              if (response == 200) {
-                new AlertManager().success("Playlist shared successfully");
-                cleanupAndClose();
-                return
-              }
-              throw new Error("Failed to add track")
+    if (isOwnerOrAdmin) {
+      const emailInput = container.querySelector('#email');
+      const editorInput = container.querySelector('#editor');
+      const submitButton = container.querySelector('#submit-share');
 
-            } catch (err){
-              submitButton.disabled = false;
-              submitButton.innerHTML = originalButtonContent;
-              throw new Error("Error sharing playlist")
-            }
-        };
-    let debounceTimer;
-    emailInput.addEventListener('keyup', (e) => {
+      let debounceTimer;
+      emailInput.addEventListener('keyup', (e) => {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-            handleEmailInputChange(e.target.value);
-        }, 500);
-    });
+          submitButton.disabled = !isValidEmail(e.target.value);
+        }, 300);
+      });
 
-    async function handleEmailInputChange(email) {
-      if (!isValidEmail(email)) {
+      container.querySelector('#share-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const email = emailInput.value;
+        const editor = editorInput.checked;
+        const originalContent = submitButton.innerHTML;
         submitButton.disabled = true;
-        return;
-      }
+        submitButton.innerHTML = `
+          <svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Sharing...`;
 
-      submitButton.disabled = false;
+        try {
+          const response = await new TrackRepository().share(playlistId, email, editor);
+          if (response == 200) {
+            new AlertManager().success("Playlist shared successfully");
+            emailInput.value = '';
+            editorInput.checked = false;
+            submitButton.disabled = true;
+            await loadUsers();
+            return;
+          }
+          throw new Error("Failed to share playlist");
+        } catch {
+          new AlertManager().error("Failed to share playlist");
+        } finally {
+          submitButton.disabled = false;
+          submitButton.innerHTML = originalContent;
+        }
+      };
     }
   }
 

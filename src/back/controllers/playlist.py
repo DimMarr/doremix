@@ -181,3 +181,24 @@ class PlaylistController:
         if msg == "group_not_found":
             raise HTTPException(404, "Group not found")
         return {"message": "Shared with group successfully"}
+
+    @staticmethod
+    def unshare_user(
+        db: Session, playlist_id: int, target_user_id: int, current_user_id: int
+    ):
+        success, msg = PlaylistRepository.remove_shared_user(
+            db, playlist_id, target_user_id, current_user_id
+        )
+        if msg == "playlist_not_found":
+            raise HTTPException(status_code=404, detail="Playlist not found")
+        if msg == "forbidden":
+            raise HTTPException(
+                status_code=403,
+                detail="You're not allowed to remove users from this playlist",
+            )
+        if msg == "user_not_found":
+            raise HTTPException(
+                status_code=404,
+                detail="This user does not have access to this playlist",
+            )
+        return {"message": "User successfully removed from playlist"}

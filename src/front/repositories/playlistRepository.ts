@@ -303,6 +303,29 @@ export class PlaylistRepository {
         }
     }
 
+    async removeSharedUser(playlistId: number, targetUserId: number): Promise<void> {
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/playlists/${playlistId}/share/user/${targetUserId}`,
+                {
+                    method: "DELETE",
+                    credentials: 'include',
+                }
+            );
+
+            if (!response.ok) {
+                handleHttpError(response, "Remove shared user");
+                throw new Error("Failed to remove shared user");
+            }
+        } catch (error) {
+            if (error instanceof TypeError) {
+                new AlertManager().error("Network error. Check your connection.");
+            }
+            console.error("Error removing shared user from playlist:", error);
+            throw error;
+        }
+    }
+
     async update(id: number, data: Partial<Playlist>) {
         try {
             const response = await fetch(`${API_BASE_URL}/playlists/${id}`, {

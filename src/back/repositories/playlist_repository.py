@@ -388,3 +388,31 @@ class PlaylistRepository:
             db.commit()
 
         return True, "success"
+
+    @staticmethod
+    def remove_shared_user(
+        db: Session, playlist_id: int, target_user_id: int, current_user_id: int
+    ):
+        playlist = db.query(Playlist).filter(Playlist.idPlaylist == playlist_id).first()
+
+        if not playlist:
+            return False, "playlist_not_found"
+
+        if playlist.idOwner != current_user_id:
+            return False, "forbidden"
+
+        link = (
+            db.query(UserPlaylist)
+            .filter(
+                UserPlaylist.idPlaylist == playlist_id,
+                UserPlaylist.idUser == target_user_id,
+            )
+            .first()
+        )
+
+        if not link:
+            return False, "user_not_found"
+
+        db.delete(link)
+        db.commit()
+        return True, "success"

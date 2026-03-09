@@ -122,6 +122,48 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
   );
 }
 
+async function getSharedUsersElement(repo: PlaylistRepository, playlist: Playlist, isPlaylistOwner: boolean): Promise<string> {
+  const adminUser = await isAdmin();
+  if (!isPlaylistOwner && !adminUser) return '';
+
+  let users: any[] = [];
+  try {
+    users = await repo.sharedWith(playlist.idPlaylist);
+  } catch {
+    return '';
+  }
+
+  if (users.length === 0) return '';
+
+  const MAX_VISIBLE = 5;
+  const visible = users.slice(0, MAX_VISIBLE);
+  const overflow = users.length - MAX_VISIBLE;
+
+  const avatars = visible.map((u: any) => {
+    const name: string = u.user?.username ?? `#${u.idUser}`;
+    const initial = u.username.charAt(0).toUpperCase();
+    const roleTitle = u.editor ? `${u.username} (Editor)` : `${u.username} (Viewer)`;
+    return `<div
+      title="${roleTitle}"
+      class="shared-user-avatar flex items-center justify-center w-7 h-7 rounded-full bg-neutral-700 border-2 border-neutral-900 text-xs font-semibold text-white -ml-2 first:ml-0 cursor-default select-none hover:z-10 hover:scale-110 transition-transform"
+    >${initial}</div>`;
+  }).join('');
+
+  const overflowBadge = overflow > 0
+      ? `<div class="flex items-center justify-center w-7 h-7 rounded-full bg-neutral-600 border-2 border-neutral-900 text-xs font-semibold text-muted-foreground -ml-2 select-none">+${overflow}</div>`
+      : '';
+
+  return `
+    <div id="shared-users-section" class="flex items-center gap-2 mt-1">
+      <div class="flex items-center">
+        ${avatars}
+        ${overflowBadge}
+      </div>
+      <span class="text-xs text-muted-foreground">${users.length} ${users.length === 1 ? 'person' : 'people'} with access</span>
+    </div>
+  `;
+}
+
 function renderTrackList(playlist: Playlist): string {
   const tracks = playlist.tracks || [];
   const currentTrack = trackPlayerInstance.getCurrentTrack();
@@ -173,6 +215,7 @@ export async function PlaylistDetailPage(
             {isPlaylistOwner && <Button id="share-button" variant="outline" size="md">Share Playlist</Button>}
             {canDeleteCurrentPlaylist && <Button id="delete-playlist-button" variant="destructive" size="md">Delete Playlist</Button>}
           </div>
+          {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
         </>
       );
     }
@@ -225,14 +268,19 @@ export async function PlaylistDetailPage(
     render(modalContainer);
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     const modalContainer = container.querySelector('#modal-container');
     if (!modalContainer) return;
 
+    const isPlaylistOwner = await isOwner(playlist);
+    const adminUser = await isAdmin();
+
     const { render } = ShareModal({
       playlistId: playlist.idPlaylist,
+      isOwnerOrAdmin: isPlaylistOwner || adminUser,
       onClose: () => {
         modalContainer.innerHTML = '';
+        updateHeader();
       }
     });
     render(modalContainer);
@@ -344,6 +392,7 @@ export async function PlaylistDetailPage(
             {isPlaylistOwner && <Button id="share-button" variant="outline" size="md">Share Playlist</Button>}
             {canDeleteCurrentPlaylist && <Button id="delete-playlist-button" variant="destructive" size="md">Delete Playlist</Button>}
           </div>
+          {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
         </div>
       </div>
 
