@@ -85,7 +85,7 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
 
   return (
     <div class="relative z-20 w-fit">
-      <div id="visibility-trigger" class={`${badgeBase} ${colorClass} ${ canEditVisibility ? interactable : locked}`} data-visibility-trigger>
+      <div id="visibility-trigger" class={`${badgeBase} ${colorClass} ${canEditVisibility ? interactable : locked}`} data-visibility-trigger>
         <div class="flex items-center gap-2 pointer-events-none">
           {getIconForVisibility(visibility) as 'safe'}
           <span>{visibility} {await isShared(repo, playlist) ? "(SHARED)" : ""}</span>
@@ -97,19 +97,19 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
       {canEditVisibility &&
         <div id="visibility-menu" class="hidden absolute top-full left-0 mt-2 w-48 bg-neutral-900 border border-white/10 rounded-xl shadow-xl overflow-hidden backdrop-blur-md origin-top-left transition-all z-50 animate-in fade-in zoom-in-95 duration-200">
           <div class="flex flex-col py-1">
-            { visibility !== Visibility.private && (
+            {visibility !== Visibility.private && (
               <button class={menuOptionClass} data-visibility-option={Visibility.private}>
                 {getIconForVisibility(Visibility.private) as 'safe'}
                 <span>Private</span>
               </button>
             )}
-            { visibility !== Visibility.public && (
+            {visibility !== Visibility.public && (
               <button class={menuOptionClass} data-visibility-option={Visibility.public}>
                 {getIconForVisibility(Visibility.public) as 'safe'}
                 <span>Public</span>
               </button>
             )}
-            { visibility !== Visibility.open && await isAdmin() &&
+            {visibility !== Visibility.open && await isAdmin() &&
               <button class={menuOptionClass} data-visibility-option={Visibility.open}>
                 {getIconForVisibility(Visibility.open) as 'safe'}
                 <span>OPEN</span>
@@ -130,7 +130,7 @@ function renderTrackList(playlist: Playlist): string {
   return (
     <div>
       <TrackListHeader />
-      {tracks.map(async (track, index) => ( await
+      {tracks.map(async (track, index) => (await
         <TrackRow
           track={track}
           index={index}
@@ -170,8 +170,27 @@ export async function PlaylistDetailPage(
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
           <div class="flex flex-wrap gap-2 mt-1">
-            {isPlaylistOwner && <Button id="share-button" variant="outline" size="md">Share Playlist</Button>}
-            {canDeleteCurrentPlaylist && <Button id="delete-playlist-button" variant="destructive" size="md">Delete Playlist</Button>}
+            {await canEdit(repo, playlist) &&
+              <button id="add-track-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Add Track">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" />
+                </svg>
+              </button>
+            }
+            {isPlaylistOwner &&
+              <button id="share-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Share Playlist">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
+                </svg>
+              </button>
+            }
+            {canDeleteCurrentPlaylist &&
+              <button id="delete-playlist-button" class="p-2 rounded-md border border-red-500/20 text-red-500 hover:bg-red-500/10 transition-colors" title="Delete Playlist">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            }
           </div>
         </>
       );
@@ -333,7 +352,18 @@ export async function PlaylistDetailPage(
             class="w-48 h-48 rounded-md object-cover shadow-2xl"
             alt={playlist.name}
           />
-          { await canEdit(repo, playlist) && <Button id="add-track-button" variant="outline" size="md">Add Track</Button> }
+          <div class="flex items-center gap-2">
+            <button id="play-all-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Play">
+              <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </button>
+            <button id="shuffle-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Shuffle">
+              <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
+              </svg>
+            </button>
+          </div>
         </div>
         <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
           {await getVisibilityElement(repo, playlist) as 'safe'}
@@ -341,8 +371,27 @@ export async function PlaylistDetailPage(
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
           <div class="flex flex-wrap gap-2 mt-1">
-            {isPlaylistOwner && <Button id="share-button" variant="outline" size="md">Share Playlist</Button>}
-            {canDeleteCurrentPlaylist && <Button id="delete-playlist-button" variant="destructive" size="md">Delete Playlist</Button>}
+            {await canEdit(repo, playlist) &&
+              <button id="add-track-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Add Track">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" />
+                </svg>
+              </button>
+            }
+            {isPlaylistOwner &&
+              <button id="share-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Share Playlist">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
+                </svg>
+              </button>
+            }
+            {canDeleteCurrentPlaylist &&
+              <button id="delete-playlist-button" class="p-2 rounded-md border border-red-500/20 text-red-500 hover:bg-red-500/10 transition-colors" title="Delete Playlist">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            }
           </div>
         </div>
       </div>
@@ -399,6 +448,21 @@ export async function PlaylistDetailPage(
 
     if (target.closest('#add-track-button')) {
       handleAddTrack();
+      return;
+    }
+
+    if (target.closest('#play-all-button')) {
+      if (tracks.length === 0) return;
+      trackPlayerInstance.setShuffle(false);
+      handlePlayTrack(0);
+      return;
+    }
+
+    if (target.closest('#shuffle-button')) {
+      if (tracks.length === 0) return;
+      trackPlayerInstance.setShuffle(true);
+      const index = Math.floor(Math.random() * tracks.length);
+      handlePlayTrack(index);
       return;
     }
 

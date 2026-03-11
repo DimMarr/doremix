@@ -54,7 +54,7 @@ declare global {
 }
 
 export const getYoutubePlayerStateFromCode = (code: number) => {
-    switch(code){
+    switch (code) {
         case -1:
             return 'UNSTARTED'
         case 0:
@@ -86,6 +86,7 @@ export class YoutubePlayer {
     private audioPlayer: YTPlayer;
     private isPlayerReady: boolean = false;
     private pendingAction: (() => void) | null = null;
+    private shuffleMode: boolean = false;
 
     constructor(
         { youtubePlayerHtmlElementId, playlist }: YoutubePlayerProps,
@@ -128,7 +129,7 @@ export class YoutubePlayer {
         this.playlist = playlist;
         this.tracks = this.playlist.tracks;
 
-        if(this.tracks.length === 0){
+        if (this.tracks.length === 0) {
             this.hide();
             return;
         }
@@ -257,8 +258,14 @@ export class YoutubePlayer {
     }
 
     nextTrack(): void {
-        const newIndex = (this.currentPlayingTrackIndex + 1) %
-            this.tracks.length;
+        let newIndex: number;
+        if (this.shuffleMode && this.tracks.length > 1) {
+            do {
+                newIndex = Math.floor(Math.random() * this.tracks.length);
+            } while (newIndex === this.currentPlayingTrackIndex);
+        } else {
+            newIndex = (this.currentPlayingTrackIndex + 1) % this.tracks.length;
+        }
         this.playTrack(newIndex);
     }
 
@@ -268,7 +275,7 @@ export class YoutubePlayer {
             return;
         }
 
-        if(this.tracks.length === 0){
+        if (this.tracks.length === 0) {
             new AlertManager().error("No track to listen in this playlist");
         }
 
@@ -442,6 +449,10 @@ export class YoutubePlayer {
 
     getCurrentTrack(): Track | null {
         return this.tracks[this.currentPlayingTrackIndex] || null;
+    }
+
+    setShuffle(value: boolean): void {
+        this.shuffleMode = value;
     }
 }
 
