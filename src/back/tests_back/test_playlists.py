@@ -1,11 +1,12 @@
 import pytest
 from datetime import datetime
 from models import Playlist, PlaylistVisibility, User, Genre
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 
 @pytest.fixture
-def sample_playlists(db: Session, sample_user, sample_genre):
+async def sample_playlists(db: AsyncSession, sample_user, sample_genre):
     """Crée des playlists de test."""
     playlists = [
         Playlist(
@@ -31,10 +32,10 @@ def sample_playlists(db: Session, sample_user, sample_genre):
         ),
     ]
     db.add_all(playlists)
-    db.commit()
+    await db.commit()
 
     for playlist in playlists:
-        db.refresh(playlist)
+        await db.refresh(playlist)
 
     return playlists
 
@@ -42,22 +43,21 @@ def sample_playlists(db: Session, sample_user, sample_genre):
 class TestGetAllPlaylists:
     """Tests pour l'endpoint GET /playlists/."""
 
-    def test_get_all_playlists_success_complete(self, client, sample_playlists):
+    @pytest.mark.asyncio
+    async def test_get_all_playlists_success_complete(self, client, sample_playlists):
         """Test complet: récupération, structure, types et valeurs des données."""
-        response = client.get("/playlists/")
+        response = await client.get("/playlists/")
         assert response.status_code == 200
 
         data = response.json()
         assert isinstance(data, list)
         assert len(data) == 3
 
-        # Vérification des valeurs spécifiques (dont visibilité)
         assert data[0]["name"] == "My Favorite Songs"
         assert data[0]["visibility"] == "PUBLIC"
         assert data[1]["name"] == "Private Mix"
         assert data[1]["visibility"] == "PRIVATE"
 
-        # Vérification du schéma et des types pour tous les éléments
         for playlist in data:
             assert isinstance(playlist["idPlaylist"], int)
             assert isinstance(playlist["name"], str)
@@ -68,9 +68,10 @@ class TestGetAllPlaylists:
             assert isinstance(playlist["createdAt"], str)
             assert isinstance(playlist["updatedAt"], str)
 
-    def test_get_all_playlists_empty(self, client):
+    @pytest.mark.asyncio
+    async def test_get_all_playlists_empty(self, client):
         """Test la récupération de playlists quand la BD est vide."""
-        response = client.get("/playlists/")
+        response = await client.get("/playlists/")
         assert response.status_code == 200
 
         data = response.json()
@@ -81,10 +82,11 @@ class TestGetAllPlaylists:
 class TestGetPlaylistById:
     """Tests pour l'endpoint GET /playlists/{playlist_id}."""
 
-    def test_get_playlist_by_id_success_complete(self, client, sample_playlists):
+    @pytest.mark.asyncio
+    async def test_get_playlist_by_id_success_complete(self, client, sample_playlists):
         """Test récupération ID avec validation complète (valeurs, structure, types)."""
         playlist_id = sample_playlists[0].idPlaylist
-        response = client.get(f"/playlists/{playlist_id}")
+        response = await client.get(f"/playlists/{playlist_id}")
 
         assert response.status_code == 200
 
@@ -102,10 +104,11 @@ class TestGetPlaylistById:
         assert isinstance(data["createdAt"], str)
         assert isinstance(data["updatedAt"], str)
 
-    def test_get_playlist_by_id_not_found(self, client):
+    @pytest.mark.asyncio
+    async def test_get_playlist_by_id_not_found(self, client):
         """Test la récupération d'une playlist inexistante."""
         try:
-            response = client.get("/playlists/999")
+            response = await client.get("/playlists/999")
             assert response.status_code in [404, 422, 500]
         except Exception as e:
             assert (
@@ -113,27 +116,30 @@ class TestGetPlaylistById:
                 or "validation error" in str(e).lower()
             )
 
-    def test_get_playlist_private_visibility(self, client, sample_playlists):
+    @pytest.mark.asyncio
+    async def test_get_playlist_private_visibility(self, client, sample_playlists):
         """Test la récupération d'une playlist privée."""
         private_playlist = next(
             p for p in sample_playlists if p.visibility == PlaylistVisibility.PRIVATE
         )
-        response = client.get(f"/playlists/{private_playlist.idPlaylist}")
+        response = await client.get(f"/playlists/{private_playlist.idPlaylist}")
 
         assert response.status_code == 200
         data = response.json()
         assert data["visibility"] == "PRIVATE"
 
-    def test_get_playlist_by_id_invalid_id_type(self, client):
+    @pytest.mark.asyncio
+    async def test_get_playlist_by_id_invalid_id_type(self, client):
         """Test avec un type d'ID de playlist invalide."""
-        response = client.get("/playlists/invalid")
+        response = await client.get("/playlists/invalid")
 
         assert response.status_code == 422
 
-    def test_get_playlist_by_id_negative_id(self, client):
+    @pytest.mark.asyncio
+    async def test_get_playlist_by_id_negative_id(self, client):
         """Test avec un ID de playlist négatif."""
         try:
-            response = client.get("/playlists/-1")
+            response = await client.get("/playlists/-1")
             assert response.status_code in [404, 422, 500]
         except Exception as e:
             assert (
@@ -141,22 +147,22 @@ class TestGetPlaylistById:
                 or "validation error" in str(e).lower()
             )
 
-    def test_get_playlist_preserves_data_integrity(
-        self, client, sample_playlists, db: Session
+    @pytest.mark.asyncio
+    async def test_get_playlist_preserves_data_integrity(
+        self, client, sample_playlists, db: AsyncSession
     ):
         """Test que la récupération d'une playlist ne la modifie pas."""
         original_playlist = sample_playlists[0]
         original_name = original_playlist.name
         original_vote = original_playlist.vote
 
-        response = client.get(f"/playlists/{original_playlist.idPlaylist}")
+        response = await client.get(f"/playlists/{original_playlist.idPlaylist}")
         assert response.status_code == 200
 
-        db_playlist = (
-            db.query(Playlist)
-            .filter(Playlist.idPlaylist == original_playlist.idPlaylist)
-            .first()
+        result = await db.execute(
+            select(Playlist).filter(Playlist.idPlaylist == original_playlist.idPlaylist)
         )
+        db_playlist = result.scalar_one_or_none()
 
         assert db_playlist is not None
         assert db_playlist.name == original_name
@@ -166,8 +172,9 @@ class TestGetPlaylistById:
 class TestPlaylistEdgeCases:
     """Tests pour les cas limites et scénarios spéciaux."""
 
-    def test_get_multiple_playlists_from_same_owner(
-        self, client, db: Session, sample_user, sample_genre
+    @pytest.mark.asyncio
+    async def test_get_multiple_playlists_from_same_owner(
+        self, client, db: AsyncSession, sample_user, sample_genre
     ):
         """Test la récupération de plusieurs playlists du même propriétaire."""
         playlists = [
@@ -179,18 +186,18 @@ class TestPlaylistEdgeCases:
             for i in range(5)
         ]
         db.add_all(playlists)
-        db.commit()
+        await db.commit()
 
-        response = client.get("/playlists/")
+        response = await client.get("/playlists/")
         assert response.status_code == 200
 
         data = response.json()
         assert len(data) == 5
-
         assert all(p["idOwner"] == sample_user.idUser for p in data)
 
-    def test_playlist_with_high_vote_count(
-        self, client, db: Session, sample_user, sample_genre
+    @pytest.mark.asyncio
+    async def test_playlist_with_high_vote_count(
+        self, client, db: AsyncSession, sample_user, sample_genre
     ):
         """Test une playlist avec un haut nombre de votes."""
         playlist = Playlist(
@@ -200,17 +207,18 @@ class TestPlaylistEdgeCases:
             vote=999999,
         )
         db.add(playlist)
-        db.commit()
-        db.refresh(playlist)
+        await db.commit()
+        await db.refresh(playlist)
 
-        response = client.get(f"/playlists/{playlist.idPlaylist}")
+        response = await client.get(f"/playlists/{playlist.idPlaylist}")
         assert response.status_code == 200
 
         data = response.json()
         assert data["vote"] == 999999
 
-    def test_playlist_name_with_special_characters(
-        self, client, db: Session, sample_user, sample_genre
+    @pytest.mark.asyncio
+    async def test_playlist_name_with_special_characters(
+        self, client, db: AsyncSession, sample_user, sample_genre
     ):
         """Test une playlist avec des caractères spéciaux dans le nom."""
         special_names = [
@@ -226,9 +234,9 @@ class TestPlaylistEdgeCases:
             )
             db.add(playlist)
 
-        db.commit()
+        await db.commit()
 
-        response = client.get("/playlists/")
+        response = await client.get("/playlists/")
         assert response.status_code == 200
 
         data = response.json()
@@ -237,7 +245,10 @@ class TestPlaylistEdgeCases:
         for name in special_names:
             assert name in returned_names
 
-    def test_all_visibility_types(self, client, db: Session, sample_user, sample_genre):
+    @pytest.mark.asyncio
+    async def test_all_visibility_types(
+        self, client, db: AsyncSession, sample_user, sample_genre
+    ):
         """Test que tous les types de visibilité sont retournés correctement."""
         visibility_types = [
             PlaylistVisibility.PUBLIC,
@@ -253,9 +264,9 @@ class TestPlaylistEdgeCases:
             )
             db.add(playlist)
 
-        db.commit()
+        await db.commit()
 
-        response = client.get("/playlists/")
+        response = await client.get("/playlists/")
         assert response.status_code == 200
 
         data = response.json()
