@@ -1,7 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import List
-
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 from controllers import UserController
 from schemas import UserSchema, PlaylistSchema
 from database import get_db
@@ -15,57 +13,32 @@ router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.get(
     "/",
-    response_model=List[UserSchema],
-    summary="Lister tous les utilisateurs",
-    description="Retourne la liste complète des utilisateurs enregistrés.",
+    response_model=list[UserSchema],
+    summary="List all users",
+    description="Returns the complete list of registered users.",
 )
-def get_users(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+async def get_users(
+    db: AsyncSession = Depends(get_db),
+    _admin=Depends(require_role(["ADMIN"])),
 ):
-    if not PermissionService.hasPermissionsTo(
-        db, current_user, Actions.READ, Ressources.USER
-    ):
-        raise HTTPException(status_code=403, detail="Not allowed to list users")
-    users = UserController.get_all_users(db)
-    return users
+    return await UserController.get_all_users(db)
 
 
 @router.get(
-    "/{idUser}",
+    "/{user_id}",
     response_model=UserSchema,
-    summary="Récupérer un utilisateur",
-    description="Retourne les informations détaillées d'un utilisateur à partir de son identifiant.",
+    summary="Get a user",
+    description="Returns the detailed information of a user based on their ID.",
 )
-def get_user(
-    idUser: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    if not PermissionService.hasPermissionsTo(
-        db, current_user, Actions.READ, Ressources.USER
-    ):
-        raise HTTPException(status_code=403, detail="Not allowed to view user details")
-    user = UserController.get_user(db, idUser)
-    return user
+async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
+    return await UserController.get_user(db, user_id)
 
 
 @router.get(
-    "/{idUser}/playlists",
-    response_model=List[PlaylistSchema],
-    summary="Récupérer les playlists d'un utilisateur",
-    description="Retourne la liste des playlists associées à un utilisateur spécifique.",
+    "/{user_id}/playlists",
+    response_model=list[PlaylistSchema],
+    summary="Get user playlists",
+    description="Returns the list of playlists associated with a specific user.",
 )
-def get_user_playlists(
-    idUser: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    if not PermissionService.hasPermissionsTo(
-        db, current_user, Actions.READ, Ressources.USER
-    ):
-        raise HTTPException(
-            status_code=403, detail="Not allowed to view user playlists"
-        )
-    playlists = UserController.get_user_playlists(db, idUser)
-    return playlists
+async def get_user_playlists(user_id: int, db: AsyncSession = Depends(get_db)):
+    return await UserController.get_user_playlists(db, user_id)

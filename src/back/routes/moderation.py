@@ -1,7 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import List
-
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 from controllers import UserController
 from database import get_db
 from middleware.auth_middleware import get_current_user
@@ -15,39 +13,31 @@ router = APIRouter(prefix="/moderation", tags=["Moderation"])
 
 @router.get(
     "/ban-candidates",
-    response_model=List[ModerationUserSchema],
+    response_model=list[ModerationUserSchema],
     summary="List users that can be banned",
     description="Returns non-admin users that are not banned yet. Reserved to moderators.",
 )
-def get_ban_candidates(
-    db: Session = Depends(get_db),
-    moderator: User = Depends(get_current_user),
+async def get_ban_candidates(
+    db: AsyncSession = Depends(get_db),
+    moderator_id: int = Depends(get_current_user_id),
+    _moderator=Depends(require_role(["MODERATOR"])),
 ):
-    if not PermissionService.hasPermissionsTo(
-        db, moderator, Actions.BAN, Ressources.USER
-    ):
-        raise HTTPException(status_code=403, detail="Not allowed to ban users")
-
-    return UserController.get_ban_candidates(db, moderator.idUser)
+    return await UserController.get_ban_candidates(db, moderator_id)
 
 
 @router.post(
-    "/users/{idUser}/ban",
+    "/users/{user_id}/ban",
     response_model=BanUserResponse,
     summary="Ban a user",
     description="Ban a non-admin user and revoke all their tokens. Reserved to moderators.",
 )
-def ban_user(
-    idUser: int,
-    db: Session = Depends(get_db),
-    moderator: User = Depends(get_current_user),
+async def ban_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    moderator_id: int = Depends(get_current_user_id),
+    _moderator=Depends(require_role(["MODERATOR"])),
 ):
-    if not PermissionService.hasPermissionsTo(
-        db, moderator, Actions.BAN, Ressources.USER, idUser
-    ):
-        raise HTTPException(status_code=403, detail="Not allowed to ban this user")
-
-    user = UserController.ban_user(db, moderator.idUser, idUser)
+    user = await UserController.ban_user(db, moderator_id, user_id)
     return {
         "idUser": user.idUser,
         "banned": user.banned,

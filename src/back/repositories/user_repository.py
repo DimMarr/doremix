@@ -1,4 +1,6 @@
-from sqlalchemy.orm import Session
+from typing import cast
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from sqlalchemy import or_
 from models.user import User, UserRole
 from models.group import GroupUser, UserGroup
@@ -11,78 +13,70 @@ _ROLE_GROUP_NAME = {
 
 
 class UserRepository:
+    ADMIN_ROLE_ID = 3  # hardcodé pour que les moderators ne puissent pas ban les admins
+
     @staticmethod
-    def create(db: Session, user: User) -> User:
+    async def create(db: AsyncSession, user: User) -> User:
         db.add(user)
-        db.commit()
-        db.refresh(user)
+        await db.commit()
+        await db.refresh(user)
         return user
 
     @staticmethod
-    def get_all(db: Session):
-        users = db.query(User).all()
-        return users
+    async def get_all(db: AsyncSession) -> list[User]:
+        result = await db.execute(select(User))
+        return list(result.scalars().all())
 
     @staticmethod
-    def get_user_by_id(db: Session, user_id: int):
-        return db.query(User).filter(User.idUser == user_id).first()
+    async def get_user_by_id(db: AsyncSession, user_id: int) -> User | None:
+        result = await db.execute(select(User).filter(User.idUser == user_id))
+        return cast(User | None, result.scalars().first())
 
     @staticmethod
-    def get_by_email(db: Session, email: str):
-        return db.query(User).filter(User.email == email).first()
+    async def get_by_email(db: AsyncSession, email: str) -> User | None:
+        result = await db.execute(select(User).filter(User.email == email))
+        return cast(User | None, result.scalars().first())
 
     @staticmethod
-    def get_by_username(db: Session, username: str):
-        return db.query(User).filter(User.username == username).first()
+    async def get_by_username(db: AsyncSession, username: str) -> User | None:
+        result = await db.execute(select(User).filter(User.username == username))
+        return cast(User | None, result.scalars().first())
 
     @staticmethod
-    def create_user(
-        db: Session, email: str, username: str, password_hash: str, is_verified: bool
-    ):
+    async def create_user(
+        db: AsyncSession,
+        email: str,
+        username: str,
+        password_hash: str,
+        is_verified: bool,
+    ) -> User:
         db_user = User(
             email=email,
             username=username,
             password=password_hash,
             isVerified=is_verified,
+            role=UserRole.USER,
             banned=False,
         )
-
         db.add(db_user)
-        db.flush()  # get db_user.idUser before commit
-
-        # Assign default base role group
-        default_group = (
-            db.query(UserGroup)
-            .filter(UserGroup.groupName == "Utilisateurs normaux")
-            .first()
-        )
-        if default_group:
-            db.add(
-                GroupUser(
-                    idUser=db_user.idUser,
-                    idGroup=default_group.idGroup,
-                    isBaseRole=True,
-                )
-            )
-
-        db.commit()
-        db.refresh(db_user)
-
+        await db.commit()
+        await db.refresh(db_user)
         return db_user
 
     @staticmethod
-    def mark_as_verified(db: Session, userId: int):
-        user = db.query(User).filter(User.idUser == userId).first()
+    async def mark_as_verified(db: AsyncSession, user_id: int) -> User | None:
+        result = await db.execute(select(User).filter(User.idUser == user_id))
+        user = cast(User | None, result.scalars().first())
         if user:
             user.is_verified = True
-            db.commit()
-            db.refresh(user)
+            await db.commit()
+            await db.refresh(user)
         return user
 
     @staticmethod
-    def search_users(db: Session, query: str, limit: int = 10):
-        users = (
-            db.query(User)
+    async def search_users(db: AsyncSession, query: str, limit: int = 10) -> list[User]:
+        result = await db.execute(
+            select(User)
             .filter(
                 or_(
                     User.username.ilike(f"%{query}%"),
@@ -90,57 +84,32 @@ class UserRepository:
                 )
             )
             .limit(limit)
-            .all()
         )
-        return users
+        return list(result.scalars().all())
 
     @staticmethod
-    def update_role(db: Session, user_id: int, new_role: UserRole):
-        target_group = (
-            db.query(UserGroup)
-            .filter(UserGroup.groupName == _ROLE_GROUP_NAME[new_role])
-            .first()
-        )
-        if not target_group:
-            return None
-
-        base_membership = (
-            db.query(GroupUser)
-            .filter(GroupUser.idUser == user_id, GroupUser.isBaseRole)
-            .first()
-        )
-        if base_membership:
-            base_membership.idGroup = target_group.idGroup
-        else:
-            db.add(
-                GroupUser(idUser=user_id, idGroup=target_group.idGroup, isBaseRole=True)
-            )
-
-        db.commit()
-        return db.query(User).filter(User.idUser == user_id).first()
+    async def update_role(
+        db: AsyncSession, user_id: int, new_role: UserRole
+    ) -> User | None:
+        result = await db.execute(select(User).filter(User.idUser == user_id))
+        user = cast(User | None, result.scalars().first())
+        if user:
+            user.role = new_role
+            await db.commit()
+            await db.refresh(user)
+        return user
 
     @staticmethod
-    def get_non_admin_ban_candidates(db: Session, current_user_id: int):
-        admin_group = (
-            db.query(UserGroup).filter(UserGroup.groupName == "Admins").first()
-        )
-        admin_user_ids_subq = (
-            (
-                db.query(GroupUser.idUser)
-                .filter(
-                    GroupUser.idGroup == admin_group.idGroup,
-                    GroupUser.isBaseRole,
-                )
-                .subquery()
+    async def get_non_admin_ban_candidates(
+        db: AsyncSession, current_user_id: int
+    ) -> list[User]:
+        result = await db.execute(
+            select(User)
+            .filter(
+                User.idUser != current_user_id,
+                User.idRole != UserRepository.ADMIN_ROLE_ID,
+                User.banned.is_(False),
             )
-            if admin_group
-            else None
+            .order_by(User.idUser.asc())
         )
-
-        q = db.query(User).filter(
-            User.idUser != current_user_id,
-            User.banned.is_(False),
-        )
-        if admin_user_ids_subq is not None:
-            q = q.filter(User.idUser.not_in(admin_user_ids_subq))
-        return q.order_by(User.idUser.asc()).all()
+        return list(result.scalars().all())

@@ -1,12 +1,8 @@
 from models.user import User
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
-from services.permission_service import PermissionService
-from models.enums import Actions, Ressources
-
 from controllers import PlaylistController
 from schemas import (
     PlaylistSchema,
@@ -18,7 +14,6 @@ from schemas import (
 )
 from database import get_db
 import os
-
 from middleware.auth_middleware import get_current_user, get_current_user_id
 
 router = APIRouter(prefix="/playlists", tags=["Playlists"])
@@ -32,138 +27,121 @@ class AddTrackBody(BaseModel):
 @router.post(
     "/",
     response_model=PlaylistSchema,
-    summary="Créer une playlist",
-    description="Crée une nouvelle playlist avec les informations fournies.",
+    summary="Create a playlist",
+    description="Creates a new playlist with the provided information.",
 )
-def create_playlist(
+async def create_playlist(
     playlist: PlaylistCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
-    canCreate = PermissionService.hasPermissionsTo(
-        db, current_user, Actions.CREATE, Ressources.PLAYLIST
-    )
-    print(canCreate)
-    if not PermissionService.hasPermissionsTo(
-        db, current_user, Actions.CREATE, Ressources.PLAYLIST
-    ):
-        raise HTTPException(status_code=403, detail="Not allowed to create a playlist")
-    return PlaylistController.create_playlist(
-        db, playlist.model_dump(), current_user.idUser
-    )
+    return await PlaylistController.create_playlist(db, playlist.model_dump(), user_id)
 
 
 @router.get(
     "/",
-    response_model=List[PlaylistSchema],
-    summary="Lister toutes les playlists accessibles par l'utilisateur courrant",
-    description="Retourne la liste complète des playlists visibles.",
+    response_model=list[PlaylistSchema],
+    summary="List all playlists accessible by the current user",
+    description="Returns the complete list of visible playlists.",
 )
-def get_accessible_playlists(
-    db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)
+async def get_accessible_playlists(
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
-    playlists = PlaylistController.get_accessible_playlists(db, user_id)
-    return playlists
+    return await PlaylistController.get_accessible_playlists(db, user_id)
 
 
 @router.get(
     "/public",
-    response_model=List[PlaylistSchema],
-    summary="Lister toutes les playlists publiques",
-    description="Retourne la liste complète des playlists disponibles.",
+    response_model=list[PlaylistSchema],
+    summary="List all public playlists",
+    description="Returns the complete list of available public playlists.",
 )
-def get_public_playlists(
-    db: Session = Depends(get_db), user: User = Depends(get_current_user)
+async def get_public_playlists(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    playlists = PlaylistController.get_public_playlists(db, user)
-    return playlists
+    return await PlaylistController.get_public_playlists(db, user)
 
 
 @router.get(
     "/shared",
-    summary="Lister toutes les playlists partagées",
-    description="Retourne la liste complète des playlists partagées.",
+    summary="List all shared playlists",
+    description="Returns the complete list of shared playlists.",
 )
-def get_shared_playlists(
-    db: Session = Depends(get_db), user_id=Depends(get_current_user_id)
+async def get_shared_playlists(
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
-    playlists = PlaylistController.get_shared_playlists(db, user_id)
-    return playlists
+    return await PlaylistController.get_shared_playlists(db, user_id)
 
 
 @router.get(
-    "/{idPlaylist}",
+    "/{playlist_id}",
     response_model=PlaylistSchema,
-    summary="Récupérer une playlist",
-    description="Retourne les informations détaillées d'une playlist à partir de son identifiant.",
+    summary="Get a playlist",
+    description="Returns the detailed information of a playlist based on its ID.",
 )
-def get_playlist(
-    idPlaylist: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
-    playlist = PlaylistController.get_playlist(db, idPlaylist, user)
-    return playlist
-
-
-@router.get("/{playlist_id}/tracks", response_model=List[TrackSchema])
-def get_playlist_tracks(
+async def get_playlist(
     playlist_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    tracks = PlaylistController.get_playlist_tracks(db, playlist_id, user)
-    return tracks
+    return await PlaylistController.get_playlist(db, playlist_id, user)
+
+
+@router.get(
+    "/{playlist_id}/tracks",
+    response_model=list[TrackSchema],
+    summary="Get playlist tracks",
+    description="Returns the list of tracks in a playlist.",
+)
+async def get_playlist_tracks(
+    playlist_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    return await PlaylistController.get_playlist_tracks(db, playlist_id, user)
 
 
 @router.post(
     "/{playlist_id}/tracks/by-url",
     response_model=TrackSchema,
-    summary="Ajoute un track à une playlist via URL (Sécurisé)",
+    summary="Add a track to a playlist via URL (secured)",
 )
-def add_playlist_track_by_url(
+async def add_playlist_track_by_url(
     playlist_id: int,
     body: AddTrackBody,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
-    if not PermissionService.hasPermissionsTo(
-        db, user, Actions.EDIT, Ressources.PLAYLIST, playlist_id
-    ):
-        raise HTTPException(status_code=403, detail="Not allowed to edit this playlist")
-
-    track = PlaylistController.add_playlist_track_secure(
-        db, body.title, body.url, playlist_id, user.idUser
+    return await PlaylistController.add_playlist_track_secure(
+        db, body.title, body.url, playlist_id, user_id
     )
 
-    if not track:
-        raise HTTPException(status_code=500, detail="Failed to add track")
-    return track
 
-
-@router.post("/{playlist_id}/cover", response_model=PlaylistSchema)
-def upload_playlist_cover(
+@router.post(
+    "/{playlist_id}/cover",
+    response_model=PlaylistSchema,
+    summary="Upload a playlist cover image",
+)
+async def upload_playlist_cover(
     playlist_id: int,
     file: UploadFile = File(...),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    if not PermissionService.hasPermissionsTo(
-        db, user, Actions.EDIT, Ressources.PLAYLIST, playlist_id
-    ):
-        raise HTTPException(status_code=403, detail="Not allowed to edit this playlist")
-
-    updated_playlist = PlaylistController.upload_cover(db, playlist_id, file, user)
-    return updated_playlist
+    return await PlaylistController.upload_cover(db, playlist_id, file, user)
 
 
-@router.get("/covers/{filename}")
-def get_cover_image(filename: str):
+@router.get(
+    "/covers/{filename}",
+    summary="Get a cover image",
+)
+async def get_cover_image(filename: str):
     filepath = f"/app/uploads/covers/{filename}"
-
     if not os.path.exists(filepath):
         raise HTTPException(status_code=404, detail="Image not found")
-
     return FileResponse(filepath)
 
 
@@ -173,36 +151,26 @@ def get_cover_image(filename: str):
     summary="Delete a playlist",
     description="Deletes a playlist by its ID.",
 )
-def delete_playlist(
+async def delete_playlist(
     playlist_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    if not PermissionService.hasPermissionsTo(
-        db, user, Actions.DELETE, Ressources.PLAYLIST, playlist_id
-    ):
-        raise HTTPException(
-            status_code=403, detail="Not allowed to delete this playlist"
-        )
-
-    return PlaylistController.delete_playlist(db, playlist_id, user)
+    return await PlaylistController.delete_playlist(db, playlist_id, user)
 
 
-@router.delete("/{playlist_id}/track/{track_id}", response_model=PlaylistSchema)
-def remove_track(
+@router.delete(
+    "/{playlist_id}/track/{track_id}",
+    response_model=PlaylistSchema,
+    summary="Remove a track from a playlist",
+)
+async def remove_track(
     playlist_id: int,
     track_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    if not PermissionService.hasPermissionsTo(
-        db, user, Actions.EDIT, Ressources.PLAYLIST, playlist_id
-    ):
-        raise HTTPException(status_code=403, detail="Not allowed to edit this playlist")
-
-    updated_playlist = PlaylistController.remove_track(db, playlist_id, track_id, user)
-
-    return updated_playlist
+    return await PlaylistController.remove_track(db, playlist_id, track_id, user)
 
 
 @router.patch(
@@ -211,70 +179,54 @@ def remove_track(
     summary="Update a playlist",
     description="Updates a playlist by its ID.",
 )
-def update_playlist(
+async def update_playlist(
     playlist_id: int,
     playlist_data: PlaylistUpdate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    if not PermissionService.hasPermissionsTo(
-        db, user, Actions.EDIT, Ressources.PLAYLIST, playlist_id
-    ):
-        raise HTTPException(status_code=403, detail="Not allowed to edit this playlist")
-
-    return PlaylistController.update_playlist(
+    return await PlaylistController.update_playlist(
         db, playlist_id, playlist_data.model_dump(exclude_unset=True), user
     )
 
 
 @router.get(
     "/{playlist_id}/shared-with",
-    summary="Lister la liste des utilisateurs partagées et leurs droits",
+    summary="List users the playlist is shared with and their permissions",
 )
-def shared_with(
+async def shared_with(
     playlist_id: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    current_user_id: int = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
 ):
-    if not PermissionService.hasPermissionsTo(
-        db, user, Actions.READ, Ressources.PLAYLIST, playlist_id
-    ):
-        raise HTTPException(status_code=403, detail="Not allowed to view this playlist")
-
-    return PlaylistController.shared_with(db, playlist_id, user.idUser)
+    return await PlaylistController.shared_with(db, playlist_id, current_user_id)
 
 
-@router.post("/{playlist_id}/share/user", summary="Partager avec un utilisateur")
-def share_playlist_user(
+@router.post(
+    "/{playlist_id}/share/user",
+    summary="Share a playlist with a user",
+)
+async def share_playlist_user(
     playlist_id: int,
     req: SharePlaylistRequest,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
-    if not PermissionService.hasPermissionsTo(
-        db, user, Actions.SHARE, Ressources.PLAYLIST, playlist_id
-    ):
-        raise HTTPException(
-            status_code=403, detail="Not allowed to share this playlist"
-        )
-
-    return PlaylistController.share_user(
-        db, playlist_id, user.idUser, req.target_email, req.is_editor
+    return await PlaylistController.share_user(
+        db, playlist_id, user_id, req.target_email, req.is_editor
     )
 
 
-@router.post("/{playlist_id}/share/group", summary="Partager avec un groupe")
-def share_playlist_group(
+@router.post(
+    "/{playlist_id}/share/group",
+    summary="Share a playlist with a group",
+)
+async def share_playlist_group(
     playlist_id: int,
     req: ShareGroupRequest,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
 ):
-    if not PermissionService.hasPermissionsTo(
-        db, user, Actions.SHARE, Ressources.PLAYLIST, playlist_id
-    ):
-        raise HTTPException(
-            status_code=403, detail="Not allowed to share this playlist"
-        )
-
-    return PlaylistController.share_group(db, playlist_id, user.idUser, req.group_name)
+    return await PlaylistController.share_group(
+        db, playlist_id, user_id, req.group_name
+    )

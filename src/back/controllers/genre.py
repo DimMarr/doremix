@@ -1,36 +1,38 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
-from repositories.genre_repository import GenreRepository
-from models.genre import Genre
-from typing import List, Optional
+from repositories import GenreRepository
+from models import Genre
 
 
 class GenreController:
     @staticmethod
-    def get_all_genres(db: Session) -> List[Genre]:
-        return GenreRepository.get_all(db)
+    async def get_all_genres(db: AsyncSession) -> list[Genre]:
+        genres = await GenreRepository.get_all(db)
+        if not genres:
+            raise HTTPException(status_code=404, detail="No genres found")
+        return genres
 
     @staticmethod
-    def get_genre(db: Session, genre_id: int) -> Optional[Genre]:
-        return GenreRepository.get_by_id(db, genre_id)
-
-    @staticmethod
-    def create_genre(db: Session, label: str) -> Genre:
-        return GenreRepository.create(db, label)
-
-    @staticmethod
-    def update_genre(db: Session, genre_id: int, label: str) -> Genre:
-        genre = GenreRepository.update(db, genre_id, label)
+    async def get_genre(db: AsyncSession, genre_id: int) -> Genre | None:
+        genre = await GenreRepository.get_by_id(db, genre_id)
         if not genre:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Genre {genre_id} not found",
-            )
+            raise HTTPException(status_code=404, detail="Genre not found")
         return genre
 
     @staticmethod
-    def delete_genre(db: Session, genre_id: int) -> bool:
-        deleted, reason = GenreRepository.delete(db, genre_id)
+    async def create_genre(db: AsyncSession, label: str) -> Genre:
+        return await GenreRepository.create(db, label)
+
+    @staticmethod
+    async def update_genre(db: AsyncSession, genre_id: int, label: str) -> Genre:
+        genre = await GenreRepository.update(db, genre_id, label)
+        if not genre:
+            raise HTTPException(status_code=404, detail=f"Genre {genre_id} not found")
+        return genre
+
+    @staticmethod
+    async def delete_genre(db: AsyncSession, genre_id: int) -> bool:
+        deleted, reason = await GenreRepository.delete(db, genre_id)
         if not deleted:
             if reason == "not_found":
                 raise HTTPException(
