@@ -49,4 +49,4 @@ class TrackRepository:
             .distinct()
             .limit(limit)
         )
-        return list(result.scalars().all())
+        return list(result.unique().scalars().all())
