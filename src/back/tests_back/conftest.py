@@ -1,3 +1,7 @@
+import os
+
+os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
