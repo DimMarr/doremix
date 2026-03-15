@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Response, Request, status
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from controllers.login import LoginController
 from schemas.auth import (
@@ -16,15 +16,17 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post("/login", response_model=TokenResponse, status_code=status.HTTP_200_OK)
-def login(credentials: LoginSchema, response: Response, db: Session = Depends(get_db)):
+async def login(
+    credentials: LoginSchema, response: Response, db: AsyncSession = Depends(get_db)
+):
     """
-    Authentifie un utilisateur et retourne les tokens
+    Authenticates a user and returns tokens.
 
-    Les tokens sont également stockés dans des cookies httpOnly :
-    - access_token : valide 15 minutes
-    - refresh_token : valide 30 jours
+    Tokens are also stored in httpOnly cookies:
+    - access_token: valid for 15 minutes
+    - refresh_token: valid for 30 days
     """
-    result = LoginController.login(db, credentials.email, credentials.password)
+    result = await LoginController.login(db, credentials.email, credentials.password)
 
     response.set_cookie(
         key="access_token",
@@ -34,7 +36,6 @@ def login(credentials: LoginSchema, response: Response, db: Session = Depends(ge
         samesite="lax",
         max_age=15 * 60,
     )
-
     response.set_cookie(
         key="refresh_token",
         value=result["refresh_token"],
@@ -50,20 +51,23 @@ def login(credentials: LoginSchema, response: Response, db: Session = Depends(ge
 @router.post(
     "/check-token", response_model=AccessTokenValidity, status_code=status.HTTP_200_OK
 )
-def check_token(request: Request, response: Response, db: Session = Depends(get_db)):
+async def check_token(request: Request, db: AsyncSession = Depends(get_db)):
+    """
+    Checks the validity of the current access token.
+    """
     access_token_str = request.cookies.get("access_token")
-    result = LoginController.check_access_token_validity(db, access_token_str)
-    return result
+    return await LoginController.check_access_token_validity(db, access_token_str)
 
 
 @router.post("/refresh", response_model=TokenResponse, status_code=status.HTTP_200_OK)
-def refresh_token(request: Request, response: Response, db: Session = Depends(get_db)):
+async def refresh_token(
+    request: Request, response: Response, db: AsyncSession = Depends(get_db)
+):
     """
-    Génère un nouveau access token à partir du refresh token
+    Generates a new access token from the refresh token.
 
-    Le refresh token doit être présent dans les cookies
+    The refresh token must be present in the cookies.
     """
-
     refresh_token_str = request.cookies.get("refresh_token")
 
     if not refresh_token_str:
@@ -72,7 +76,7 @@ def refresh_token(request: Request, response: Response, db: Session = Depends(ge
             content={"detail": "Refresh token missing"},
         )
 
-    result = LoginController.refresh_access_token(db, refresh_token_str)
+    result = await LoginController.refresh_access_token(db, refresh_token_str)
 
     response.set_cookie(
         key="access_token",
@@ -87,9 +91,11 @@ def refresh_token(request: Request, response: Response, db: Session = Depends(ge
 
 
 @router.post("/logout", response_model=LogoutResponse, status_code=status.HTTP_200_OK)
-def logout(request: Request, response: Response, db: Session = Depends(get_db)):
+async def logout(
+    request: Request, response: Response, db: AsyncSession = Depends(get_db)
+):
     """
-    Déconnecte l'utilisateur et révoque les tokens
+    Logs out the user and revokes their tokens.
     """
     access_token = request.cookies.get("access_token")
     refresh_token = request.cookies.get("refresh_token")
@@ -100,7 +106,7 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
             content={"detail": "Tokens missing"},
         )
 
-    result = LoginController.logout(db, access_token, refresh_token)
+    result = await LoginController.logout(db, access_token, refresh_token)
 
     response.delete_cookie(key="access_token")
     response.delete_cookie(key="refresh_token")
@@ -111,16 +117,16 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
 @router.post(
     "/logout-all", response_model=LogoutResponse, status_code=status.HTTP_200_OK
 )
-def logout_all_devices(
+async def logout_all_devices(
     response: Response,
     user_id: int = Depends(get_current_user_id),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
-    Déconnecte l'utilisateur de tous ses appareils
-    (Nécessite d'être authentifié)
+    Logs out the user from all devices.
+    (Requires authentication)
     """
-    result = LoginController.logout_all_devices(db, user_id)
+    result = await LoginController.logout_all_devices(db, user_id)
 
     response.delete_cookie(key="access_token")
     response.delete_cookie(key="refresh_token")
@@ -129,10 +135,10 @@ def logout_all_devices(
 
 
 @router.get("/me", response_model=UserInfoResponse, status_code=status.HTTP_200_OK)
-def get_current_user_info(user=Depends(get_current_user)):
+async def get_current_user_info(user=Depends(get_current_user)):
     """
-    Retourne les informations de l'utilisateur connecté
-    (Route protégée - nécessite un access token valide)
+    Returns the current authenticated user's information.
+    (Protected route - requires a valid access token)
     """
     return {
         "id": user.idUser,

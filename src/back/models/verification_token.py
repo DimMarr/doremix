@@ -16,9 +16,12 @@ class VerificationToken(Base):
         nullable=False,
     )
     createdAt = Column(
-        "createdat", DateTime, default=datetime.now(timezone.utc), nullable=False
+        "createdat",
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
     )
-    expiresAt = Column("expiresat", DateTime, nullable=False)
+    expiresAt = Column("expiresat", DateTime(timezone=True), nullable=False)
 
     user = relationship("Users", back_populates="verification_token")
 
