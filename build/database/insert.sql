@@ -104,7 +104,9 @@ INSERT INTO PLAYLIST (name, idGenre, idOwner, visibility, vote, coverImage) VALU
 
 INSERT INTO TRACK_PLAYLIST (idTrack, idPlaylist, nameInPlaylist, next_track_id) VALUES
 (2, 1, NULL, 18),
-(18, 1, 'Inception (Best OST)', NULL),
+(18, 1, 'Inception (Best OST)', 3),
+(3, 1, NULL,4),
+(4,1,NULL,NULL),
 (4, 2, NULL, 5),
 (5, 2, NULL, NULL),
 (1, 3, NULL, 2),
