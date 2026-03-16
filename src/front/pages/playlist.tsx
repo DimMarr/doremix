@@ -455,6 +455,15 @@ export async function PlaylistDetailPage(
       if (tracks.length === 0) return;
       trackPlayerInstance.setShuffle(false);
       handlePlayTrack(0);
+
+      const playBtn = target.closest('#play-all-button');
+      const shuffleBtn = container.querySelector('#shuffle-button');
+      if (playBtn) {
+        playBtn.classList.add('text-blue-500');
+      }
+      if (shuffleBtn) {
+        shuffleBtn.classList.remove('text-blue-500');
+      }
       return;
     }
 
@@ -464,6 +473,15 @@ export async function PlaylistDetailPage(
         trackPlayerInstance.setPlaylist({ ...playlist, tracks });
       }
       trackPlayerInstance.setShuffle(true);
+
+      const shuffleBtn = target.closest('#shuffle-button');
+      const playBtn = container.querySelector('#play-all-button');
+      if (shuffleBtn) {
+        shuffleBtn.classList.add('text-blue-500');
+      }
+      if (playBtn) {
+        playBtn.classList.remove('text-blue-500');
+      }
       return;
     }
 
