@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from database import Base
 
 
@@ -22,6 +22,7 @@ class GroupUser(Base):
         ForeignKey("user_group.idgroup", ondelete="CASCADE"),
         primary_key=True,
     )
+    isBaseRole = Column("isbaserole", Boolean, default=False)
 
 
 class GroupPlaylist(Base):

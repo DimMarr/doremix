@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
 from controllers import UserController
 from database import get_db
-from middleware.auth_middleware import require_role, get_current_user_id
+from middleware.auth_middleware import get_current_user
+from models.user import User
+from models.enums import Actions, Ressources
+from services.permission_service import PermissionService
 from schemas.user import ModerationUserSchema, BanUserResponse
 
 router = APIRouter(prefix="/moderation", tags=["Moderation"])
@@ -18,10 +21,14 @@ router = APIRouter(prefix="/moderation", tags=["Moderation"])
 )
 def get_ban_candidates(
     db: Session = Depends(get_db),
-    moderator_id: int = Depends(get_current_user_id),
-    _moderator=Depends(require_role(["MODERATOR"])),
+    moderator: User = Depends(get_current_user),
 ):
-    return UserController.get_ban_candidates(db, moderator_id)
+    if not PermissionService.hasPermissionsTo(
+        db, moderator, Actions.BAN, Ressources.USER
+    ):
+        raise HTTPException(status_code=403, detail="Not allowed to ban users")
+
+    return UserController.get_ban_candidates(db, moderator.idUser)
 
 
 @router.post(
@@ -33,10 +40,14 @@ def get_ban_candidates(
 def ban_user(
     idUser: int,
     db: Session = Depends(get_db),
-    moderator_id: int = Depends(get_current_user_id),
-    _moderator=Depends(require_role(["MODERATOR"])),
+    moderator: User = Depends(get_current_user),
 ):
-    user = UserController.ban_user(db, moderator_id, idUser)
+    if not PermissionService.hasPermissionsTo(
+        db, moderator, Actions.BAN, Ressources.USER, idUser
+    ):
+        raise HTTPException(status_code=403, detail="Not allowed to ban this user")
+
+    user = UserController.ban_user(db, moderator.idUser, idUser)
     return {
         "idUser": user.idUser,
         "banned": user.banned,

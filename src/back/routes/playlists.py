@@ -4,6 +4,8 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List
 from pydantic import BaseModel
+from services.permission_service import PermissionService
+from models.enums import Actions, Ressources
 
 from controllers import PlaylistController
 from schemas import (
@@ -36,9 +38,19 @@ class AddTrackBody(BaseModel):
 def create_playlist(
     playlist: PlaylistCreate,
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    current_user: User = Depends(get_current_user),
 ):
-    return PlaylistController.create_playlist(db, playlist.model_dump(), user_id)
+    canCreate = PermissionService.hasPermissionsTo(
+        db, current_user, Actions.CREATE, Ressources.PLAYLIST
+    )
+    print(canCreate)
+    if not PermissionService.hasPermissionsTo(
+        db, current_user, Actions.CREATE, Ressources.PLAYLIST
+    ):
+        raise HTTPException(status_code=403, detail="Not allowed to create a playlist")
+    return PlaylistController.create_playlist(
+        db, playlist.model_dump(), current_user.idUser
+    )
 
 
 @router.get(
@@ -113,10 +125,15 @@ def add_playlist_track_by_url(
     playlist_id: int,
     body: AddTrackBody,
     db: Session = Depends(get_db),
-    user_id: User = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
+    if not PermissionService.hasPermissionsTo(
+        db, user, Actions.EDIT, Ressources.PLAYLIST, playlist_id
+    ):
+        raise HTTPException(status_code=403, detail="Not allowed to edit this playlist")
+
     track = PlaylistController.add_playlist_track_secure(
-        db, body.title, body.url, playlist_id, user_id
+        db, body.title, body.url, playlist_id, user.idUser
     )
 
     if not track:
@@ -131,6 +148,11 @@ def upload_playlist_cover(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    if not PermissionService.hasPermissionsTo(
+        db, user, Actions.EDIT, Ressources.PLAYLIST, playlist_id
+    ):
+        raise HTTPException(status_code=403, detail="Not allowed to edit this playlist")
+
     updated_playlist = PlaylistController.upload_cover(db, playlist_id, file, user)
     return updated_playlist
 
@@ -156,6 +178,13 @@ def delete_playlist(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    if not PermissionService.hasPermissionsTo(
+        db, user, Actions.DELETE, Ressources.PLAYLIST, playlist_id
+    ):
+        raise HTTPException(
+            status_code=403, detail="Not allowed to delete this playlist"
+        )
+
     return PlaylistController.delete_playlist(db, playlist_id, user)
 
 
@@ -166,6 +195,11 @@ def remove_track(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    if not PermissionService.hasPermissionsTo(
+        db, user, Actions.EDIT, Ressources.PLAYLIST, playlist_id
+    ):
+        raise HTTPException(status_code=403, detail="Not allowed to edit this playlist")
+
     updated_playlist = PlaylistController.remove_track(db, playlist_id, track_id, user)
 
     return updated_playlist
@@ -183,6 +217,11 @@ def update_playlist(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    if not PermissionService.hasPermissionsTo(
+        db, user, Actions.EDIT, Ressources.PLAYLIST, playlist_id
+    ):
+        raise HTTPException(status_code=403, detail="Not allowed to edit this playlist")
+
     return PlaylistController.update_playlist(
         db, playlist_id, playlist_data.model_dump(exclude_unset=True), user
     )
@@ -194,10 +233,15 @@ def update_playlist(
 )
 def shared_with(
     playlist_id: int,
-    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    return PlaylistController.shared_with(db, playlist_id, current_user_id)
+    if not PermissionService.hasPermissionsTo(
+        db, user, Actions.READ, Ressources.PLAYLIST, playlist_id
+    ):
+        raise HTTPException(status_code=403, detail="Not allowed to view this playlist")
+
+    return PlaylistController.shared_with(db, playlist_id, user.idUser)
 
 
 @router.post("/{playlist_id}/share/user", summary="Partager avec un utilisateur")
@@ -205,10 +249,17 @@ def share_playlist_user(
     playlist_id: int,
     req: SharePlaylistRequest,
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
+    if not PermissionService.hasPermissionsTo(
+        db, user, Actions.SHARE, Ressources.PLAYLIST, playlist_id
+    ):
+        raise HTTPException(
+            status_code=403, detail="Not allowed to share this playlist"
+        )
+
     return PlaylistController.share_user(
-        db, playlist_id, user_id, req.target_email, req.is_editor
+        db, playlist_id, user.idUser, req.target_email, req.is_editor
     )
 
 
@@ -217,6 +268,13 @@ def share_playlist_group(
     playlist_id: int,
     req: ShareGroupRequest,
     db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id),
+    user: User = Depends(get_current_user),
 ):
-    return PlaylistController.share_group(db, playlist_id, user_id, req.group_name)
+    if not PermissionService.hasPermissionsTo(
+        db, user, Actions.SHARE, Ressources.PLAYLIST, playlist_id
+    ):
+        raise HTTPException(
+            status_code=403, detail="Not allowed to share this playlist"
+        )
+
+    return PlaylistController.share_group(db, playlist_id, user.idUser, req.group_name)

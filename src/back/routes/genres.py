@@ -1,11 +1,14 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
 from controllers.genre import GenreController
 from schemas.genre import GenreSchema, GenreCreate, GenreUpdate
 from database import get_db
-from middleware.auth_middleware import require_role
+from middleware.auth_middleware import get_current_user
+from models.user import User
+from models.enums import Actions, Ressources
+from services.permission_service import PermissionService
 
 router = APIRouter(prefix="/genres", tags=["Genres"])
 admin_router = APIRouter(prefix="/admin/genres", tags=["Admin Genres"])
@@ -31,8 +34,13 @@ def get_all_genres(db: Session = Depends(get_db)):
 def create_genre(
     body: GenreCreate,
     db: Session = Depends(get_db),
-    _admin=Depends(require_role(["ADMIN"])),
+    admin: User = Depends(get_current_user),
 ):
+    if not PermissionService.hasPermissionsTo(
+        db, admin, Actions.CREATE, Ressources.GENRE
+    ):
+        raise HTTPException(status_code=403, detail="Not allowed to create genres")
+
     return GenreController.create_genre(db, body.label)
 
 
@@ -46,8 +54,13 @@ def update_genre(
     genre_id: int,
     body: GenreUpdate,
     db: Session = Depends(get_db),
-    _admin=Depends(require_role(["ADMIN"])),
+    admin: User = Depends(get_current_user),
 ):
+    if not PermissionService.hasPermissionsTo(
+        db, admin, Actions.EDIT, Ressources.GENRE
+    ):
+        raise HTTPException(status_code=403, detail="Not allowed to edit genres")
+
     return GenreController.update_genre(db, genre_id, body.label)
 
 
@@ -60,7 +73,12 @@ def update_genre(
 def delete_genre(
     genre_id: int,
     db: Session = Depends(get_db),
-    _admin=Depends(require_role(["ADMIN"])),
+    admin: User = Depends(get_current_user),
 ):
+    if not PermissionService.hasPermissionsTo(
+        db, admin, Actions.DELETE, Ressources.GENRE
+    ):
+        raise HTTPException(status_code=403, detail="Not allowed to delete genres")
+
     GenreController.delete_genre(db, genre_id)
     return {"detail": "Genre supprimé avec succès"}

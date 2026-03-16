@@ -26,6 +26,13 @@
 
 ---
 
+## 📚 Documentation
+
+- [Architecture overview](documentation/architecture/overview.md)
+- [Database schema reference](documentation/database/schema-reference.md)
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites

@@ -25,9 +25,13 @@ class LoginController:
                 status_code=500, detail="PEPPER_KEY is missing in .env file"
             )
 
+        print("password : ", password)
+        print("email : ", email)
+
         user = UserRepository.get_by_email(db, email)
         if not user:
             raise HTTPException(status_code=401, detail="Invalid credentials")
+        print("afer user was found in db")
 
         if user.banned:
             raise HTTPException(status_code=403, detail="Your account has been banned")

@@ -51,11 +51,11 @@ class UserController:
                 detail=f"User {target_user_id} not found",
             )
 
-        if target_user.idRole == UserRepository.ADMIN_ROLE_ID:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Moderators cannot ban admin users",
-            )
+        # if target_user.idRole == UserRepository.ADMIN_ROLE_ID:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_403_FORBIDDEN,
+        #         detail="Moderators cannot ban admin users",
+        #     )
 
         try:
             target_user.banned = True

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Enum
+from sqlalchemy import Column, Integer, String, Boolean, and_
 from sqlalchemy.orm import relationship
 from database import Base
 import enum
@@ -10,6 +10,13 @@ class UserRole(enum.Enum):
     ADMIN = "ADMIN"
 
 
+_ROLE_MAPPING = {
+    "Utilisateurs normaux": UserRole.USER,
+    "Modérateurs": UserRole.MODERATOR,
+    "Admins": UserRole.ADMIN,
+}
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -17,7 +24,6 @@ class User(Base):
     email = Column("email", String(255), unique=True, nullable=False)
     password = Column("password", String(255), nullable=False)
     username = Column("username", String(255), nullable=False)
-    idRole = Column("idrole", Integer, default=1)
     banned = Column("banned", Boolean, default=False)
     isVerified = Column("isverified", Boolean, default=False)  # for email verification
 
@@ -25,21 +31,20 @@ class User(Base):
         "Playlist", secondary="user_playlist", back_populates="users"
     )
 
+    # Loads the single UserGroup where isBaseRole=True for this user
+    _base_group = relationship(
+        "UserGroup",
+        secondary="group_user",
+        primaryjoin="and_(User.idUser == foreign(GroupUser.idUser), GroupUser.isBaseRole)",
+        secondaryjoin="UserGroup.idGroup == foreign(GroupUser.idGroup)",
+        uselist=False,
+        viewonly=True,
+        lazy="joined",
+    )
+
     @property
     def role(self) -> UserRole:
-        if self.idRole == 2:
-            return UserRole.MODERATOR
-        elif self.idRole == 3:
-            return UserRole.ADMIN
-        # Default :
-        return UserRole.USER
-
-    # To be able to do user.role = UserRole.ADMIN
-    @role.setter
-    def role(self, role_enum: UserRole):
-        if role_enum == UserRole.MODERATOR:
-            self.idRole = 2
-        elif role_enum == UserRole.ADMIN:
-            self.idRole = 3
-        else:
-            self.idRole = 1
+        """Derives the user's role from their base-role group (isBaseRole=True)."""
+        if self._base_group is None:
+            return UserRole.USER
+        return _ROLE_MAPPING.get(self._base_group.groupName, UserRole.USER)

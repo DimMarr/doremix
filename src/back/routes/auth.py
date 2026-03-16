@@ -24,6 +24,7 @@ def login(credentials: LoginSchema, response: Response, db: Session = Depends(ge
     - access_token : valide 15 minutes
     - refresh_token : valide 30 jours
     """
+    print("in login (auth.py)")
     result = LoginController.login(db, credentials.email, credentials.password)
 
     response.set_cookie(

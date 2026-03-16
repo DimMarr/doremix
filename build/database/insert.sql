@@ -1,32 +1,10 @@
 TRUNCATE
-    USER_PLAYLIST, TRACK_PLAYLIST, TRACK_ARTIST, PLAYLIST_RIGHTS, ROLE_RIGHTS,
+    USER_PLAYLIST, TRACK_PLAYLIST, TRACK_ARTIST,
     GROUP_USER, GROUP_PLAYLIST, PLAYLIST, TRACK, ARTIST, GENRE,
-    USERS, USER_GROUP, RIGHTS, ROLE
+    USERS, USER_GROUP
 RESTART IDENTITY CASCADE;
 
 BEGIN;
-
-INSERT INTO ROLE (roleName) VALUES
-('USER'),
-('MODERATOR'),
-('ADMIN');
-
-INSERT INTO RIGHTS (rightName) VALUES
-('CREATE'),
-('READ'),
-('EDIT'),
-('DELETE'),
-('BAN_USER');
-
-
-INSERT INTO ROLE_RIGHTS (idRole, idRight) VALUES
-(3, 1), (3, 2), (3, 3), (3, 4), (3, 5);
-
-INSERT INTO ROLE_RIGHTS (idRole, idRight) VALUES
-(2, 2), (2, 4), (2, 5);
-
-INSERT INTO ROLE_RIGHTS (idRole, idRight) VALUES
-(1, 1), (1, 2), (1, 3);
 
 INSERT INTO GENRE (label) VALUES
 ('Rock'), ('Pop'), ('Hip-Hop'), ('Classique'), ('Electro'), ('Jazz');
@@ -35,21 +13,59 @@ INSERT INTO ARTIST (name) VALUES
 ('Queen'), ('Daft Punk'), ('Eminem'), ('Mozart'), ('Adele'), ('Hans Zimmer');
 
 INSERT INTO USER_GROUP (groupName) VALUES
+('Utilisateurs normaux'),
+('Modérateurs'),
+('Admins'),
 ('Les Etudiants'),
 ('Staff Admin'),
 ('Fans de Rock');
 
-INSERT INTO USERS (username, email, password, idRole, isverified) VALUES
-('SuperAdmin', 'admin@umontpellier.fr', '$2b$12$xnS.JxXR0Rij1Cw/60901Of0vVcowP8t1C5.TVB4ZGGjaS5XeUCSK', 3, TRUE),
-('ModoSarah', 'sarah@etu.umontpellier.fr', '$2b$12$MfGljJQRrXEFoIXXniPzFueRzeO.wSwElO8U1uRqmq.f15VHw7kIK', 2, TRUE),
-('AliceEtudiante', 'alice@etu.umontpellier.fr', '$2b$12$j538y6ALuA4i/ZN.N/xxjObHVeb5NnB9HNYIZo4tKfNfvEAIMzoJu', 1, TRUE),
-('Charlie', 'charlie@umontpellier.fr', '$2b$12$fnRwsmyffcI00XeKK15W/.2/lsUvSN/7PThyDCbyboWuIkczRA5Ha', 1, FALSE);
+INSERT INTO PERMISSIONS (action, ressource, groupId) VALUES
+('CREATE','PLAYLIST', 1),
+('SEARCH','PLAYLIST', 1),
+('READ','PLAYLIST', 1),
+('EDIT','PLAYLIST', 1),
+('DELETE','PLAYLIST', 1),
+('CREATE','GENRE', 1),
+('PROMOTE','USER', 1),
+('DEMOTE','USER', 1),
+('CREATE','PLAYLIST_PRIVATE', 2),
+('CREATE','PLAYLIST_SHARED', 2),
+('SEARCH','PLAYLIST_PRIVATE', 2),
+('SEARCH','PLAYLIST_SHARED', 2),
+('READ','PLAYLIST_SHARED', 2),
+('READ','PLAYLIST_PRIVATE', 2),
+('EDIT','PLAYLIST_SHARED', 2),
+('EDIT','PLAYLIST_PRIVATE', 2),
+('DELETE','PLAYLIST_SHARED', 2),
+('DELETE','PLAYLIST_PRIVATE', 2),
+('BAN','USER', 2),
+('CREATE','PLAYLIST_PRIVATE', 3),
+('CREATE','PLAYLIST_SHARED', 3),
+('SEARCH','PLAYLIST_PRIVATE', 3),
+('SEARCH','PLAYLIST_SHARED', 3),
+('READ','PLAYLIST_SHARED', 3),
+('READ','PLAYLIST_PRIVATE', 3),
+('EDIT','PLAYLIST_SHARED', 3),
+('EDIT','PLAYLIST_PRIVATE', 3),
+('DELETE','PLAYLIST_SHARED', 3),
+('DELETE','PLAYLIST_PRIVATE', 3);
 
-INSERT INTO GROUP_USER (idUser, idGroup) VALUES
-(1, 2),
-(3, 1),
-(4, 3),
-(3, 3);
+INSERT INTO USERS (username, email, password, isverified) VALUES
+('SuperAdmin', 'admin@umontpellier.fr', '$2b$12$xnS.JxXR0Rij1Cw/60901Of0vVcowP8t1C5.TVB4ZGGjaS5XeUCSK', TRUE),
+('ModoSarah', 'sarah@etu.umontpellier.fr', '$2b$12$MfGljJQRrXEFoIXXniPzFueRzeO.wSwElO8U1uRqmq.f15VHw7kIK', TRUE),
+('AliceEtudiante', 'alice@etu.umontpellier.fr', '$2b$12$j538y6ALuA4i/ZN.N/xxjObHVeb5NnB9HNYIZo4tKfNfvEAIMzoJu', TRUE),
+('Charlie', 'charlie@umontpellier.fr', '$2b$12$fnRwsmyffcI00XeKK15W/.2/lsUvSN/7PThyDCbyboWuIkczRA5Ha', FALSE);
+
+INSERT INTO GROUP_USER (idUser, idGroup, isBaseRole) VALUES
+(1, 3, TRUE),  -- SuperAdmin in Admins group (base role)
+(2, 2, TRUE),  -- ModoSarah in Modérateurs group (base role)
+(3, 1, TRUE),  -- AliceEtudiante in Utilisateurs normaux group (base role)
+(4, 1, TRUE),  -- Charlie in Utilisateurs normaux group (base role)
+(1, 5, FALSE), -- SuperAdmin also in Staff Admin (not base role)
+(3, 4, FALSE), -- AliceEtudiante also in Les Etudiants (not base role)
+(4, 6, FALSE), -- Charlie also in Fans de Rock (not base role)
+(3, 6, FALSE); -- AliceEtudiante also in Fans de Rock (not base role)
 
 INSERT INTO TRACK (title, youtubeLink, listeningCount, durationSeconds) VALUES
 ('Bohemian Rhapsody', 'https://www.youtube.com/watch?v=fJ9rUzIMcZQ', 15000000, 354),
@@ -110,8 +126,8 @@ INSERT INTO TRACK_PLAYLIST (idTrack, idPlaylist, nameInPlaylist) VALUES
 (1, 3, NULL),
 (2, 3, 'L hymne du stade');
 
-INSERT INTO GROUP_PLAYLIST (idGroup, idPlaylist) VALUES (3, 3);
+INSERT INTO GROUP_PLAYLIST (idGroup, idPlaylist) VALUES (6, 3);
 INSERT INTO USER_PLAYLIST (idUser, idPlaylist, editor) VALUES (3, 3, TRUE);
-INSERT INTO PLAYLIST_RIGHTS (idPlaylist, idRight) VALUES (1, 2);
+
 
 COMMIT;
