@@ -57,6 +57,7 @@ test:
     - docker:27-dind
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker buildx create --use --driver docker-container
 
 build_backend_beta:
   <<: *build_template
@@ -64,12 +65,13 @@ build_backend_beta:
     - beta
   script:
     - echo "🔨 Build backend beta..."
-    - docker build
-      --cache-from $BACKEND_IMAGE:beta
+    - docker buildx build
+      --cache-from type=registry,ref=$BACKEND_IMAGE:cache-beta
+      --cache-to type=registry,ref=$BACKEND_IMAGE:cache-beta,mode=max
       -f build/backend/Dockerfile
       -t $BACKEND_IMAGE:beta
+      --push
       .
-    - docker push $BACKEND_IMAGE:beta
 
 build_frontend_beta:
   <<: *build_template
@@ -77,12 +79,13 @@ build_frontend_beta:
     - beta
   script:
     - echo "🔨 Build frontend beta..."
-    - docker build
-      --cache-from $FRONTEND_IMAGE:beta
+    - docker buildx build
+      --cache-from type=registry,ref=$FRONTEND_IMAGE:cache-beta
+      --cache-to type=registry,ref=$FRONTEND_IMAGE:cache-beta,mode=max
       -f build/frontend/Dockerfile-beta
       -t $FRONTEND_IMAGE:beta
+      --push
       .
-    - docker push $FRONTEND_IMAGE:beta
 
 build_backend_prod:
   <<: *build_template
@@ -91,14 +94,14 @@ build_backend_prod:
       when: on_success
   script:
     - echo "🔨 Build backend prod..."
-    - docker build
-      --cache-from $BACKEND_IMAGE:latest
+    - docker buildx build
+      --cache-from type=registry,ref=$BACKEND_IMAGE:cache-prod
+      --cache-to type=registry,ref=$BACKEND_IMAGE:cache-prod,mode=max
       -f build/backend/Dockerfile
       -t $BACKEND_IMAGE:latest
       -t $BACKEND_IMAGE:$CI_COMMIT_TAG
+      --push
       .
-    - docker push $BACKEND_IMAGE:latest
-    - docker push $BACKEND_IMAGE:$CI_COMMIT_TAG
 
 build_frontend_prod:
   <<: *build_template
@@ -107,14 +110,14 @@ build_frontend_prod:
       when: on_success
   script:
     - echo "🔨 Build frontend prod..."
-    - docker build
-      --cache-from $FRONTEND_IMAGE:latest
+    - docker buildx build
+      --cache-from type=registry,ref=$FRONTEND_IMAGE:cache-prod
+      --cache-to type=registry,ref=$FRONTEND_IMAGE:cache-prod,mode=max
       -f build/frontend/Dockerfile-prod
       -t $FRONTEND_IMAGE:latest
       -t $FRONTEND_IMAGE:$CI_COMMIT_TAG
+      --push
       .
-    - docker push $FRONTEND_IMAGE:latest
-    - docker push $FRONTEND_IMAGE:$CI_COMMIT_TAG
 
 deploy_beta:
   stage: deploy
