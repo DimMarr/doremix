@@ -1,8 +1,9 @@
-from typing import Optional, cast
+from typing import cast
 from models.genre import Genre
 from models.playlist import Playlist
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import func
 
 
 class GenreRepository:
@@ -12,9 +13,16 @@ class GenreRepository:
         return cast(list[Genre], result.scalars().all())
 
     @staticmethod
-    async def get_by_id(db: AsyncSession, genre_id: int) -> Optional[Genre]:
+    async def get_by_id(db: AsyncSession, genre_id: int) -> Genre | None:
         result = await db.execute(select(Genre).filter(Genre.idGenre == genre_id))
-        return cast(Optional[Genre], result.scalars().first())
+        return cast(Genre | None, result.scalars().first())
+
+    @staticmethod
+    async def get_by_label(db: AsyncSession, label: str) -> Genre | None:
+        result = await db.execute(
+            select(Genre).filter(func.lower(Genre.label) == label.lower())
+        )
+        return cast(Genre | None, result.scalars().first())
 
     @staticmethod
     async def create(db: AsyncSession, label: str) -> Genre:
@@ -25,7 +33,7 @@ class GenreRepository:
         return genre
 
     @staticmethod
-    async def update(db: AsyncSession, genre_id: int, label: str) -> Optional[Genre]:
+    async def update(db: AsyncSession, genre_id: int, label: str) -> Genre | None:
         genre = await GenreRepository.get_by_id(db, genre_id)
         if not genre:
             return None
@@ -39,13 +47,9 @@ class GenreRepository:
         genre = await GenreRepository.get_by_id(db, genre_id)
         if not genre:
             return False, "not_found"
-
-        # Check FK constraint: any playlist still using this genre?
         result = await db.execute(select(Playlist).filter(Playlist.idGenre == genre_id))
-        in_use = result.scalars().first()
-        if in_use:
+        if result.scalars().first():
             return False, "in_use"
-
         await db.delete(genre)
         await db.commit()
         return True, "deleted"

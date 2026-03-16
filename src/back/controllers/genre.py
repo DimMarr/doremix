@@ -21,10 +21,21 @@ class GenreController:
 
     @staticmethod
     async def create_genre(db: AsyncSession, label: str) -> Genre:
+        if await GenreRepository.get_by_label(db, label):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Genre already exists",
+            )
         return await GenreRepository.create(db, label)
 
     @staticmethod
     async def update_genre(db: AsyncSession, genre_id: int, label: str) -> Genre:
+        existing = await GenreRepository.get_by_label(db, label)
+        if existing and existing.idGenre != genre_id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Genre already exists",
+            )
         genre = await GenreRepository.update(db, genre_id, label)
         if not genre:
             raise HTTPException(status_code=404, detail=f"Genre {genre_id} not found")
