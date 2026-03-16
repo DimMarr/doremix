@@ -460,9 +460,10 @@ export async function PlaylistDetailPage(
 
     if (target.closest('#shuffle-button')) {
       if (tracks.length === 0) return;
+      if (trackPlayerInstance.playlist?.idPlaylist !== playlist.idPlaylist) {
+        trackPlayerInstance.setPlaylist({ ...playlist, tracks });
+      }
       trackPlayerInstance.setShuffle(true);
-      const index = Math.floor(Math.random() * tracks.length);
-      handlePlayTrack(index);
       return;
     }
 
