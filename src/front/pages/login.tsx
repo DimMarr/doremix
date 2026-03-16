@@ -1,44 +1,74 @@
-import { Button, Input, Testimony } from "@components/generics";
+import { Button, Input } from "@components/generics";
 import { AlertManager } from "@utils/alertManager";
-import { isValidEmail, isValidPassword } from "@utils/authentication";
-import { Card } from "@components/generics/card";
-import { authService } from "@utils/authentication";
-import profileimage from "@assets/images/profileimage.jpg"
+import { isValidEmail, isValidPassword, authService } from "@utils/authentication";
 
 export async function LoginPage(container) {
 
     const pageHtml = (
-        <div>
-            {
-                <div class="flex justify-center items-center h-[calc(100vh-64px)]">
-                    <div class="flex flex-col lg:flex-row items-stretch" >
-                        <div class="bg-(--color-secondary) rounded-t-lg lg:rounded-l-lg lg:rounded-tr-none p-10 flex flex-col justify-between gap-10" style="max-width: 600px;">
-                            <div class="flex flex-col gap-4">
-                                <h3 class="font-bold text-lg">Welcome to DoReMiX</h3>
-                                <p>A smarter way to manage YouTube playlists. <br />
-                                    No clutter. No friction. No wasted time. <br />
-                                    Just clean, powerful control.</p>
-                            </div>
-                            <Testimony name="Olivier De Jonckère" description="Teacher at Polytech Montpellier" testimony="DoReMix is one of the most secure applications I have ever seen. No injection vulnerabilities — I’m impressed." image={profileimage} />
-                        </div>
-                        <Card image={null} title="Log in to DoReMiX" className="p-10 flex justify-center items-center rounded-b-lg lg:rounded-b-none lg:rounded-r-lg">
-                            <form id="loginForm" class="mt-6 flex flex-col gap-5">
-                                <Input id="email" placeholder="vincent.berry@umontpellier.fr" label="Email" type="email"></Input>
-                                <div>
-                                    <Input id="password" placeholder="*********" label="Password" type="password"></Input>
-                                    <span id="togglePasswordVisibility" class="cursor-pointer text-xs text-muted-foreground">Show password</span>
-                                </div>
-                                <Button className="w-100 mt-5">Log in</Button>
-                                <a href="/signup" class="text-center text-sm opacity-50">Sign up</a>
-                            </form>
-                        </Card>
-                    </div>
+        <div class="container relative min-h-screen flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+            <div class="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex">
+                <div class="absolute inset-0 bg-zinc-900" />
+                <div class="relative z-20 flex block items-center text-lg font-medium">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        class="mr-2 h-6 w-6"
+                    >
+                        <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
+                    </svg>
+                    DoReMiX Inc
                 </div>
-            }
+                <div class="relative z-20 mt-auto">
+                    <blockquote class="space-y-2">
+                        <p class="text-lg">
+                            &ldquo;DoReMix is one of the most secure applications I have ever seen. No injection vulnerabilities — I’m impressed.&rdquo;
+                        </p>
+                        <footer class="text-sm">Olivier De Jonckère</footer>
+                    </blockquote>
+                </div>
+            </div>
+
+            <div class="p-8 h-full flex items-center justify-center">
+                <div class="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+                    <div class="flex flex-col space-y-2 text-center">
+                        <h1 class="text-2xl font-semibold tracking-tight">Login to your account</h1>
+                        <p class="text-sm text-muted-foreground">
+                            Enter your email below to log in
+                        </p>
+                    </div>
+
+                    <form id="loginForm" class="flex flex-col gap-4">
+                        <div class="grid gap-2">
+                            <Input id="email" placeholder="name@example.com" label="Email" type="email"></Input>
+                        </div>
+                        <div class="grid gap-2">
+                            <Input id="password" placeholder="*********" label="Password" type="password"></Input>
+                            <span id="togglePasswordVisibility" class="cursor-pointer text-xs text-muted-foreground text-right w-fit ml-auto hover:text-primary">Show password</span>
+                        </div>
+                        <Button className="w-full mt-2">Sign In</Button>
+                    </form>
+
+                    <p class="px-8 text-center text-sm text-muted-foreground">
+                        Don't have an account?{" "}
+                        <a
+                            href="/signup"
+                            class="underline underline-offset-4 hover:text-primary"
+                        >
+                            Sign up
+                        </a>
+                    </p>
+                </div>
+            </div>
         </div>
     );
 
     container.innerHTML = pageHtml;
+    document.querySelector("header").innerHTML = "";
     handleLogin();
     togglePasswordVisibility();
 
