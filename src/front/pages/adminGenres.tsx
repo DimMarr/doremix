@@ -120,8 +120,6 @@ export async function AdminPage(container: HTMLElement | null) {
   await initModerationPanel(container);
 }
 
-
-
 function renderBanRows(users: ModerationUser[]): string {
   if (users.length === 0) {
     return '<p class="text-muted-foreground text-sm">No ban candidates available.</p>';
@@ -189,13 +187,22 @@ async function initGenreManagement(container: HTMLElement) {
       const newLabel = input?.value.trim();
       if (!newLabel) return;
 
+      if (genres.some((g) => g.label.toLowerCase() === newLabel.toLowerCase() && g.idGenre !== id)) {
+        new AlertManager().error("This genre already exists");
+        return;
+      }
+
       try {
         await repo.update(id, newLabel);
         new AlertManager().success("Genre updated");
         editingId = null;
         await refresh();
-      } catch {
-        new AlertManager().error("Failed to update genre");
+      } catch (error: any) {
+        if (error.message === "Conflict") {
+          new AlertManager().error("This genre already exists");
+        } else {
+          new AlertManager().error("Failed to update genre");
+        }
       }
       return;
     }
@@ -220,13 +227,22 @@ async function initGenreManagement(container: HTMLElement) {
     const label = newGenreInput.value.trim();
     if (!label) return;
 
+    if (genres.some((g) => g.label.toLowerCase() === label.toLowerCase())) {
+      new AlertManager().error("This genre already exists");
+      return;
+    }
+
     try {
       await repo.create(label);
       new AlertManager().success("Genre created");
       newGenreInput.value = "";
       await refresh();
-    } catch {
-      new AlertManager().error("Failed to create genre");
+    } catch (error: any) {
+      if (error.message === "Conflict") {
+        new AlertManager().error("This genre already exists");
+      } else {
+        new AlertManager().error("Failed to create genre");
+      }
     }
   });
 
