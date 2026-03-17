@@ -22,6 +22,19 @@ async def get_ban_candidates(
     return await UserController.get_ban_candidates(db, moderator_id)
 
 
+@router.get(
+    "/unban-candidates",
+    response_model=List[ModerationUserSchema],
+    summary="List users that can be unbanned",
+    description="Returns banned users. Reserved to moderators.",
+)
+def get_unban_candidates(
+    db: Session = Depends(get_db),
+    _moderator=Depends(require_role(["MODERATOR"])),
+):
+    return UserController.get_unban_candidates(db)
+
+
 @router.post(
     "/users/{user_id}/ban",
     response_model=BanUserResponse,
