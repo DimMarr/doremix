@@ -433,6 +433,8 @@ export async function PlaylistDetailPage(
   // Drag & Drop Event Delegation
   let draggedTrackIndex: number | null = null;
   let draggedTrackId: number | null = null;
+  let draggedRow: HTMLElement | null = null;
+  let placeholder: HTMLElement | null = null;
 
   container.addEventListener('dragstart', (e: DragEvent) => {
     const target = e.target as HTMLElement;
@@ -440,96 +442,132 @@ export async function PlaylistDetailPage(
     if (row && e.dataTransfer) {
       draggedTrackIndex = Number(row.getAttribute('data-track-index'));
       draggedTrackId = Number(row.getAttribute('data-track-id'));
+      draggedRow = row;
+
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', draggedTrackIndex.toString());
-      setTimeout(() => row.classList.add('opacity-50', 'bg-neutral-700'), 0);
+
+      // Create a custom drag image for better UI
+      const dragImage = row.cloneNode(true) as HTMLElement;
+      dragImage.style.width = `${row.offsetWidth}px`;
+      dragImage.classList.add('bg-neutral-800', 'shadow-2xl', 'scale-105', 'opacity-90', 'rounded-md', 'z-50', 'pointer-events-none');
+      document.body.appendChild(dragImage);
+      dragImage.style.position = 'absolute';
+      dragImage.style.top = '-1000px';
+      e.dataTransfer.setDragImage(dragImage, e.offsetX || 20, e.offsetY || 20);
+
+      // Create the placeholder
+      placeholder = document.createElement('div');
+      placeholder.id = 'dnd-placeholder';
+      placeholder.className = "bg-blue-500/10 border-2 border-dashed border-blue-500/50 rounded-md transition-all duration-300 pointer-events-none";
+      placeholder.style.height = `${row.offsetHeight}px`;
+
+      // Wait for drag start to finish before hiding visually
+      setTimeout(() => {
+        row.style.display = 'none'; // Keep it simple to remove from flow
+        row.parentNode?.insertBefore(placeholder!, row);
+      }, 0);
+
+      // Clean up the temporary drag image from body
+      setTimeout(() => {
+        if (document.body.contains(dragImage)) {
+          document.body.removeChild(dragImage);
+        }
+      }, 100);
     }
   });
 
   container.addEventListener('dragover', (e: DragEvent) => {
     e.preventDefault();
     if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-    const target = e.target as HTMLElement;
-    const row = target.closest('[data-track-index]') as HTMLElement;
-    if (row && Number(row.getAttribute('data-track-index')) !== draggedTrackIndex) {
-      const rect = row.getBoundingClientRect();
+
+    if (!placeholder || !draggedRow) return;
+
+    const wrapper = container.querySelector('#track-list-container > div');
+    if (!wrapper) return;
+
+    // Find all track rows in the wrapper excluding the dragged one and the placeholder
+    const allItems = Array.from(wrapper.children) as HTMLElement[];
+    const visibleRows = allItems.filter(el => el !== draggedRow && el !== placeholder && el.hasAttribute('data-track-index'));
+
+    let insertBeforeNode: HTMLElement | null = null;
+
+    // Determine the position based on cursor Y coordinate
+    for (let i = 0; i < visibleRows.length; i++) {
+      const r = visibleRows[i];
+      const rect = r.getBoundingClientRect();
       const midY = rect.top + rect.height / 2;
-      row.style.borderTop = '';
-      row.style.borderBottom = '';
+
       if (e.clientY < midY) {
-        row.style.borderTop = '2px solid #3b82f6';
-      } else {
-        row.style.borderBottom = '2px solid #3b82f6';
+        insertBeforeNode = r;
+        break;
       }
     }
-  });
 
-  container.addEventListener('dragleave', (e: DragEvent) => {
-    const target = e.target as HTMLElement;
-    const row = target.closest('[data-track-index]') as HTMLElement;
-    if (row) {
-      row.style.borderTop = '';
-      row.style.borderBottom = '';
+    if (insertBeforeNode) {
+      if (placeholder.nextElementSibling !== insertBeforeNode) {
+        wrapper.insertBefore(placeholder, insertBeforeNode);
+      }
+    } else {
+      wrapper.appendChild(placeholder);
     }
   });
 
   container.addEventListener('dragend', (e: DragEvent) => {
-    const target = e.target as HTMLElement;
-    const row = target.closest('[data-track-index]') as HTMLElement;
-    if (row) {
-      row.classList.remove('opacity-50', 'bg-neutral-700');
+    if (draggedRow) {
+      draggedRow.style.display = ''; // Restore visibility
     }
-    container.querySelectorAll('[data-track-index]').forEach(el => {
-      (el as HTMLElement).style.borderTop = '';
-      (el as HTMLElement).style.borderBottom = '';
-    });
+    if (placeholder && placeholder.parentNode) {
+      placeholder.parentNode.removeChild(placeholder);
+    }
+
+    draggedTrackIndex = null;
+    draggedTrackId = null;
+    draggedRow = null;
+    placeholder = null;
   });
 
   container.addEventListener('drop', async (e: DragEvent) => {
     e.preventDefault();
-    const target = e.target as HTMLElement;
-    const row = target.closest('[data-track-index]') as HTMLElement;
 
-    container.querySelectorAll('[data-track-index]').forEach(el => {
-      (el as HTMLElement).style.borderTop = '';
-      (el as HTMLElement).style.borderBottom = '';
-    });
+    if (draggedRow && placeholder && draggedTrackIndex !== null && draggedTrackId !== null) {
+      const wrapper = container.querySelector('#track-list-container > div');
+      if (wrapper) {
+        // Find drop position relative to data-track-index elements.
+        // We look at placeholder's position skipping draggedRow
+        const allItems = Array.from(wrapper.children) as HTMLElement[];
+        const filteredItems = allItems.filter(el => (el.hasAttribute('data-track-index') && el !== draggedRow) || el === placeholder);
 
-    if (row && draggedTrackIndex !== null && draggedTrackId !== null) {
-      const dropIndex = Number(row.getAttribute('data-track-index'));
-      if (dropIndex === draggedTrackIndex) return;
+        let newIndex = filteredItems.indexOf(placeholder);
 
-      const rect = row.getBoundingClientRect();
-      const midY = rect.top + rect.height / 2;
-      let newIndex = dropIndex;
-      if (e.clientY > midY) {
-        newIndex = dropIndex + 1;
+        // Remove placeholder and restore dragged row
+        if (placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
+        draggedRow.style.display = '';
+
+        if (newIndex !== -1 && newIndex !== draggedTrackIndex) {
+          const trackToMove = tracks[draggedTrackIndex];
+          tracks.splice(draggedTrackIndex, 1);
+          tracks.splice(newIndex, 0, trackToMove);
+
+          playlist.tracks = [...tracks];
+          trackPlayerInstance.setPlaylist({ ...playlist });
+          updateTrackListDisplay();
+
+          const afterTrackId = newIndex > 0 ? tracks[newIndex - 1].idTrack : null;
+
+          try {
+            await repo.reorderTrack(playlist.idPlaylist, draggedTrackId, afterTrackId);
+          } catch (err) {
+            console.error("Failed to reorder tracks", err);
+            new AlertManager().error("Failed to save reorder");
+          }
+        }
       }
-
-      if (draggedTrackIndex < newIndex) {
-        newIndex -= 1;
-      }
-
-      if (newIndex === draggedTrackIndex) return;
-
-      const trackToMove = tracks[draggedTrackIndex];
-      tracks.splice(draggedTrackIndex, 1);
-      tracks.splice(newIndex, 0, trackToMove);
-
-      playlist.tracks = [...tracks];
-      trackPlayerInstance.setPlaylist({ ...playlist });
-      updateTrackListDisplay();
-
-      const afterTrackId = newIndex > 0 ? tracks[newIndex - 1].idTrack : null;
-
-      try {
-        await repo.reorderTrack(playlist.idPlaylist, draggedTrackId, afterTrackId);
-      } catch (err) {
-        console.error("Failed to reorder tracks", err);
-        new AlertManager().error("Failed to save reorder");
-      }
-      draggedTrackIndex = null;
-      draggedTrackId = null;
     }
+
+    draggedTrackIndex = null;
+    draggedTrackId = null;
+    draggedRow = null;
+    placeholder = null;
   });
 }
