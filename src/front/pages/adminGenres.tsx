@@ -236,7 +236,7 @@ export async function AdminPage(container: HTMLElement | null) {
       </div>
 
       <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full shadow-2xl min-h-[70vh]">
-        <h2 class="text-xl font-semibold text-white mb-4">Ban candidates</h2>
+        <h2 class="text-xl font-semibold text-white mb-4">Manage Users</h2>
         <div id="ban-user-list" class="space-y-3 overflow-y-auto h-[calc(70vh-5rem)]">
           <p class="text-muted-foreground text-sm">Loading...</p>
         </div>
@@ -249,24 +249,37 @@ export async function AdminPage(container: HTMLElement | null) {
 
 function renderBanRows(users: ModerationUser[]): string {
   if (users.length === 0) {
-    return '<p class="text-muted-foreground text-sm">No ban candidates available.</p>';
+    return '<p class="text-muted-foreground text-sm">No users available.</p>';
   }
 
   return users
-    .map((user) => (
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 rounded-lg border border-white/10 bg-white/5" data-user-id={user.idUser}>
-        <div>
-          <p safe class="text-white text-sm font-medium">{user.username}</p>
-          <p safe class="text-white/60 text-xs">{user.email}</p>
-          <span class="inline-block mt-2 px-2 py-1 rounded-full bg-neutral-700 text-white text-[10px] uppercase tracking-wide">
-            {user.role}
-          </span>
-        </div>
+    .map((user) => {
+      const actionButton = user.banned ? (
+        <button data-unban-user={user.idUser} class="px-3 py-2 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-green-500 transition-colors self-start md:self-auto">
+          Unban user
+        </button>
+      ) : (
         <button data-ban-user={user.idUser} class="px-3 py-2 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-500 transition-colors self-start md:self-auto">
           Ban user
         </button>
-      </div>
-    ))
+      );
+
+      return (
+        <div class={`flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 rounded-lg border border-white/10 ${user.banned ? 'bg-red-900/10 opacity-75' : 'bg-white/5'}`} data-user-id={user.idUser}>
+          <div>
+            <p class="text-white text-sm font-medium flex items-center gap-1">
+              <span safe>{user.username}</span>
+              {user.banned ? <span class="text-red-400 text-xs">(Banned)</span> : ""}
+            </p>
+            <p safe class="text-white/60 text-xs">{user.email}</p>
+            <span class="inline-block mt-2 px-2 py-1 rounded-full bg-neutral-700 text-white text-[10px] uppercase tracking-wide">
+              {user.role}
+            </span>
+          </div>
+          {actionButton as 'safe'}
+        </div>
+      );
+    })
     .join("");
 }
 
@@ -530,7 +543,14 @@ async function initModerationPanel(container: HTMLElement) {
 
   const refresh = async () => {
     try {
-      users = await repo.getBanCandidates();
+      // On récupère les utilisateurs à bannir et ceux déjà bannis
+      const banCandidates = await repo.getBanCandidates();
+      const unbanCandidates = await repo.getUnbanCandidates();
+
+      // On fusionne les deux listes et on trie par ID
+      users = [...banCandidates, ...unbanCandidates];
+      users.sort((a, b) => a.idUser - b.idUser);
+
       userList.innerHTML = renderBanRows(users);
     } catch {
       userList.innerHTML = '<p class="text-red-400 text-sm">Failed to load users.</p>';
@@ -539,25 +559,49 @@ async function initModerationPanel(container: HTMLElement) {
 
   userList.addEventListener("click", async (event) => {
     const target = event.target as HTMLElement;
+
+    // Gestion du bouton Ban
     const banBtn = target.closest("[data-ban-user]") as HTMLElement | null;
-    if (!banBtn) return;
+    if (banBtn) {
+      const userId = parseInt(banBtn.getAttribute("data-ban-user") || "", 10);
+      if (!userId) return;
 
-    const userId = parseInt(banBtn.getAttribute("data-ban-user") || "", 10);
-    if (!userId) return;
+      if (!confirm("Ban this user and revoke all of their tokens?")) return;
 
-    if (!confirm("Ban this user and revoke all of their tokens?")) return;
+      try {
+        banBtn.setAttribute("disabled", "true");
+        banBtn.classList.add("opacity-70", "cursor-not-allowed");
+        await repo.banUser(userId);
+        new AlertManager().success("User banned and logged out");
+        await refresh(); // Recharger les données depuis le serveur
+      } catch {
+        new AlertManager().error("Failed to ban user");
+        banBtn.removeAttribute("disabled");
+        banBtn.classList.remove("opacity-70", "cursor-not-allowed");
+      }
+      return;
+    }
 
-    try {
-      banBtn.setAttribute("disabled", "true");
-      banBtn.classList.add("opacity-70", "cursor-not-allowed");
-      await repo.banUser(userId);
-      new AlertManager().success("User banned and logged out");
-      users = users.filter((user) => user.idUser !== userId);
-      userList.innerHTML = renderBanRows(users);
-    } catch {
-      new AlertManager().error("Failed to ban user");
-      banBtn.removeAttribute("disabled");
-      banBtn.classList.remove("opacity-70", "cursor-not-allowed");
+    // Gestion du bouton Unban
+    const unbanBtn = target.closest("[data-unban-user]") as HTMLElement | null;
+    if (unbanBtn) {
+      const userId = parseInt(unbanBtn.getAttribute("data-unban-user") || "", 10);
+      if (!userId) return;
+
+      if (!confirm("Unban this user?")) return;
+
+      try {
+        unbanBtn.setAttribute("disabled", "true");
+        unbanBtn.classList.add("opacity-70", "cursor-not-allowed");
+        await repo.unbanUser(userId);
+        new AlertManager().success("User unbanned");
+        await refresh(); // Recharger les données depuis le serveur
+      } catch {
+        new AlertManager().error("Failed to unban user");
+        unbanBtn.removeAttribute("disabled");
+        unbanBtn.classList.remove("opacity-70", "cursor-not-allowed");
+      }
+      return;
     }
   });
 
