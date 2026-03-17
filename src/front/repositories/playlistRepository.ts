@@ -276,31 +276,44 @@ export class PlaylistRepository {
         });
     }
 
+    private sharedWithCache = new Map<number, Promise<any>>();
+
     async sharedWith(playlist_id: Number) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/playlists/${playlist_id}/shared-with`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: 'include',
-            });
-
-            if (response.status == 403){
-                return []
-            }
-
-            if (!response.ok) {
-                throw new Error("Failed to get shared users");
-            }
-            return response.json();
-        } catch (error) {
-            if (error instanceof TypeError) {
-                new AlertManager().error("Network error. Check your connection.");
-            }
-            console.error("Error getting shared users for a playlist:", error);
-            throw error;
+        const id = Number(playlist_id);
+        if (this.sharedWithCache.has(id)) {
+            return this.sharedWithCache.get(id);
         }
+
+        const promise = (async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/playlists/${id}/shared-with`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    credentials: 'include',
+                });
+
+                if (response.status == 403){
+                    return []
+                }
+
+                if (!response.ok) {
+                    throw new Error("Failed to get shared users");
+                }
+                return response.json();
+            } catch (error) {
+                this.sharedWithCache.delete(id);
+                if (error instanceof TypeError) {
+                    new AlertManager().error("Network error. Check your connection.");
+                }
+                console.error("Error getting shared users for a playlist:", error);
+                throw error;
+            }
+        })();
+
+        this.sharedWithCache.set(id, promise);
+        return promise;
     }
 
     async update(id: number, data: Partial<Playlist>) {
