@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
 from controllers.admin_playlist_controller import AdminPlaylistController
@@ -18,29 +17,29 @@ class AddTrackBody(BaseModel):
 
 @router.get(
     "/",
-    response_model=List[PlaylistSchema],
+    response_model=list[PlaylistSchema],
     summary="List all playlists",
     description="Returns all playlists regardless of visibility. Admin only.",
 )
-def get_all_playlists(
-    db: Session = Depends(get_db),
+async def get_all_playlists(
+    db: AsyncSession = Depends(get_db),
     _admin=Depends(require_role(["ADMIN"])),
 ):
-    return AdminPlaylistController.get_all(db)
+    return await AdminPlaylistController.get_all(db)
 
 
 @router.get(
     "/{playlist_id}/tracks",
-    response_model=List[TrackSchema],
+    response_model=list[TrackSchema],
     summary="Get tracks of any playlist",
     description="Returns all tracks of a playlist. Admin only.",
 )
-def get_playlist_tracks(
+async def get_playlist_tracks(
     playlist_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     _admin=Depends(require_role(["ADMIN"])),
 ):
-    return AdminPlaylistController.get_tracks(db, playlist_id)
+    return await AdminPlaylistController.get_tracks(db, playlist_id)
 
 
 @router.patch(
@@ -49,13 +48,13 @@ def get_playlist_tracks(
     summary="Update any playlist",
     description="Updates name, genre, or visibility of any playlist. Admin only.",
 )
-def update_playlist(
+async def update_playlist(
     playlist_id: int,
     playlist_data: PlaylistUpdate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     _admin=Depends(require_role(["ADMIN"])),
 ):
-    return AdminPlaylistController.update_playlist(
+    return await AdminPlaylistController.update_playlist(
         db, playlist_id, playlist_data.model_dump(exclude_unset=True)
     )
 
@@ -66,12 +65,12 @@ def update_playlist(
     summary="Delete any playlist",
     description="Deletes any playlist. Admin only.",
 )
-def delete_playlist(
+async def delete_playlist(
     playlist_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     _admin=Depends(require_role(["ADMIN"])),
 ):
-    return AdminPlaylistController.delete_playlist(db, playlist_id)
+    return await AdminPlaylistController.delete_playlist(db, playlist_id)
 
 
 @router.post(
@@ -80,13 +79,15 @@ def delete_playlist(
     summary="Add track to any playlist",
     description="Adds a track via YouTube URL to any playlist. Admin only.",
 )
-def add_track(
+async def add_track(
     playlist_id: int,
     body: AddTrackBody,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     _admin=Depends(require_role(["ADMIN"])),
 ):
-    return AdminPlaylistController.add_track(db, playlist_id, body.title, body.url)
+    return await AdminPlaylistController.add_track(
+        db, playlist_id, body.title, body.url
+    )
 
 
 @router.delete(
@@ -95,10 +96,10 @@ def add_track(
     summary="Remove track from any playlist",
     description="Removes a track from any playlist. Admin only.",
 )
-def remove_track(
+async def remove_track(
     playlist_id: int,
     track_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     _admin=Depends(require_role(["ADMIN"])),
 ):
-    return AdminPlaylistController.remove_track(db, playlist_id, track_id)
+    return await AdminPlaylistController.remove_track(db, playlist_id, track_id)

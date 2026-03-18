@@ -117,9 +117,7 @@ class PlaylistRepository:
     @staticmethod
     async def get_all(db: AsyncSession) -> list[Playlist]:
         """Admin-only: returns all playlists regardless of visibility."""
-        result = await db.execute(
-            select(Playlist).options(joinedload(Playlist.genre))
-        )
+        result = await db.execute(select(Playlist).options(joinedload(Playlist.genre)))
         return list(result.scalars().all())
 
     @staticmethod
