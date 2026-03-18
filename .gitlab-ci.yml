@@ -11,7 +11,7 @@ variables:
   UV_CACHE_DIR: "$CI_PROJECT_DIR/.cache/uv"
 
   DOCKER_HOST: tcp://docker:2376
-  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_TLS_CERTDIR: ""
   DOCKER_TLS_VERIFY: 1
   DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
   DOCKER_DRIVER: overlay2
@@ -62,6 +62,7 @@ test:
   services:
     - name: docker:27-dind
       alias: docker
+      command: ["--tls=false"]
   before_script:
     # On attend que le daemon soit prêt
     - |
