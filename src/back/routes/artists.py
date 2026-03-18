@@ -1,31 +1,32 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from typing import List
-
-from controllers.artist import ArtistController
-from schemas.artist import ArtistSchema
+from sqlalchemy.ext.asyncio import AsyncSession
+from controllers import ArtistController
+from schemas import ArtistSchema
 from database import get_db
 
 router = APIRouter(prefix="/artists", tags=["Artists"])
 
 
+# =========================
+# GET routes
+# =========================
+
+
 @router.get(
     "/",
-    response_model=List[ArtistSchema],
-    summary="Lister tous les artistes",
-    description="Retourne la liste complète des artistes disponibles.",
+    response_model=list[ArtistSchema],
+    summary="Get all artists",
+    description="Returns the complete list of available artists.",
 )
-def get_artists(db: Session = Depends(get_db)):
-    artists = ArtistController.get_all_artists(db)
-    return artists
+async def get_artists(db: AsyncSession = Depends(get_db)):
+    return await ArtistController.get_all_artists(db)
 
 
 @router.get(
     "/{artist_id}",
     response_model=ArtistSchema,
-    summary="Récupérer un artiste",
-    description="Retourne les informations détaillées d'un artiste à partir de son identifiant.",
+    summary="Get an artist",
+    description="Returns the detailed information of an artist based on their ID.",
 )
-def get_artist(artist_id: int, db: Session = Depends(get_db)):
-    artist = ArtistController.get_artist(db, artist_id)
-    return artist
+async def get_artist(artist_id: int, db: AsyncSession = Depends(get_db)):
+    return await ArtistController.get_artist(db, artist_id)

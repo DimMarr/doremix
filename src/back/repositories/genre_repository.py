@@ -1,57 +1,55 @@
-from typing import Optional, cast
+from typing import cast
 from models.genre import Genre
-from sqlalchemy.orm import Session
+from models.playlist import Playlist
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from sqlalchemy import func
 
 
 class GenreRepository:
     @staticmethod
-    def get_all(db: Session) -> list[Genre]:
-        return cast(list[Genre], db.query(Genre).all())
+    async def get_all(db: AsyncSession) -> list[Genre]:
+        result = await db.execute(select(Genre))
+        return cast(list[Genre], result.scalars().all())
 
     @staticmethod
-    def get_by_id(db: Session, genre_id: int) -> Optional[Genre]:
-        return cast(
-            Optional[Genre],
-            db.query(Genre).filter(Genre.idGenre == genre_id).first(),
+    async def get_by_id(db: AsyncSession, genre_id: int) -> Genre | None:
+        result = await db.execute(select(Genre).filter(Genre.idGenre == genre_id))
+        return cast(Genre | None, result.scalars().first())
+
+    @staticmethod
+    async def get_by_label(db: AsyncSession, label: str) -> Genre | None:
+        result = await db.execute(
+            select(Genre).filter(func.lower(Genre.label) == label.lower())
         )
+        return cast(Genre | None, result.scalars().first())
 
     @staticmethod
-    def get_by_label(db: Session, label: str) -> Optional[Genre]:
-        return cast(
-            Optional[Genre],
-            db.query(Genre).filter(func.lower(Genre.label) == label.lower()).first(),
-        )
-
-    @staticmethod
-    def create(db: Session, label: str) -> Genre:
+    async def create(db: AsyncSession, label: str) -> Genre:
         genre = Genre(label=label)
         db.add(genre)
-        db.commit()
-        db.refresh(genre)
+        await db.commit()
+        await db.refresh(genre)
         return genre
 
     @staticmethod
-    def update(db: Session, genre_id: int, label: str) -> Optional[Genre]:
-        genre = GenreRepository.get_by_id(db, genre_id)
+    async def update(db: AsyncSession, genre_id: int, label: str) -> Genre | None:
+        genre = await GenreRepository.get_by_id(db, genre_id)
         if not genre:
             return None
         genre.label = label
-        db.commit()
-        db.refresh(genre)
+        await db.commit()
+        await db.refresh(genre)
         return genre
 
     @staticmethod
-    def delete(db: Session, genre_id: int) -> tuple[bool, str]:
-        genre = GenreRepository.get_by_id(db, genre_id)
+    async def delete(db: AsyncSession, genre_id: int) -> tuple[bool, str]:
+        genre = await GenreRepository.get_by_id(db, genre_id)
         if not genre:
             return False, "not_found"
-        # Check FK constraint: any playlist still using this genre?
-        from models.playlist import Playlist
-
-        in_use = db.query(Playlist).filter(Playlist.idGenre == genre_id).first()
-        if in_use:
+        result = await db.execute(select(Playlist).filter(Playlist.idGenre == genre_id))
+        if result.scalars().first():
             return False, "in_use"
-        db.delete(genre)
-        db.commit()
+        await db.delete(genre)
+        await db.commit()
         return True, "deleted"

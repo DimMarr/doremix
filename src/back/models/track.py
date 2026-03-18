@@ -18,4 +18,6 @@ class Track(Base):
         "Playlist", secondary="track_playlist", back_populates="tracks"
     )
 
-    artists = relationship("Artist", secondary="track_artist", back_populates="tracks")
+    artists = relationship(
+        "Artist", secondary="track_artist", back_populates="tracks", lazy="selectin"
+    )
