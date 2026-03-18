@@ -8,3 +8,4 @@ from .auth import router as authRouter
 from .genres import router as genresRouter
 from .genres import admin_router as adminGenresRouter
 from .moderation import router as moderationRouter
+from .admin_playlists import router as adminPlaylistsRouter
