@@ -10,7 +10,6 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   UV_CACHE_DIR: "$CI_PROJECT_DIR/.cache/uv"
 
-  DOCKER_HOST: tcp://docker:2376
   DOCKER_TLS_CERTDIR: ""
   DOCKER_DRIVER: overlay2
 
