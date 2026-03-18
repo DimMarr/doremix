@@ -5,7 +5,6 @@ from models import User
 
 
 class AdminPlaylistController:
-
     @staticmethod
     def get_all(db: Session):
         return PlaylistRepository.get_all(db)
@@ -46,7 +45,9 @@ class AdminPlaylistController:
         if status == "invalid url":
             raise HTTPException(status_code=400, detail="Invalid URL")
         if status == "already_exists":
-            raise HTTPException(status_code=409, detail="Track already exists in this playlist")
+            raise HTTPException(
+                status_code=409, detail="Track already exists in this playlist"
+            )
         return track
 
     @staticmethod
@@ -55,6 +56,8 @@ class AdminPlaylistController:
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
         if not PlaylistRepository.remove_track(db, playlist_id, track_id):
-            raise HTTPException(status_code=404, detail="This track is not in the current playlist")
+            raise HTTPException(
+                status_code=404, detail="This track is not in the current playlist"
+            )
         db.refresh(playlist)
         return playlist

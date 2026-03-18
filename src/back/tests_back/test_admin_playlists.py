@@ -2,6 +2,7 @@
 Tests for admin playlist management endpoints: /admin/playlists/*
 Follows the pattern established in test_moderation.py.
 """
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -146,6 +147,7 @@ def sample_track(db: Session):
 # Happy path — admin
 # ---------------------------------------------------------------------------
 
+
 def test_admin_sees_all_playlists_including_private(
     admin_client, db, monkeypatch, admin_user, sample_playlists
 ):
@@ -209,12 +211,16 @@ def test_admin_can_get_tracks_of_private_playlist(
 ):
     """Admin GET /admin/playlists/{id}/tracks returns tracks for a PRIVATE playlist."""
     private_playlist = sample_playlists[1]
-    tp = TrackPlaylist(idPlaylist=private_playlist.idPlaylist, idTrack=sample_track.idTrack)
+    tp = TrackPlaylist(
+        idPlaylist=private_playlist.idPlaylist, idTrack=sample_track.idTrack
+    )
     db.add(tp)
     db.commit()
 
     set_actor(admin_client, monkeypatch, admin_user)
-    response = admin_client.get(f"/admin/playlists/{private_playlist.idPlaylist}/tracks")
+    response = admin_client.get(
+        f"/admin/playlists/{private_playlist.idPlaylist}/tracks"
+    )
 
     assert response.status_code == 200
     data = response.json()
@@ -292,6 +298,7 @@ def test_admin_can_remove_track_returns_playlist(
 # Authorization — non-admin gets 403 on every endpoint
 # ---------------------------------------------------------------------------
 
+
 def test_list_playlists_forbidden_for_regular_user(
     admin_client, db, monkeypatch, regular_user, sample_playlists
 ):
@@ -323,7 +330,9 @@ def test_get_tracks_forbidden_for_regular_user(
     admin_client, db, monkeypatch, regular_user, sample_playlists
 ):
     set_actor(admin_client, monkeypatch, regular_user)
-    response = admin_client.get(f"/admin/playlists/{sample_playlists[0].idPlaylist}/tracks")
+    response = admin_client.get(
+        f"/admin/playlists/{sample_playlists[0].idPlaylist}/tracks"
+    )
     assert response.status_code == 403
 
 
