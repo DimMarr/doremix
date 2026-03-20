@@ -1,8 +1,122 @@
-import { Genre } from "@models/genre";
-import { GenreRepository, ModerationRepository } from "@repositories/index";
+import { Genre, User } from "@models/index";
+import { GenreRepository, ModerationRepository, UserRepository } from "@repositories/index";
+import { Input, AdminPanel } from "@components/index";
 import type { ModerationUser } from "@repositories/moderationRepository";
 import { AlertManager } from "@utils/alertManager";
 import { authService } from "@utils/authentication";
+
+// Main function : Handle behavior based on role
+export async function AdminPage(container: HTMLElement | null) {
+  if (!container) return;
+
+  const userInfos = await authService.infos();
+  const isAdmin = userInfos.role === "ADMIN";
+  const isModerator = userInfos.role === "MODERATOR";
+
+  // ROLE == USER
+  if (!isAdmin && !isModerator) {
+    container.innerHTML = (
+      <div class="py-12 text-center">
+        <h1 class="text-2xl font-bold mb-2">Forbidden</h1>
+        <p class="text-muted-foreground mb-6">Only admins and moderators can access this page.</p>
+        <a href="/" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">Back to Home</a>
+      </div>
+    );
+    return;
+  }
+
+  // ROLE == ADMIN
+  if (isAdmin) {
+    container.innerHTML = (
+      <div class="px-4 py-6 md:px-8">
+        {/* Header */}
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-3xl font-bold tracking-tight text-white/90">Admin Panels</h1>
+            <p class="text-white/60 mt-1 text-sm">Manage DoReMiX</p>
+          </div>
+          <a href="/" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">
+            Back
+          </a>
+        </div>
+
+        <div class="flex gap-5">
+          {/* Genre Managing Panel */}
+          <AdminPanel title="Genres" name="genre" content={
+            <form id="add-genre-form" class="flex gap-2 mt-4">
+              <input
+                type="text"
+                name="label"
+                id="new-genre-input"
+                placeholder="New genre name"
+                required
+                class="flex-1 px-4 py-2 rounded-lg bg-input border border-border text-foreground focus:ring-2 focus:ring-ring outline-none text-sm"
+              />
+              <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/80 transition-colors">
+                Add
+              </button>
+            </form>
+          }/>
+
+          {/* Moderators Managing Panel */}
+          <AdminPanel title="Moderators" name="moderators" />
+        </div>
+      </div>
+    );
+    await initGenreManagement(container);
+    await initAddModeratorPanel(container);
+    return;
+  }
+
+  // ROLE == MODERATOR
+  container.innerHTML = (
+    <div class="px-4 py-6 md:px-8">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-3xl font-bold tracking-tight text-white/90">Moderation</h1>
+          <p class="text-white/60 mt-1 text-sm">Ban non-admin users and revoke their tokens</p>
+        </div>
+        <a href="/" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">
+          Back
+        </a>
+      </div>
+
+      <AdminPanel title="Users" name="ban-user" />
+    </div>
+  );
+
+  await initModerationPanel(container);
+}
+
+/*
+ * RENDER FUNCTIONS :
+ * renderBanRows()
+ * renderGenreRows()
+ * renderModeratorRows()
+ */
+
+function renderBanRows(users: ModerationUser[]): string {
+  if (users.length === 0) {
+    return '<p class="text-muted-foreground text-sm">No ban candidates available.</p>';
+  }
+
+  return users
+    .map((user) => (
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 rounded-lg border border-white/10 bg-white/5" data-user-id={user.idUser}>
+        <div>
+          <p safe class="text-white text-sm font-medium">{user.username}</p>
+          <p safe class="text-white/60 text-xs">{user.email}</p>
+          <span class="inline-block mt-2 px-2 py-1 rounded-full bg-neutral-700 text-white text-[10px] uppercase tracking-wide">
+            {user.role}
+          </span>
+        </div>
+        <button data-ban-user={user.idUser} class="px-3 py-2 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-500 transition-colors self-start md:self-auto">
+          Ban user
+        </button>
+      </div>
+    ))
+    .join("");
+}
 
 function renderGenreRows(genres: Genre[], editingId: number | null): string {
   if (genres.length === 0) {
@@ -39,109 +153,36 @@ function renderGenreRows(genres: Genre[], editingId: number | null): string {
     .join("");
 }
 
-export async function AdminPage(container: HTMLElement | null) {
-  if (!container) return;
-
-  const userInfos = await authService.infos();
-  const isAdmin = userInfos.role === "ADMIN";
-  const isModerator = userInfos.role === "MODERATOR";
-
-  if (!isAdmin && !isModerator) {
-    container.innerHTML = (
-      <div class="py-12 text-center">
-        <h1 class="text-2xl font-bold mb-2">Forbidden</h1>
-        <p class="text-muted-foreground mb-6">Only admins and moderators can access this page.</p>
-        <a href="/" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">Back to Home</a>
-      </div>
-    );
-    return;
-  }
-
-  if (isAdmin) {
-    container.innerHTML = (
-      <div class="px-4 py-6 md:px-8">
-        <div class="flex items-center justify-between mb-6">
-          <div>
-            <h1 class="text-3xl font-bold tracking-tight text-white/90">Admin</h1>
-            <p class="text-white/60 mt-1 text-sm">Manage genres</p>
-          </div>
-          <a href="/" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">
-            Back
-          </a>
-        </div>
-
-        <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full max-w-2xl shadow-2xl">
-          <h2 class="text-xl font-semibold text-white mb-4">Genres</h2>
-          <div id="genre-list" class="space-y-2 mb-6 max-h-96 overflow-y-auto">
-            <p class="text-muted-foreground text-sm">Loading...</p>
-          </div>
-
-          <form id="add-genre-form" class="flex gap-2 mt-4">
-            <input
-              type="text"
-              name="label"
-              id="new-genre-input"
-              placeholder="New genre name"
-              required
-              class="flex-1 px-4 py-2 rounded-lg bg-input border border-border text-foreground focus:ring-2 focus:ring-ring outline-none text-sm"
-            />
-            <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/80 transition-colors">
-              Add
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-    await initGenreManagement(container);
-    return;
-  }
-
-  container.innerHTML = (
-    <div class="px-4 py-6 md:px-8">
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <h1 class="text-3xl font-bold tracking-tight text-white/90">Moderation</h1>
-          <p class="text-white/60 mt-1 text-sm">Ban non-admin users and revoke their tokens</p>
-        </div>
-        <a href="/" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">
-          Back
-        </a>
-      </div>
-
-      <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full shadow-2xl min-h-[70vh]">
-        <h2 class="text-xl font-semibold text-white mb-4">Ban candidates</h2>
-        <div id="ban-user-list" class="space-y-3 overflow-y-auto h-[calc(70vh-5rem)]">
-          <p class="text-muted-foreground text-sm">Loading...</p>
-        </div>
-      </div>
-    </div>
-  );
-
-  await initModerationPanel(container);
-}
-
-function renderBanRows(users: ModerationUser[]): string {
+function renderModeratorsRows(users: User[]): string {
   if (users.length === 0) {
-    return '<p class="text-muted-foreground text-sm">No ban candidates available.</p>';
+    return '<p class="text-muted-foreground text-sm">No user.</p>';
   }
 
   return users
-    .map((user) => (
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 rounded-lg border border-white/10 bg-white/5" data-user-id={user.idUser}>
-        <div>
-          <p safe class="text-white text-sm font-medium">{user.username}</p>
-          <p safe class="text-white/60 text-xs">{user.email}</p>
-          <span class="inline-block mt-2 px-2 py-1 rounded-full bg-neutral-700 text-white text-[10px] uppercase tracking-wide">
-            {user.role}
-          </span>
+    .map((user) => {
+      return (
+        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors" data-genre-id={user.idUser}>
+          <span safe class="text-foreground text-sm">{user.username}</span>
+          <div class="flex gap-2">
+            <Input
+              type="checkbox"
+              checked={user.role === "MODERATOR" || user.role === "ADMIN"}
+              disabled={user.role === "ADMIN"}
+              data-mod-user={user.idUser}
+            />
+          </div>
         </div>
-        <button data-ban-user={user.idUser} class="px-3 py-2 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-500 transition-colors self-start md:self-auto">
-          Ban user
-        </button>
-      </div>
-    ))
+      );
+    })
     .join("");
 }
+
+/*
+ * INIT PANEL FUNCTIONS :
+ * initGenreManagement()
+ * initModeratorPanel()
+ * initAddModeratorPanel()
+ */
 
 async function initGenreManagement(container: HTMLElement) {
   const genreList = container.querySelector("#genre-list") as HTMLElement | null;
@@ -286,6 +327,69 @@ async function initModerationPanel(container: HTMLElement) {
       new AlertManager().error("Failed to ban user");
       banBtn.removeAttribute("disabled");
       banBtn.classList.remove("opacity-70", "cursor-not-allowed");
+    }
+  });
+
+  await refresh();
+}
+
+async function initAddModeratorPanel(container: HTMLElement) {
+  // Get panel element
+  const moderatorListPanel = container.querySelector("#moderators-list") as HTMLElement | null;
+  if (!moderatorListPanel) return;
+
+  // Get users
+  const userRepo = new UserRepository();
+  let users: User[] = [];
+
+  // Fill panel with users
+  const refresh = async () => {
+    try {
+      users = await userRepo.getAllUsers();
+      moderatorListPanel.innerHTML = renderModeratorsRows(users);
+    } catch {
+      moderatorListPanel.innerHTML = '<p class="text-red-400 text-sm">Failed to load users.</p>';
+    }
+  };
+
+  // Handle checkbox
+  moderatorListPanel.addEventListener("click", async (event) => {
+    const target = event.target as HTMLElement;
+    const checkbox = target.closest("[data-mod-user]") as HTMLElement | null;
+    const role = checkbox.checked ? "USER" : "MODERATOR"
+
+    if (!checkbox) return;
+
+    const userId = parseInt(checkbox.getAttribute("data-mod-user") || "", 10);
+    if (!userId) return;
+
+    // If role == "USER" -> addModerator(userId)
+    // If role == "MODERATOR" -> demoteModerator(userId)
+
+    try {
+      checkbox.setAttribute("disabled", "true");
+      checkbox.classList.add("opacity-70", "cursor-not-allowed");
+
+      if (role == "USER") {
+        if (!confirm("Do you really want to promote user as moderator?")) return;
+        await userRepo.addModerator(userId)
+        new AlertManager().success("User is now a moderator.");
+        users = users.map((user) => user.idUser === userId ? {...user, role: "MODERATOR"} : user);
+      }
+
+      if (role == "MODERATOR") {
+        if (!confirm("Do you really want to demote this moderator?")) return;
+        await userRepo.demoteModerator(userId)
+        new AlertManager().success("User is no longer a moderator.");
+        users = users.map((user) => user.idUser === userId ? {...user, role: "USER"} : user);
+      }
+
+      moderatorListPanel.innerHTML = renderModeratorsRows(users);
+
+    } catch {
+      new AlertManager().error("Failed to changed user's role.");
+      checkbox.removeAttribute("disabled");
+      checkbox.classList.remove("opacity-70", "cursor-not-allowed");
     }
   });
 
