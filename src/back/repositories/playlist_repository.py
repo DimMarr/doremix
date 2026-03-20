@@ -327,16 +327,24 @@ class PlaylistRepository:
         users = (
             db.query(UserPlaylist).filter(UserPlaylist.idPlaylist == playlist_id).all()
         )
-        if current_user_id != db.query(Playlist.idOwner).filter(
-            Playlist.idPlaylist == playlist_id
-        ).scalar() and current_user_id not in [
-            user_playlist.idUser for user_playlist in users
-        ]:
+
+        owner_id = (
+            db.query(Playlist.idOwner)
+            .filter(Playlist.idPlaylist == playlist_id)
+            .scalar()
+        )
+
+        current_user = db.query(User).filter(User.idUser == current_user_id).first()
+        is_admin = current_user is not None and current_user.idRole == 3
+
+        if (
+            not is_admin
+            and current_user_id != owner_id
+            and current_user_id not in [u.idUser for u in users]
+        ):
             return [], "You're not allowed to see shared users for this playlist"
-        if users:
-            return users, None
-        else:
-            return [], None
+
+        return users, None
 
     @staticmethod
     def share_with_user(
@@ -398,7 +406,10 @@ class PlaylistRepository:
         if not playlist:
             return False, "playlist_not_found"
 
-        if playlist.idOwner != current_user_id:
+        current_user = db.query(User).filter(User.idUser == current_user_id).first()
+        is_admin = current_user is not None and current_user.idRole == 3
+
+        if playlist.idOwner != current_user_id and not is_admin:
             return False, "forbidden"
 
         link = (

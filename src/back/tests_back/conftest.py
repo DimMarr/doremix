@@ -11,6 +11,7 @@ from routes.search_router import router as search_router
 from models import User, Genre
 from models.enums import PlaylistVisibility
 from models.playlist import Playlist
+from middleware.auth_middleware import get_current_user_id, get_current_user
 
 # Crée une base de données SQLite en mémoire pour les tests
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -53,8 +54,6 @@ def client(db, sample_user):
         return sample_user.idUser
 
     app.dependency_overrides[get_db] = override_get_db
-    # Override auth dependencies so routes depending on user or user id work in tests
-    from middleware.auth_middleware import get_current_user_id, get_current_user
 
     app.dependency_overrides[get_current_user_id] = (
         lambda: override_get_current_user_id()
@@ -78,6 +77,67 @@ def sample_user(db: Session):
     db.commit()
     db.refresh(user)
     return user
+
+
+@pytest.fixture(scope="function")
+def other_user(db: Session):
+    """Crée un second utilisateur (ni owner ni admin)."""
+    user = User(
+        username="alice",
+        email="alice@etu.umontpellier.fr",
+        password="hashed",
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@pytest.fixture(scope="function")
+def admin_user(db: Session):
+    """Crée un utilisateur admin."""
+    user = User(
+        username="admin",
+        email="admin@etu.umontpellier.fr",
+        password="hashed",
+        idRole=3,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@pytest.fixture(scope="function")
+def client_as_other_user(db, other_user):
+    """Client authentifié en tant qu'utilisateur non owner non admin."""
+
+    def override_get_db():
+        yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user_id] = lambda: other_user.idUser
+    app.dependency_overrides[get_current_user] = lambda: other_user
+
+    test_client = TestClient(app)
+    yield test_client
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture(scope="function")
+def client_as_admin(db, admin_user):
+    """Client authentifié en tant qu'admin."""
+
+    def override_get_db():
+        yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user_id] = lambda: admin_user.idUser
+    app.dependency_overrides[get_current_user] = lambda: admin_user
+
+    test_client = TestClient(app)
+    yield test_client
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture(scope="function")
