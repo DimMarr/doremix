@@ -1,5 +1,6 @@
-import { Genre } from "@models/genre";
-import { GenreRepository, ModerationRepository } from "@repositories/index";
+import { Genre, User } from "@models/index";
+import { GenreRepository, ModerationRepository, UserRepository } from "@repositories/index";
+import { Input, AdminPanel } from "@components/index";
 import type { ModerationUser } from "@repositories/moderationRepository";
 import { AlertManager } from "@utils/alertManager";
 import { authService } from "@utils/authentication";
@@ -132,6 +133,9 @@ function renderBanRows(users: ModerationUser[]): string {
 >>>>>>> c2fa0a8 (refactor: renamed admin page)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 8953f0b (feat: add and demote moderators panel on frontend)
 // Main function : Handle behavior based on role
 export async function AdminPage(container: HTMLElement | null) {
   if (!container) return;
@@ -168,7 +172,10 @@ export async function AdminPage(container: HTMLElement | null) {
         </div>
 
         <div class="flex gap-5">
+<<<<<<< HEAD
         <div class="flex gap-5 items-stretch flex-wrap md:flex-nowrap">
+=======
+>>>>>>> 8953f0b (feat: add and demote moderators panel on frontend)
           {/* Genre Managing Panel */}
           <AdminPanel title="Genres" name="genre" content={
             <form id="add-genre-form" class="flex gap-2 mt-4">
@@ -246,8 +253,11 @@ function renderBanRows(users: ModerationUser[]): string {
     .join("");
 }
 
+<<<<<<< HEAD
 =======
 >>>>>>> 32dcc41 (fix: display users and groups playlists have been shared to in flexbox)
+=======
+>>>>>>> 8953f0b (feat: add and demote moderators panel on frontend)
 function renderGenreRows(genres: Genre[], editingId: number | null): string {
   if (genres.length === 0) {
     return '<p class="text-muted-foreground text-sm">No genres yet.</p>';
@@ -712,17 +722,23 @@ export async function AdminPage(container: HTMLElement | null) {
 }
 
 function renderBanRows(users: ModerationUser[]): string {
+function renderModeratorsRows(users: User[]): string {
   if (users.length === 0) {
+<<<<<<< HEAD
     return '<p class="text-muted-foreground text-sm">No users available.</p>';
 =======
 function renderModeratorsRows(users: User[]): string {
   if (users.length === 0) {
     return '<p class="text-muted-foreground text-sm">No user.</p>';
 >>>>>>> c2fa0a8 (refactor: renamed admin page)
+=======
+    return '<p class="text-muted-foreground text-sm">No user.</p>';
+>>>>>>> 7033dfe (feat: add and demote moderators panel on frontend)
   }
 
   return users
     .map((user) => {
+<<<<<<< HEAD
 <<<<<<< HEAD
       const actionButton = user.banned ? (
         <button data-unban-user={user.idUser} class="px-3 py-2 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-green-500 transition-colors self-start md:self-auto">
@@ -734,18 +750,20 @@ function renderModeratorsRows(users: User[]): string {
         </button>
       );
 
+=======
+>>>>>>> 7033dfe (feat: add and demote moderators panel on frontend)
       return (
-        <div class={`flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 rounded-lg border border-white/10 ${user.banned ? 'bg-red-900/10 opacity-75' : 'bg-white/5'}`} data-user-id={user.idUser}>
-          <div>
-            <p class="text-white text-sm font-medium flex items-center gap-1">
-              <span safe>{user.username}</span>
-              {user.banned ? <span class="text-red-400 text-xs">(Banned)</span> : ""}
-            </p>
-            <p safe class="text-white/60 text-xs">{user.email}</p>
-            <span class="inline-block mt-2 px-2 py-1 rounded-full bg-neutral-700 text-white text-[10px] uppercase tracking-wide">
-              {user.role}
-            </span>
+        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors" data-genre-id={user.idUser}>
+          <span safe class="text-foreground text-sm">{user.username}</span>
+          <div class="flex gap-2">
+            <Input
+              type="checkbox"
+              checked={user.role === "MODERATOR" || user.role === "ADMIN"}
+              disabled={user.role === "ADMIN"}
+              data-mod-user={user.idUser}
+            />
           </div>
+<<<<<<< HEAD
           {actionButton as 'safe'}
 =======
       return (
@@ -760,12 +778,15 @@ function renderModeratorsRows(users: User[]): string {
             />
           </div>
 >>>>>>> c2fa0a8 (refactor: renamed admin page)
+=======
+>>>>>>> 7033dfe (feat: add and demote moderators panel on frontend)
         </div>
       );
     })
     .join("");
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 function renderModeratorsRows(users: User[]): string {
@@ -800,6 +821,11 @@ function renderModeratorsRows(users: User[]): string {
 =======
 =======
 >>>>>>> 682c4bc (refactor: renamed admin page)
+=======
+=======
+=======
+>>>>>>> 7033dfe (feat: add and demote moderators panel on frontend)
+>>>>>>> 8953f0b (feat: add and demote moderators panel on frontend)
 /*
  * INIT PANEL FUNCTIONS :
  * initGenreManagement()
@@ -808,11 +834,17 @@ function renderModeratorsRows(users: User[]): string {
  */
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 32dcc41 (fix: display users and groups playlists have been shared to in flexbox)
 =======
 >>>>>>> c2fa0a8 (refactor: renamed admin page)
 >>>>>>> 682c4bc (refactor: renamed admin page)
+=======
+>>>>>>> c2fa0a8 (refactor: renamed admin page)
+=======
+>>>>>>> 7033dfe (feat: add and demote moderators panel on frontend)
+>>>>>>> 8953f0b (feat: add and demote moderators panel on frontend)
 async function initGenreManagement(container: HTMLElement) {
   const genreList = container.querySelector("#genre-list") as HTMLElement | null;
   const addForm = container.querySelector("#add-genre-form") as HTMLFormElement | null;
@@ -1230,6 +1262,7 @@ async function initAddModeratorPanel(container: HTMLElement) {
   await refresh();
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 async function initAddModeratorPanel(container: HTMLElement) {
   const moderatorList = container.querySelector("#moderators-list") as HTMLElement | null;
@@ -1252,6 +1285,10 @@ async function initAddModeratorPanel(container: HTMLElement) {
   moderatorList.addEventListener("change", async (event) => {
     const target = event.target as HTMLInputElement;
     const checkbox = target.closest("[data-mod-user]") as HTMLInputElement | null;
+=======
+
+async function initAddModeratorPanel(container: HTMLElement) {
+>>>>>>> 8953f0b (feat: add and demote moderators panel on frontend)
   // Get panel element
   const moderatorListPanel = container.querySelector("#moderators-list") as HTMLElement | null;
   if (!moderatorListPanel) return;
@@ -1281,6 +1318,7 @@ async function initAddModeratorPanel(container: HTMLElement) {
     const userId = parseInt(checkbox.getAttribute("data-mod-user") || "", 10);
     if (!userId) return;
 
+<<<<<<< HEAD
     const nextCheckedState = checkbox.checked;
 
     if (nextCheckedState) {
@@ -1309,6 +1347,8 @@ async function initAddModeratorPanel(container: HTMLElement) {
     } catch {
       checkbox.checked = !nextCheckedState;
       alerts.error("Failed to change user's role.");
+=======
+>>>>>>> 8953f0b (feat: add and demote moderators panel on frontend)
     // If role == "USER" -> addModerator(userId)
     // If role == "MODERATOR" -> demoteModerator(userId)
 
@@ -1341,5 +1381,8 @@ async function initAddModeratorPanel(container: HTMLElement) {
 
   await refresh();
 }
+<<<<<<< HEAD
 =======
 >>>>>>> 32dcc41 (fix: display users and groups playlists have been shared to in flexbox)
+=======
+>>>>>>> 8953f0b (feat: add and demote moderators panel on frontend)
