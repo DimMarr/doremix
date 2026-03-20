@@ -53,3 +53,27 @@ async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
 )
 async def get_user_playlists(user_id: int, db: AsyncSession = Depends(get_db)):
     return await UserController.get_user_playlists(db, user_id)
+
+
+@router.patch(
+    "/{user_id}/add-moderator", response_model=UserSchema, summary="Add a moderator"
+)
+async def add_moderator(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    _admin=Depends(require_role(["ADMIN"])),
+):
+    return await UserController.add_moderator(db, user_id)
+
+
+@router.patch(
+    "/{user_id}/demote-moderator",
+    response_model=UserSchema,
+    summary="Demote a moderator",
+)
+async def demote_moderator(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    _admin=Depends(require_role(["ADMIN"])),
+):
+    return await UserController.demote_moderator(db, user_id)
