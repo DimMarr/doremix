@@ -73,4 +73,3 @@ Notes:
 - `playlist list` defaults to `--scope accessible` (your playlists + other users' `OPEN` and `PUBLIC` playlists).
 - Playlist mutations (`update`, `delete`, `add-track`, `remove`) are owner-only.
 - `playlist vote` accepts `--up` (+1), `--down` (-1), or `--remove` (0) — exactly one flag required.
-- Admin commands require an authenticated account with role `ADMIN`.
