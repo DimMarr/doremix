@@ -368,8 +368,37 @@ class PlaylistRepository:
         return right_result.scalars().first() is not None
 
     @staticmethod
+<<<<<<< HEAD
     async def list_shared_user(
         db: AsyncSession, playlist_id: int, current_user_id: int
+=======
+    def list_shared_user(db: Session, playlist_id: int, current_user_id: int):
+        users = (
+            db.query(UserPlaylist).filter(UserPlaylist.idPlaylist == playlist_id).all()
+        )
+
+        owner_id = (
+            db.query(Playlist.idOwner)
+            .filter(Playlist.idPlaylist == playlist_id)
+            .scalar()
+        )
+
+        current_user = db.query(User).filter(User.idUser == current_user_id).first()
+        is_admin = current_user is not None and current_user.idRole == 3
+
+        if (
+            not is_admin
+            and current_user_id != owner_id
+            and current_user_id not in [u.idUser for u in users]
+        ):
+            return [], "You're not allowed to see shared users for this playlist"
+
+        return users, None
+
+    @staticmethod
+    def share_with_user(
+        db: Session, playlist_id: int, owner_id: int, target_email: str, is_editor: bool
+>>>>>>> 282797d (feat : ajout test playlist user shared)
     ):
         users_result = await db.execute(
             select(UserPlaylist).filter(UserPlaylist.idPlaylist == playlist_id)
@@ -493,11 +522,23 @@ class PlaylistRepository:
         return True, "success"
 
     @staticmethod
-    async def remove_shared_user(
-        db: AsyncSession, playlist_id: int, target_user_id: int
-    ) -> bool:
-        link_result = await db.execute(
-            select(UserPlaylist).filter(
+    def remove_shared_user(
+        db: Session, playlist_id: int, target_user_id: int, current_user_id: int
+    ):
+        playlist = db.query(Playlist).filter(Playlist.idPlaylist == playlist_id).first()
+
+        if not playlist:
+            return False, "playlist_not_found"
+
+        current_user = db.query(User).filter(User.idUser == current_user_id).first()
+        is_admin = current_user is not None and current_user.idRole == 3
+
+        if playlist.idOwner != current_user_id and not is_admin:
+            return False, "forbidden"
+
+        link = (
+            db.query(UserPlaylist)
+            .filter(
                 UserPlaylist.idPlaylist == playlist_id,
                 UserPlaylist.idUser == target_user_id,
             )
