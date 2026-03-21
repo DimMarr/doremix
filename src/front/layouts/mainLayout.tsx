@@ -5,6 +5,7 @@ import { waitForYouTubeAPI } from "@utils/youtubeApiLoader";
 import logo from "@assets/images/logo.png";
 import Playlist from "@models/playlist";
 import { authService } from "@utils/authentication";
+import { AppRoutes } from "../router";
 export let trackPlayerInstance = null;
 
 export async function createMainLayout() {
@@ -16,7 +17,7 @@ export async function createMainLayout() {
   const appHtml = (
     <div class="min-h-screen bg-background text-foreground px-6 pb-20">
       <Header className="">
-        <a href="/">
+        <a href="/" style={window.location.pathname === AppRoutes.LOGIN || window.location.pathname === AppRoutes.SIGNUP ? 'display: none;' : ''}>
           <img src={logo} alt="Dorémix" class="h-8" />
         </a>
 
@@ -45,7 +46,7 @@ export async function createMainLayout() {
     if (btn) {
       btn.addEventListener('click', async () => {
         await authService.logout()
-        window.location.href = "/login"
+        window.location.href = AppRoutes.LOGIN
         return
       })
     }
