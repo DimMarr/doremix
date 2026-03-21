@@ -1,41 +1,43 @@
-from sqlalchemy.orm import Session, joinedload
+from typing import cast
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy.orm import joinedload
 from sqlalchemy import or_
 from models.track import Track
 from models.artist import Artist
-from typing import Optional, List
 
 
 class TrackRepository:
     @staticmethod
-    def create(db: Session, track: Track) -> Track:
+    async def create(db: AsyncSession, track: Track) -> Track:
         db.add(track)
-        db.commit()
-        db.refresh(track)
+        await db.commit()
+        await db.refresh(track)
         return track
 
     @staticmethod
-    def get_all(db: Session) -> List[Track]:
-        tracks: List[Track] = db.query(Track).all()
-        return tracks
+    async def get_all(db: AsyncSession) -> list[Track]:
+        result = await db.execute(select(Track))
+        return list(result.scalars().all())
 
     @staticmethod
-    def get_by_id(db: Session, track_id: int) -> Optional[Track]:
-        track: Optional[Track] = (
-            db.query(Track).filter(Track.idTrack == track_id).first()
+    async def get_by_id(db: AsyncSession, track_id: int) -> Track | None:
+        result = await db.execute(select(Track).filter(Track.idTrack == track_id))
+        return cast(Track | None, result.scalars().first())
+
+    @staticmethod
+    async def get_by_youtube_link(db: AsyncSession, youtube_link: str) -> Track | None:
+        result = await db.execute(
+            select(Track).filter(Track.youtubeLink == youtube_link)
         )
-        return track
+        return cast(Track | None, result.scalars().first())
 
     @staticmethod
-    def get_by_youtube_link(db: Session, youtube_link: str) -> Optional[Track]:
-        track: Optional[Track] = (
-            db.query(Track).filter(Track.youtubeLink == youtube_link).first()
-        )
-        return track
-
-    @staticmethod
-    def search_tracks(db: Session, query: str, limit: int = 10) -> List[Track]:
-        tracks: List[Track] = (
-            db.query(Track)
+    async def search_tracks(
+        db: AsyncSession, query: str, limit: int = 10
+    ) -> list[Track]:
+        result = await db.execute(
+            select(Track)
             .outerjoin(Track.artists)
             .options(joinedload(Track.artists))
             .filter(
@@ -46,6 +48,5 @@ class TrackRepository:
             )
             .distinct()
             .limit(limit)
-            .all()
         )
-        return tracks
+        return list(result.unique().scalars().all())

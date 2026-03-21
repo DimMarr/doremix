@@ -1,6 +1,5 @@
 from database import Base
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 
 
@@ -16,9 +15,12 @@ class RefreshToken(Base):
         nullable=False,
     )
     createdAt = Column(
-        "createdat", DateTime, default=datetime.now(timezone.utc), nullable=False
+        "createdat",
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
     )
-    expiresAt = Column("expiresat", DateTime, nullable=False)
+    expiresAt = Column("expiresat", DateTime(timezone=True), nullable=False)
 
     @property
     def is_valid(self):

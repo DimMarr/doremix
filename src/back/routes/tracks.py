@@ -1,7 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import List, Optional
-
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 from controllers import TrackController
 from schemas import TrackSchema
 from database import get_db
@@ -11,34 +9,29 @@ router = APIRouter(prefix="/tracks", tags=["Tracks"])
 
 @router.get(
     "/",
-    response_model=List[TrackSchema],
-    summary="Lister tous les morceaux",
-    description="Retourne la liste complète des morceaux disponibles.",
+    response_model=list[TrackSchema],
+    summary="List all tracks",
+    description="Returns the complete list of available tracks.",
 )
-def get_tracks(db: Session = Depends(get_db)):
-    tracks = TrackController.get_all_tracks(db)
-    return tracks
+async def get_tracks(db: AsyncSession = Depends(get_db)):
+    return await TrackController.get_all_tracks(db)
 
 
 @router.get(
     "/by-url",
     response_model=TrackSchema,
-    summary="Récupérer un morceau par son URL",
-    description="Retourne les informations détaillées d'un morceau à partir de son URL YouTube.",
+    summary="Get a track by URL",
+    description="Returns the detailed information of a track based on its YouTube URL.",
 )
-def get_track_by_url(url: str, db: Session = Depends(get_db)):
-    track = TrackController.get_track_by_url(db, url)
-    if not track:
-        raise HTTPException(status_code=404, detail="Track not found")
-    return track
+async def get_track_by_url(url: str, db: AsyncSession = Depends(get_db)):
+    return await TrackController.get_track_by_url(db, url)
 
 
 @router.get(
     "/{track_id}",
     response_model=TrackSchema,
-    summary="Récupérer un morceau",
-    description="Retourne les informations détaillées d'un morceau à partir de son identifiant.",
+    summary="Get a track",
+    description="Returns the detailed information of a track based on its ID.",
 )
-def get_track(track_id: int, db: Session = Depends(get_db)):
-    track = TrackController.get_track(db, track_id)
-    return track
+async def get_track(track_id: int, db: AsyncSession = Depends(get_db)):
+    return await TrackController.get_track(db, track_id)

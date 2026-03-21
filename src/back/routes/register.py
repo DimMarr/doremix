@@ -1,18 +1,17 @@
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from controllers.register import RegisterController
 from schemas.user import UserRegisterSchema
 
-# /auth/register, /auth/login...
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post(
     "/register",
     status_code=status.HTTP_201_CREATED,
-    summary="Créer un nouveau compte",
-    description="Enregistre un utilisateur, hache le mot de passe et génère un username unique.",
+    summary="Create a new account",
+    description="Registers a user, hashes the password and generates a unique username.",
 )
-def register(user_data: UserRegisterSchema, db: Session = Depends(get_db)):
-    return RegisterController.register(db, user_data)
+async def register(user_data: UserRegisterSchema, db: AsyncSession = Depends(get_db)):
+    return await RegisterController.register(db, user_data)
