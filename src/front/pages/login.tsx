@@ -1,13 +1,14 @@
 import { Button, Input } from "@components/generics";
 import { AlertManager } from "@utils/alertManager";
 import { isValidEmail, isValidPassword, authService } from "@utils/authentication";
+import { AppRoutes } from "../router";
 
 export async function LoginPage(container) {
 
     const pageHtml = (
         <div class="relative h-[calc(100vh-64px)] flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0 rounded-lg overflow-hidden">
             <div class="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex rounded-md animate-fade-reveal">
-                <div class="absolute inset-0 bg-[#3838ec] rounded-md" />
+                <div class="absolute inset-0 bg-zinc-900 rounded-md" />
                 <div class="relative z-20 flex block items-center text-lg font-medium animate-fade-right animation-delay-100">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -96,7 +97,7 @@ export async function LoginPage(container) {
                     <p class="px-8 text-center text-sm text-muted-foreground animate-fade-up animation-delay-600">
                         Don't have an account?{" "}
                         <a
-                            href="/signup"
+                            href={AppRoutes.SIGNUP}
                             class="underline underline-offset-4 hover:text-primary"
                         >
                             Sign up
@@ -148,7 +149,7 @@ export async function LoginPage(container) {
 
             try {
                 await authService.login(email, password);
-                window.location.href = "/";
+                window.location.href = AppRoutes.HOME;
             } catch (e) {
                 new AlertManager().error("Login failed. Please check your credentials.");
             }
