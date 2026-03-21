@@ -1,12 +1,8 @@
 import { secondsToReadableTime } from "@components/utils";
 import { Track } from "@models/track";
-import { PlaylistRepository } from "@repositories/playlistRepository";
-import { canEdit } from "@utils/rights";
 
-export async function TrackRow({ track, index, current_track, playlistId }: { track: Track; index: number, current_track?: Track, playlistId: number }) {
+export async function TrackRow({ track, index, current_track, playlistId, canEditPlaylist }: { track: Track; index: number, current_track?: Track, playlistId: number, canEditPlaylist?: boolean }) {
   const artistText = track.artists?.map(a => a.name).join(', ') || 'Unknown';
-  const repo = new PlaylistRepository();
-  let playlist = await repo.getById(playlistId);
 
   return (
     <div
@@ -21,7 +17,7 @@ export async function TrackRow({ track, index, current_track, playlistId }: { tr
       <span safe class="font-medium track-title">{track.title}</span>
       <span safe>{artistText}</span>
       <span safe>{secondsToReadableTime(track.durationSeconds)}</span>
-      { await canEdit(repo, playlist) &&
+      { canEditPlaylist &&
       <button
         class="opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive flex items-center justify-center cursor-pointer delete-track"
         data-track-id={track.idTrack}

@@ -122,7 +122,7 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
   );
 }
 
-function renderTrackList(playlist: Playlist): string {
+async function renderTrackList(playlist: Playlist, canEditPlaylist: boolean): Promise<string> {
   const tracks = playlist.tracks || [];
   const currentTrack = trackPlayerInstance.getCurrentTrack();
   const playerState = trackPlayerInstance.getPlayerState();
@@ -130,15 +130,15 @@ function renderTrackList(playlist: Playlist): string {
   return (
     <div>
       <TrackListHeader />
-      {tracks.map(async (track, index) => ( await
+      {(await Promise.all(tracks.map(async (track, index) => ( await
         <TrackRow
           track={track}
           index={index}
           playlistId={playlist.idPlaylist}
-          trackPlayer={trackPlayerInstance}
-          current_track={[YoutubePlayerState.UNSTARTED, YoutubePlayerState.CUED].includes(playerState) ? null : currentTrack}
+          current_track={[YoutubePlayerState.UNSTARTED, YoutubePlayerState.CUED].includes(playerState) ? undefined : currentTrack}
+          canEditPlaylist={canEditPlaylist}
         />
-      )) as 'safe'}
+      )))) as unknown as 'safe'}
     </div>
   );
 }
@@ -202,7 +202,8 @@ export async function PlaylistDetailPage(
   const updateTrackListDisplay = async () => {
     const trackListContainer = container.querySelector('#track-list-container');
     if (trackListContainer) {
-      trackListContainer.innerHTML = await renderTrackList({ ...playlist, tracks });
+      const canEditPlaylist = await canEdit(repo, playlist);
+      trackListContainer.innerHTML = await renderTrackList({ ...playlist, tracks }, canEditPlaylist);
     }
   };
 
@@ -317,6 +318,7 @@ export async function PlaylistDetailPage(
 
   const canDeleteCurrentPlaylist = await canDeletePlaylist(playlist);
   const isPlaylistOwner = await isOwner(playlist);
+  const canEditPlaylist = await canEdit(repo, playlist);
 
   container.innerHTML = (
     <div>
@@ -348,7 +350,7 @@ export async function PlaylistDetailPage(
       </div>
 
       <div id="track-list-container" class="flex flex-col gap-4">
-        {await renderTrackList({ ...playlist, tracks }) as 'safe'}
+        {await renderTrackList({ ...playlist, tracks }, canEditPlaylist) as 'safe'}
       </div>
     </div>
   );
