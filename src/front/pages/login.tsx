@@ -2,6 +2,7 @@ import { Button, Input } from "@components/generics";
 import { AlertManager } from "@utils/alertManager";
 import { isValidEmail, isValidPassword, authService } from "@utils/authentication";
 import { AppRoutes } from "../router";
+import logo from "@assets/images/logo.png";
 
 export async function LoginPage(container) {
 
@@ -10,18 +11,7 @@ export async function LoginPage(container) {
             <div class="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex rounded-md animate-fade-reveal">
                 <div class="absolute inset-0 bg-zinc-900 rounded-md" />
                 <div class="relative z-20 flex block items-center text-lg font-medium animate-fade-right animation-delay-100">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        class="mr-2 h-6 w-6"
-                    >
-                        <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-                    </svg>
+                    <img src={logo} alt="Dorémix" class="mr-2 h-8" />
                     DoReMiX Inc
                 </div>
 
@@ -74,8 +64,11 @@ export async function LoginPage(container) {
                 </div>
             </div>
 
-            <div class="p-8 h-full flex items-center justify-center animate-fade-reveal animation-delay-200">
+            <div class="p-4 sm:p-8 h-full flex items-center justify-center animate-fade-reveal animation-delay-200">
                 <div class="mx-auto flex w-full flex-col justify-center space-y-8 sm:w-[350px]">
+                    <div class="relative lg:hidden z-20 flex block justify-center items-center text-lg font-medium animate-fade-right animation-delay-100">
+                        <img src={logo} alt="Dorémix" class="mr-2 h-8" />
+                    </div>
                     <div class="flex flex-col space-y-2 text-center animate-fade-up animation-delay-300">
                         <h1 class="text-3xl font-bold tracking-tight">Login to your account</h1>
                         <p class="text-base text-muted-foreground">
