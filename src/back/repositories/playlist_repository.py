@@ -370,3 +370,26 @@ class PlaylistRepository:
             await db.commit()
 
         return True, "success"
+
+    @staticmethod
+    async def transfer_ownership(
+        db: AsyncSession, playlist_id: int, current_owner_id: int, new_owner_email: str
+    ) -> Playlist | None:
+        result = await db.execute(
+            select(Playlist).filter(Playlist.idPlaylist == playlist_id)
+        )
+        playlist = cast(Playlist | None, result.scalars().first())
+        if not playlist or playlist.idOwner != current_owner_id:
+            return None
+
+        user_result = await db.execute(
+            select(User).filter(User.email == new_owner_email)
+        )
+        new_owner = cast(User | None, user_result.scalars().first())
+        if not new_owner:
+            return None
+
+        playlist.idOwner = new_owner.idUser
+        await db.commit()
+        await db.refresh(playlist)
+        return playlist

@@ -1,4 +1,4 @@
-import { TrackRepository } from "@repositories/index";
+import { PlaylistRepository, TrackRepository } from "@repositories/index";
 import { Button, Input } from "@components/generics";
 import { isValidEmail } from "@utils/authentication";
 import { AlertManager } from "@utils/alertManager";
@@ -158,21 +158,42 @@ export function ShareModal({ playlistId, onClose }) {
     <div id="share-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
       <div class="bg-neutral-900 border border-border rounded-lg p-8 max-w-md w-full flex flex-col gap-5">
         <h2 class="text-2xl font-bold text-foreground mb-4">Share Playlist</h2>
-        <form id="share-form">
-          <div class="mb-4 flex flex-col gap-5">
-            <Input label="Email address" placeholder="vincent.berry@umontpellier.fr" id="email"/>
-            <Input label="Is Editor ?" id="editor" type="checkbox"/>
-          </div>
 
-          <div class="flex justify-end gap-4">
-            <Button type="button" id="cancel-share" variant="secondary">
-              Cancel
-            </Button>
-            <Button type="submit" id="submit-share" disabled>
-              Share
-            </Button>
-          </div>
-        </form>
+        <div class="flex gap-2 border-b border-border mb-2">
+          <button id="tab-share" class="tab-btn pb-2 px-1 text-sm font-medium border-b-2 border-primary text-primary transition-colors">
+            Share
+          </button>
+          <button id="tab-transfer" class="tab-btn pb-2 px-1 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground transition-colors">
+            Transfer ownership
+          </button>
+        </div>
+
+        <div id="panel-share">
+          <form id="share-form" class="flex flex-col gap-5">
+            <div class="flex flex-col gap-5">
+              <Input label="Email address" placeholder="vincent.berry@umontpellier.fr" id="email"/>
+              <Input label="Is Editor?" id="editor" type="checkbox"/>
+            </div>
+            <div class="flex justify-end gap-4">
+              <Button type="button" id="cancel-share" variant="secondary">Cancel</Button>
+              <Button type="submit" id="submit-share" disabled>Share</Button>
+            </div>
+          </form>
+        </div>
+
+        <div id="panel-transfer" class="hidden flex flex-col gap-5">
+          <p class="text-sm text-muted-foreground">
+            Transfer ownership to another user.<br></br>
+            <span class="text-destructive font-medium">This action is irreversible, you will lose access to this playlist unless the new owner invites you back.</span>
+          </p>
+          <form id="transfer-form" class="flex flex-col gap-5">
+            <Input label="New owner email" placeholder="new.owner@umontpellier.fr" id="transfer-email"/>
+            <div class="flex justify-end gap-4">
+              <Button type="button" id="cancel-transfer" variant="secondary">Cancel</Button>
+              <Button type="submit" id="submit-transfer" variant="destructive" disabled>Transfer</Button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
@@ -180,74 +201,107 @@ export function ShareModal({ playlistId, onClose }) {
   function render(container) {
     container.innerHTML = modalHtml;
 
-    const emailInput = container.querySelector('#email');
-    const editorInput = container.querySelector('#editor');
-    const submitButton = container.querySelector('#submit-share');
+    const tabShare = container.querySelector('#tab-share');
+    const tabTransfer = container.querySelector('#tab-transfer');
+    const panelShare = container.querySelector('#panel-share');
+    const panelTransfer = container.querySelector('#panel-transfer');
 
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        cleanupAndClose();
-      }
-    };
+    function activateTab(tab) {
+      const isShare = tab === 'share';
+      tabShare.classList.toggle('border-primary', isShare);
+      tabShare.classList.toggle('text-primary', isShare);
+      tabShare.classList.toggle('border-transparent', !isShare);
+      tabShare.classList.toggle('text-muted-foreground', !isShare);
 
+      tabTransfer.classList.toggle('border-primary', !isShare);
+      tabTransfer.classList.toggle('text-primary', !isShare);
+      tabTransfer.classList.toggle('border-transparent', isShare);
+      tabTransfer.classList.toggle('text-muted-foreground', isShare);
+
+      panelShare.classList.toggle('hidden', !isShare);
+      panelTransfer.classList.toggle('hidden', isShare);
+    }
+
+    tabShare.onclick = () => activateTab('share');
+    tabTransfer.onclick = () => activateTab('transfer');
+
+    const handleKeyDown = (e) => { if (e.key === 'Escape') cleanupAndClose(); };
     const cleanupAndClose = () => {
       window.removeEventListener('keydown', handleKeyDown);
       onClose();
     };
-
     window.addEventListener('keydown', handleKeyDown);
 
-    container.querySelector('#cancel-share').onclick = () => {
-      cleanupAndClose();
-    };
+    const emailInput = container.querySelector('#email');
+    const submitShare = container.querySelector('#submit-share');
 
-        container.querySelector('#share-form').onsubmit = async (e) => {
-          e.preventDefault();
-          const email = emailInput.value;
-          const editor = editorInput.checked;
-          const submitButton = container.querySelector('#submit-share');
-          const originalButtonContent = submitButton.innerHTML;
-          submitButton.disabled = true;
-          submitButton.innerHTML = `
-            <svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Sharing...`;
+    container.querySelector('#cancel-share').onclick = () => cleanupAndClose();
 
-            try {
-              console.log(editor)
-              const response = await new TrackRepository().share(playlistId, email, editor);
-              console.log(response)
-              if (response == 200) {
-                new AlertManager().success("Playlist shared successfully");
-                cleanupAndClose();
-                return
-              }
-              throw new Error("Failed to add track")
-
-            } catch (err){
-              submitButton.disabled = false;
-              submitButton.innerHTML = originalButtonContent;
-              throw new Error("Error sharing playlist")
-            }
-        };
     let debounceTimer;
     emailInput.addEventListener('keyup', (e) => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            handleEmailInputChange(e.target.value);
-        }, 500);
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        submitShare.disabled = !isValidEmail(e.target.value);
+      }, 500);
     });
 
-    async function handleEmailInputChange(email) {
-      if (!isValidEmail(email)) {
-        submitButton.disabled = true;
-        return;
-      }
+    container.querySelector('#share-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const email = emailInput.value;
+      const editor = container.querySelector('#editor').checked;
+      const originalContent = submitShare.innerHTML;
 
-      submitButton.disabled = false;
-    }
+      submitShare.disabled = true;
+
+      try {
+        const response = await new TrackRepository().share(playlistId, email, editor);
+        if (response === 200) {
+          new AlertManager().success('Playlist shared successfully');
+          cleanupAndClose();
+          return;
+        }
+        throw new Error();
+      } catch {
+        submitShare.disabled = false;
+        submitShare.innerHTML = originalContent;
+        new AlertManager().error('Error sharing playlist');
+      }
+    };
+
+    const transferEmailInput = container.querySelector('#transfer-email');
+    const submitTransfer = container.querySelector('#submit-transfer');
+
+    container.querySelector('#cancel-transfer').onclick = () => cleanupAndClose();
+
+    let transferDebounce;
+    transferEmailInput.addEventListener('keyup', (e) => {
+      clearTimeout(transferDebounce);
+      transferDebounce = setTimeout(() => {
+        submitTransfer.disabled = !isValidEmail(e.target.value);
+      }, 500);
+    });
+
+    container.querySelector('#transfer-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const email = transferEmailInput.value;
+      const originalContent = submitTransfer.innerHTML;
+
+      submitTransfer.disabled = true;
+
+      try {
+        const response = await new PlaylistRepository().transfer(playlistId, email);
+        if (response === 200) {
+          new AlertManager().success('Ownership transferred successfully');
+          cleanupAndClose();
+          return;
+        }
+        throw new Error();
+      } catch {
+        submitTransfer.disabled = false;
+        submitTransfer.innerHTML = originalContent;
+        new AlertManager().error('Error transferring ownership');
+      }
+    };
   }
 
   return { render };

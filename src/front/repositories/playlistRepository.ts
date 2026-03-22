@@ -360,4 +360,24 @@ export class PlaylistRepository {
             throw error;
         }
     }
+
+    async transfer(id: number, new_owner_email: string) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/playlists/${id}/transfer`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({ new_owner_email: new_owner_email }),
+            });
+            return response.status;
+        } catch (error) {
+            if (error instanceof TypeError) {
+                new AlertManager().error("Network error. Check your connection.");
+            }
+            console.error("Error transferring ownership of the playlist:", error);
+            throw error;
+        }
+    }
 }
