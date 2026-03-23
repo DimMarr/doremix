@@ -38,7 +38,7 @@ doremix
         |- tracks <playlist-id>
         |- remove <playlist-id> <track-id>
         |- create --name <playlist-name> [--genre <genre-id>] [--visibility <visibility>]
-        |- delete <playlist-id>
+        |- delete <playlist-id> [--force]
         |- update <playlist-id> [--name <playlist-name>] [--genre <genre-id>] [--visibility <visibility>]
         |- add-track <playlist-id> --url <youtube-link> --title <title>
         |- search-tracks <playlist-id> <query>
@@ -49,9 +49,22 @@ doremix
         |- play <track-id>
         |- stop
         |- search <query>
+    |- admin
+        |- playlist
+            |- list
+            |- tracks <playlist-id>
+            |- update <playlist-id> [--name <name>] [--genre <genre-id>] [--visibility <visibility>]
+            |- delete <playlist-id> [--force]
+            |- add-track <playlist-id> --url <youtube-url> --title <title>
+            |- remove-track <playlist-id> <track-id>
+        |- genre
+            |- list
+            |- add --label <label>
+            |- update <genre-id> --label <label>
+            |- delete <genre-id> [--force]
 ```
 
 Notes:
 - Visibility values are `PUBLIC`, `PRIVATE`, `OPEN`.
 - `playlist list` defaults to `--scope accessible` (your playlists + other users' `OPEN` and `PUBLIC` playlists).
-- Playlist mutations (`update`, `delete`, `add-track`, `remove`) are owner-only.
+- Admin commands require an authenticated account with role `ADMIN`.
