@@ -91,7 +91,7 @@ function renderPlaylistRows(
         : (
           <div class="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors" data-playlist-id={playlist.idPlaylist}>
             <div class="flex items-center gap-3 min-w-0">
-              <span safe class="text-foreground text-sm font-medium truncate">{playlist.name}</span>
+              <a href={`/playlist/${playlist.idPlaylist}`} safe class="text-foreground text-sm font-medium truncate hover:underline cursor-pointer">{playlist.name}</a>
               <span class={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide font-medium ${visibilityBadgeColor}`}>
                 {playlist.visibility}
               </span>
