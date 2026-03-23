@@ -17,6 +17,7 @@ from src.services.playlist import (
     add_track_to_playlist,
     search_playlists,
     search_tracks_in_playlist,
+    reorder_track,
 )
 
 app = typer.Typer()
@@ -88,13 +89,14 @@ def tracks(id: str):
 
     table = Table(title="All tracks")
 
-    table.add_column("id", style="cyan")
+    table.add_column("#", justify="right", style="dim")
+    table.add_column("Track ID", style="cyan", justify="right")
     table.add_column("title", style="magenta")
 
-    for track in tracks:
+    for idx, track in enumerate(tracks, start=1):
         id = str(track.idTrack)
         title = track.title
-        table.add_row(id, title)
+        table.add_row(str(idx), id, title)
 
     console.print(table)
 
@@ -261,13 +263,14 @@ def add_track(
         tracks = get_playlist_tracks(str(playlist_id))
 
         tracks_table = Table(title=f"All tracks in '{playlist.name}'")
-        tracks_table.add_column("id", style="cyan")
+        tracks_table.add_column("#", justify="right", style="dim")
+        tracks_table.add_column("Track ID", style="cyan", justify="right")
         tracks_table.add_column("title", style="magenta")
         tracks_table.add_column("artists", style="blue")
 
-        for t in tracks:
+        for idx, t in enumerate(tracks, start=1):
             t_artists = ", ".join([artist.name for artist in t.artists])
-            tracks_table.add_row(str(t.idTrack), t.title, t_artists)
+            tracks_table.add_row(str(idx), str(t.idTrack), t.title, t_artists)
 
         console.print(tracks_table)
 
@@ -341,6 +344,89 @@ def search_tracks(
 
         console.print(table)
         console.print(f"\n[green]{len(tracks)} track(s) found[/green]")
+
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(name="reorder-track", help="Reorder a track in a playlist.")
+def reorder_track_cmd(
+    playlist_id: int = typer.Option(
+        ...,
+        "--playlist",
+        "-p",
+        help="ID of the playlist",
+    ),
+    track_id: int = typer.Option(
+        ...,
+        "--track",
+        "-t",
+        help="ID of the track to move",
+    ),
+    after_track_id: int = typer.Option(
+        None,
+        "--after",
+        "-a",
+        help="ID of the track after which to insert. (Default: moves to the top if neither provided)",
+    ),
+    before_track_id: int = typer.Option(
+        None,
+        "--before",
+        "-b",
+        help="ID of the track before which to insert.",
+    ),
+):
+    try:
+        if after_track_id is not None and before_track_id is not None:
+            console.print(
+                "[red]✗ Error: You cannot specify both --after and --before at the same time.[/red]"
+            )
+            return
+
+        final_after_id = after_track_id
+
+        if before_track_id is not None:
+            tracks_current = get_playlist_tracks(str(playlist_id))
+            idx = next(
+                (
+                    i
+                    for i, t in enumerate(tracks_current)
+                    if t.idTrack == before_track_id
+                ),
+                None,
+            )
+
+            if idx is None:
+                console.print(
+                    f"[red]✗ Error: Track '{before_track_id}' not found in playlist.[/red]"
+                )
+                return
+
+            if idx == 0:
+                final_after_id = None
+            else:
+                final_after_id = tracks_current[idx - 1].idTrack
+
+        reorder_track(str(playlist_id), track_id, final_after_id)
+
+        console.print(
+            f"[green]✓ Track '{track_id}' successfully moved in playlist '{playlist_id}'![/green]"
+        )
+
+        playlist = get_playlist(str(playlist_id))
+        tracks = get_playlist_tracks(str(playlist_id))
+
+        tracks_table = Table(title=f"All tracks in '{playlist.name}'")
+        tracks_table.add_column("#", justify="right", style="dim")
+        tracks_table.add_column("Track ID", style="cyan", justify="right")
+        tracks_table.add_column("title", style="magenta")
+        tracks_table.add_column("artists", style="blue")
+
+        for idx, t in enumerate(tracks, start=1):
+            t_artists = ", ".join([artist.name for artist in t.artists])
+            tracks_table.add_row(str(idx), str(t.idTrack), t.title, t_artists)
+
+        console.print(tracks_table)
 
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")
