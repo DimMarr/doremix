@@ -291,9 +291,8 @@ export function ShareModal({ playlistId, onClose }) {
       try {
         const response = await new PlaylistRepository().transfer(playlistId, email);
         if (response === 200) {
-          new AlertManager().success('Ownership transferred successfully');
-          cleanupAndClose();
-          return;
+            window.location.href = '/playlists';
+            return;
         }
         throw new Error();
       } catch {
