@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.pool import StaticPool
 from fastapi import FastAPI
 from httpx import AsyncClient, ASGITransport
-from database import Base, get_db
+from database import Base, get_db, engine
 from routes.playlists import router as playlists_router
 from routes.users import router as users_router
 from routes.search_router import router as search_router
@@ -17,16 +17,10 @@ from models.enums import PlaylistVisibility
 from models.playlist import Playlist
 from middleware.auth_middleware import get_current_user_id, get_current_user
 
-SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-
-test_engine = create_async_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 TestingSessionLocal = async_sessionmaker(
-    bind=test_engine,
+    bind=engine,
     class_=AsyncSession,
     autocommit=False,
     autoflush=False,
@@ -41,11 +35,11 @@ app.include_router(search_router)
 
 @pytest_asyncio.fixture(scope="function")
 async def db():
-    async with test_engine.begin() as conn:
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     async with TestingSessionLocal() as session:
         yield session
-    async with test_engine.begin() as conn:
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
 
