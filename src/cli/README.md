@@ -66,6 +66,22 @@ doremix
             |- add --label <label>
             |- update <genre-id> --label <label>
             |- delete <genre-id> [--force]
+    |- mod
+        |- add <user-id>
+        |- demote <user-id>
+    |- admin
+        |- playlist
+            |- list
+            |- tracks <playlist-id>
+            |- update <playlist-id> [--name <name>] [--genre <genre-id>] [--visibility <visibility>]
+            |- delete <playlist-id> [--force]
+            |- add-track <playlist-id> --url <youtube-url> --title <title>
+            |- remove-track <playlist-id> <track-id>
+        |- genre
+            |- list
+            |- add --label <label>
+            |- update <genre-id> --label <label>
+            |- delete <genre-id> [--force]
 ```
 
 Notes:
