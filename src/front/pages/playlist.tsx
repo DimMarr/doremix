@@ -29,27 +29,27 @@ function getIconForVisibility(visibility: Visibility) {
   switch (visibility.toLowerCase()) {
     case Visibility.private:
       return (
-        <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-          <path d="M7 11V7a5 5 0 0110 0v4" />
-        </svg>
+          <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0110 0v4" />
+          </svg>
       );
     case Visibility.public:
       return (
-        <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M2 12h20" />
-          <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
-        </svg>
+          <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M2 12h20" />
+            <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+          </svg>
       );
     default:
       return (
-        <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M23 21v-2a4 4 0 00-3-3.87" />
-          <path d="M16 3.13a4 4 0 010 7.75" />
-        </svg>
+          <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 00-3-3.87" />
+            <path d="M16 3.13a4 4 0 010 7.75" />
+          </svg>
       );
   }
 }
@@ -84,46 +84,47 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
   const menuOptionClass = "w-full text-left px-4 py-3 text-sm font-medium text-white hover:bg-white/10 flex items-center gap-2 transition-colors active:bg-white/20";
 
   return (
-    <div class="relative z-20 w-fit">
-      <div id="visibility-trigger" class={`${badgeBase} ${colorClass} ${ canEditVisibility ? interactable : locked}`} data-visibility-trigger>
-        <div class="flex items-center gap-2 pointer-events-none">
-          {getIconForVisibility(visibility) as 'safe'}
-          <span>{visibility} {await isShared(repo, playlist) ? "(SHARED)" : ""}</span>
-          {canEditVisibility && <svg class="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>}
-        </div>
-      </div>
-      {canEditVisibility &&
-        <div id="visibility-menu" class="hidden absolute top-full left-0 mt-2 w-48 bg-neutral-900 border border-white/10 rounded-xl shadow-xl overflow-hidden backdrop-blur-md origin-top-left transition-all z-50 animate-in fade-in zoom-in-95 duration-200">
-          <div class="flex flex-col py-1">
-            { visibility !== Visibility.private && (
-              <button class={menuOptionClass} data-visibility-option={Visibility.private}>
-                {getIconForVisibility(Visibility.private) as 'safe'}
-                <span>Private</span>
-              </button>
-            )}
-            { visibility !== Visibility.public && (
-              <button class={menuOptionClass} data-visibility-option={Visibility.public}>
-                {getIconForVisibility(Visibility.public) as 'safe'}
-                <span>Public</span>
-              </button>
-            )}
-            { visibility !== Visibility.open && await isAdmin() &&
-              <button class={menuOptionClass} data-visibility-option={Visibility.open}>
-                {getIconForVisibility(Visibility.open) as 'safe'}
-                <span>OPEN</span>
-              </button>
-            }
+      <div class="relative z-20 w-fit">
+        <div id="visibility-trigger" class={`${badgeBase} ${colorClass} ${canEditVisibility ? interactable : locked}`} data-visibility-trigger>
+          <div class="flex items-center gap-2 pointer-events-none">
+            {getIconForVisibility(visibility) as 'safe'}
+            <span>{visibility} {await isShared(repo, playlist) ? "(SHARED)" : ""}</span>
+            {canEditVisibility && <svg class="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>}
           </div>
         </div>
-      }
-    </div>
+        {canEditVisibility &&
+            <div id="visibility-menu" class="hidden absolute top-full left-0 mt-2 w-48 bg-neutral-900 border border-white/10 rounded-xl shadow-xl overflow-hidden backdrop-blur-md origin-top-left transition-all z-50 animate-in fade-in zoom-in-95 duration-200">
+              <div class="flex flex-col py-1">
+                {visibility !== Visibility.private && (
+                    <button class={menuOptionClass} data-visibility-option={Visibility.private}>
+                      {getIconForVisibility(Visibility.private) as 'safe'}
+                      <span>Private</span>
+                    </button>
+                )}
+                {visibility !== Visibility.public && (
+                    <button class={menuOptionClass} data-visibility-option={Visibility.public}>
+                      {getIconForVisibility(Visibility.public) as 'safe'}
+                      <span>Public</span>
+                    </button>
+                )}
+                {visibility !== Visibility.open && await isAdmin() &&
+                    <button class={menuOptionClass} data-visibility-option={Visibility.open}>
+                      {getIconForVisibility(Visibility.open) as 'safe'}
+                      <span>OPEN</span>
+                    </button>
+                }
+              </div>
+            </div>
+        }
+      </div>
   );
 }
 
 async function getSharedUsersElement(repo: PlaylistRepository, playlist: Playlist, isPlaylistOwner: boolean): Promise<string> {
   const adminUser = await isAdmin();
+
   if (!isPlaylistOwner && !adminUser) return '';
 
   let users: any[] = [];
@@ -140,7 +141,6 @@ async function getSharedUsersElement(repo: PlaylistRepository, playlist: Playlis
   const overflow = users.length - MAX_VISIBLE;
 
   const avatars = visible.map((u: any) => {
-    const name: string = u.user?.username ?? `#${u.idUser}`;
     const initial = u.username.charAt(0).toUpperCase();
     const roleTitle = u.editor ? `${u.username} (Editor)` : `${u.username} (Viewer)`;
     return `<div
@@ -164,31 +164,31 @@ async function getSharedUsersElement(repo: PlaylistRepository, playlist: Playlis
   `;
 }
 
-function renderTrackList(playlist: Playlist): string {
+async function renderTrackList(playlist: Playlist, canEditPlaylist: boolean): Promise<string> {
   const tracks = playlist.tracks || [];
   const currentTrack = trackPlayerInstance.getCurrentTrack();
   const playerState = trackPlayerInstance.getPlayerState();
 
   return (
-    <div>
-      <TrackListHeader />
-      {tracks.map(async (track, index) => ( await
-        <TrackRow
-          track={track}
-          index={index}
-          playlistId={playlist.idPlaylist}
-          trackPlayer={trackPlayerInstance}
-          current_track={[YoutubePlayerState.UNSTARTED, YoutubePlayerState.CUED].includes(playerState) ? null : currentTrack}
-        />
-      )) as 'safe'}
-    </div>
+      <div>
+        <TrackListHeader />
+        {(await Promise.all(tracks.map(async (track, index) => ( await
+                <TrackRow
+                    track={track}
+                    index={index}
+                    playlistId={playlist.idPlaylist}
+                    current_track={[YoutubePlayerState.UNSTARTED, YoutubePlayerState.CUED].includes(playerState) ? undefined : currentTrack}
+                    canEditPlaylist={canEditPlaylist}
+                />
+        )))) as unknown as 'safe'}
+      </div>
   );
 }
 
 export async function PlaylistDetailPage(
-  container: HTMLElement | null,
-  onBack: () => void,
-  params: PageParams
+    container: HTMLElement | null,
+    onBack: () => void,
+    params: PageParams
 ) {
   if (!container) return;
 
@@ -206,28 +206,45 @@ export async function PlaylistDetailPage(
       const isPlaylistOwner = await isOwner(playlist);
 
       headerContainer.innerHTML = (
-        <>
-          {await getVisibilityElement(repo, playlist) as 'safe'}
-          {renderGenreSection() as 'safe'}
-          <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
-          <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
-          <div class="flex flex-wrap gap-2 mt-1">
-            {isPlaylistOwner && <Button id="share-button" variant="outline" size="md">Share Playlist</Button>}
-            {canDeleteCurrentPlaylist && <Button id="delete-playlist-button" variant="destructive" size="md">Delete Playlist</Button>}
-          </div>
-          {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
-        </>
+          <>
+            {await getVisibilityElement(repo, playlist) as 'safe'}
+            {renderGenreSection() as 'safe'}
+            <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
+            <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
+            <div class="flex flex-wrap gap-2 mt-1">
+              {await canEdit(repo, playlist) &&
+                  <button id="add-track-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Add Track">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" />
+                    </svg>
+                  </button>
+              }
+              {isPlaylistOwner &&
+                  <button id="share-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Share Playlist">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
+                    </svg>
+                  </button>
+              }
+              {canDeleteCurrentPlaylist &&
+                  <button id="delete-playlist-button" class="p-2 rounded-md border border-red-500/20 text-red-500 hover:bg-red-500/10 transition-colors" title="Delete Playlist">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+              }
+            </div>
+            {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
+          </>
       );
     }
   }
 
   const handleVisibilityChange = async (newVis: Visibility) => {
-    // Optimistic update
     const oldVis = playlist.visibility;
     playlist.visibility = newVis;
     updateHeader();
 
-    // Determine backend enum value (uppercase)
     const backendVis = newVis === Visibility.public ? "PUBLIC" : newVis === Visibility.private ? "PRIVATE" : "OPEN";
 
     try {
@@ -236,7 +253,6 @@ export async function PlaylistDetailPage(
     } catch (err) {
       console.error("Failed to update visibility", err);
       new AlertManager().error("Failed to update visibility");
-      // Revert
       playlist.visibility = oldVis;
       updateHeader();
     }
@@ -245,7 +261,8 @@ export async function PlaylistDetailPage(
   const updateTrackListDisplay = async () => {
     const trackListContainer = container.querySelector('#track-list-container');
     if (trackListContainer) {
-      trackListContainer.innerHTML = await renderTrackList({ ...playlist, tracks });
+      const canEditPlaylist = await canEdit(repo, playlist);
+      trackListContainer.innerHTML = await renderTrackList({ ...playlist, tracks }, canEditPlaylist);
     }
   };
 
@@ -278,10 +295,14 @@ export async function PlaylistDetailPage(
     const { render } = ShareModal({
       playlistId: playlist.idPlaylist,
       isOwnerOrAdmin: isPlaylistOwner || adminUser,
-      onClose: () => {
+      repo: repo,
+      onClose: async () => {
         modalContainer.innerHTML = '';
-        updateHeader();
-      }
+        await updateHeader();
+      },
+      onUsersChanged: async () => {
+        await updateHeader();
+      },
     });
     render(modalContainer);
   };
@@ -316,12 +337,10 @@ export async function PlaylistDetailPage(
 
     const wasPlaying = trackPlayerInstance.getCurrentTrack()?.idTrack === track.idTrack;
 
-    // On supprime la playlist du track store.
     tracks = tracks.filter((_, i) => i !== trackIndex);
     playlist.tracks = tracks;
     trackPlayerInstance.setPlaylist({ ...playlist });
 
-    // Si la track supprimée était en cours on la stoppe et on passe à la track suivante (s'il reste des tracks)
     if (wasPlaying) {
       trackPlayerInstance.stopVideo();
       if (tracks.length > 0) {
@@ -337,7 +356,6 @@ export async function PlaylistDetailPage(
       console.error(err);
       new AlertManager().error("Failed to remove track");
 
-      // S'il y a une erreur lors de la suppression du track, on revient en arrière en affichant la track qui n'a pas pu être supprimé.
       tracks.splice(trackIndex, 0, track);
       playlist.tracks = tracks;
       trackPlayerInstance.setPlaylist({ ...playlist });
@@ -352,12 +370,11 @@ export async function PlaylistDetailPage(
     trackPlayerInstance.playTrack(index);
   };
 
-  // Render page
   function renderGenreSection() {
     if (!playlist.genreLabel) return '';
 
     return (
-      <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">
+        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">
         {playlist.genreLabel}
       </span>
     );
@@ -365,41 +382,72 @@ export async function PlaylistDetailPage(
 
   const canDeleteCurrentPlaylist = await canDeletePlaylist(playlist);
   const isPlaylistOwner = await isOwner(playlist);
+  const canEditPlaylist = await canEdit(repo, playlist);
 
   container.innerHTML = (
-    <div>
-      <div id="modal-container"></div>
+      <div>
+        <div id="modal-container"></div>
 
-      <div class="mb-8">
-        <Button id="back-button" variant="ghost" size="sm">← Back</Button>
-      </div>
-
-      <div class="flex items-start gap-8 my-8">
-        <div class="flex flex-col items-center gap-4">
-          <img
-            src={playlist.image}
-            class="w-48 h-48 rounded-md object-cover shadow-2xl"
-            alt={playlist.name}
-          />
-          { await canEdit(repo, playlist) && <Button id="add-track-button" variant="outline" size="md">Add Track</Button> }
+        <div class="mb-8">
+          <Button id="back-button" variant="ghost" size="sm">← Back</Button>
         </div>
-        <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
-          {await getVisibilityElement(repo, playlist) as 'safe'}
-          {renderGenreSection() as 'safe'}
-          <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
-          <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
-          <div class="flex flex-wrap gap-2 mt-1">
-            {isPlaylistOwner && <Button id="share-button" variant="outline" size="md">Share Playlist</Button>}
-            {canDeleteCurrentPlaylist && <Button id="delete-playlist-button" variant="destructive" size="md">Delete Playlist</Button>}
+
+        <div class="flex items-start gap-8 my-8">
+          <div class="flex flex-col items-center gap-4">
+            <img
+                src={playlist.image}
+                class="w-48 h-48 rounded-md object-cover shadow-2xl"
+                alt={playlist.name}
+            />
+            <div class="flex items-center gap-2">
+              <button id="play-all-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Play">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </button>
+              <button id="shuffle-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Shuffle">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
+                </svg>
+              </button>
+            </div>
           </div>
-          {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
+          <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
+            {await getVisibilityElement(repo, playlist) as 'safe'}
+            {renderGenreSection() as 'safe'}
+            <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
+            <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
+            <div class="flex flex-wrap gap-2 mt-1">
+              {canEditPlaylist &&
+                  <button id="add-track-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Add Track">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" />
+                    </svg>
+                  </button>
+              }
+              {isPlaylistOwner &&
+                  <button id="share-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Share Playlist">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
+                    </svg>
+                  </button>
+              }
+              {canDeleteCurrentPlaylist &&
+                  <button id="delete-playlist-button" class="p-2 rounded-md border border-red-500/20 text-red-500 hover:bg-red-500/10 transition-colors" title="Delete Playlist">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+              }
+            </div>
+            {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
+          </div>
+        </div>
+
+        <div id="track-list-container" class="flex flex-col gap-4">
+          {await renderTrackList({ ...playlist, tracks }, canEditPlaylist) as 'safe'}
         </div>
       </div>
-
-      <div id="track-list-container" class="flex flex-col gap-4">
-        {await renderTrackList({ ...playlist, tracks }) as 'safe'}
-      </div>
-    </div>
   );
 
   // Initialize functionality
@@ -413,15 +461,12 @@ export async function PlaylistDetailPage(
     const menu = container.querySelector('#visibility-menu');
     const trigger = target.closest('[data-visibility-trigger]');
 
-    // Toggle Menu
     if (trigger) {
       e.stopPropagation();
       menu?.classList.toggle('hidden');
-      // Close other menus if any? (we assume only one here)
       return;
     }
 
-    // Handle Option Selection
     const option = target.closest('[data-visibility-option]') as HTMLElement | null;
     if (option) {
       e.stopPropagation();
@@ -433,10 +478,6 @@ export async function PlaylistDetailPage(
       return;
     }
 
-    // Close menu when clicking outside (since we used stopPropagation on trigger/option, any bubbling click here is "outside" for them)
-    // But wait, if we click somewhere else inside `container`, this handler fires.
-    // If we click inside the menu but not on an option (e.g. padding), we should probably not close?
-    // Let's refine:
     if (menu && !menu.classList.contains('hidden') && !menu.contains(target)) {
       menu.classList.add('hidden');
     }
@@ -448,6 +489,32 @@ export async function PlaylistDetailPage(
 
     if (target.closest('#add-track-button')) {
       handleAddTrack();
+      return;
+    }
+
+    if (target.closest('#play-all-button')) {
+      if (tracks.length === 0) return;
+      trackPlayerInstance.setShuffle(false);
+      handlePlayTrack(0);
+
+      const playBtn = target.closest('#play-all-button');
+      const shuffleBtn = container.querySelector('#shuffle-button');
+      if (playBtn) playBtn.classList.add('text-blue-500');
+      if (shuffleBtn) shuffleBtn.classList.remove('text-blue-500');
+      return;
+    }
+
+    if (target.closest('#shuffle-button')) {
+      if (tracks.length === 0) return;
+      if (trackPlayerInstance.playlist?.idPlaylist !== playlist.idPlaylist) {
+        trackPlayerInstance.setPlaylist({ ...playlist, tracks });
+      }
+      trackPlayerInstance.setShuffle(true);
+
+      const shuffleBtn = target.closest('#shuffle-button');
+      const playBtn = container.querySelector('#play-all-button');
+      if (shuffleBtn) shuffleBtn.classList.add('text-blue-500');
+      if (playBtn) playBtn.classList.remove('text-blue-500');
       return;
     }
 

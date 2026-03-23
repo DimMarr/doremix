@@ -5,47 +5,47 @@ import { AlertManager } from "@utils/alertManager";
 
 export function AddTrackModal({ playlistId, onClose, onTrackAdded }) {
   const modalHtml = (
-    <div id="add-track-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-      <div class="bg-neutral-900 border border-border rounded-lg p-8 max-w-md w-full">
-        <h2 class="text-2xl font-bold text-foreground mb-4">Add New Track</h2>
-        <form id="add-track-form">
-          <div class="mb-4">
-            <label for="youtube-url" class="block text-sm font-medium text-muted-foreground mb-1">
-              YouTube URL
-            </label>
-            <input
-              type="text"
-              id="youtube-url"
-              name="youtube-url"
-              class="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
-              placeholder="https://www.youtube.com/watch?v=..."
-            />
-          </div>
-          <div id="track-info" class="mb-4" style="display: none;">
-            <label for="track-title" class="block text-sm font-medium text-muted-foreground mb-1">
-              Track Title
-            </label>
-            <input
-              type="text"
-              id="track-title"
-              name="track-title"
-              class="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground"
-            />
-            <p id="track-exists-message" class="text-sm text-muted-foreground mt-1" style="display: none;">
-              This track already exists. The title cannot be changed.
-            </p>
-          </div>
-          <div class="flex justify-end gap-4">
-            <Button type="button" id="cancel-add-track" variant="secondary">
-              Cancel
-            </Button>
-            <Button type="submit" id="submit-add-track" disabled>
-              Add Track
-            </Button>
-          </div>
-        </form>
+      <div id="add-track-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-neutral-900 border border-border rounded-lg p-8 max-w-md w-full">
+          <h2 class="text-2xl font-bold text-foreground mb-4">Add New Track</h2>
+          <form id="add-track-form">
+            <div class="mb-4">
+              <label for="youtube-url" class="block text-sm font-medium text-muted-foreground mb-1">
+                YouTube URL
+              </label>
+              <input
+                  type="text"
+                  id="youtube-url"
+                  name="youtube-url"
+                  class="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring bg-input text-foreground"
+                  placeholder="https://www.youtube.com/watch?v=..."
+              />
+            </div>
+            <div id="track-info" class="mb-4" style="display: none;">
+              <label for="track-title" class="block text-sm font-medium text-muted-foreground mb-1">
+                Track Title
+              </label>
+              <input
+                  type="text"
+                  id="track-title"
+                  name="track-title"
+                  class="w-full px-3 py-2 border border-border rounded-md bg-input text-foreground"
+              />
+              <p id="track-exists-message" class="text-sm text-muted-foreground mt-1" style="display: none;">
+                This track already exists. The title cannot be changed.
+              </p>
+            </div>
+            <div class="flex justify-end gap-4">
+              <Button type="button" id="cancel-add-track" variant="secondary">
+                Cancel
+              </Button>
+              <Button type="submit" id="submit-add-track" disabled>
+                Add Track
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
   );
 
   function render(container) {
@@ -74,39 +74,39 @@ export function AddTrackModal({ playlistId, onClose, onTrackAdded }) {
       cleanupAndClose();
     };
 
-        container.querySelector('#add-track-form').onsubmit = (e) => {
-          e.preventDefault();
-          const url = urlInput.value;
-          const title = trackTitleInput.value;
-          const submitButton = container.querySelector('#submit-add-track');
-          const originalButtonContent = submitButton.innerHTML;
-          submitButton.disabled = true;
-          submitButton.innerHTML = `
+    container.querySelector('#add-track-form').onsubmit = (e) => {
+      e.preventDefault();
+      const url = urlInput.value;
+      const title = trackTitleInput.value;
+      const submitButton = container.querySelector('#submit-add-track');
+      const originalButtonContent = submitButton.innerHTML;
+      submitButton.disabled = true;
+      submitButton.innerHTML = `
             <svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             Adding...`;
 
-          new TrackRepository().create(playlistId, url, title)
-            .then(newTrack => {
-              onTrackAdded(newTrack);
-              cleanupAndClose();
-            })
-            .catch(err => {
-              console.error("Error adding track:", err);
-            })
-            .finally(() => {
-              submitButton.disabled = false;
-              submitButton.innerHTML = originalButtonContent;
-            });
-        };
+      new TrackRepository().create(playlistId, url, title)
+          .then(newTrack => {
+            onTrackAdded(newTrack);
+            cleanupAndClose();
+          })
+          .catch(err => {
+            console.error("Error adding track:", err);
+          })
+          .finally(() => {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalButtonContent;
+          });
+    };
     let debounceTimer;
     urlInput.addEventListener('keyup', (e) => {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            handleUrlInputChange(e.target.value);
-        }, 500);
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        handleUrlInputChange(e.target.value);
+      }, 500);
     });
 
     async function handleUrlInputChange(url) {
@@ -130,22 +130,22 @@ export function AddTrackModal({ playlistId, onClose, onTrackAdded }) {
         trackTitleInput.disabled = false;
         trackExistsMessage.style.display = 'none';
         try {
-            const response = await fetch(`https://www.youtube.com/oembed?url=${url}&format=json`);
-            if (!response.ok) throw new Error('Failed to fetch from oEmbed');
-            const data = await response.json();
-            trackInfo.style.display = 'block';
-            trackTitleInput.value = data.title;
+          const response = await fetch(`https://www.youtube.com/oembed?url=${url}&format=json`);
+          if (!response.ok) throw new Error('Failed to fetch from oEmbed');
+          const data = await response.json();
+          trackInfo.style.display = 'block';
+          trackTitleInput.value = data.title;
         } catch (oembedError) {
-            console.error('oEmbed fetch error:', oembedError);
-            trackInfo.style.display = 'none';
-            submitButton.disabled = true;
+          console.error('oEmbed fetch error:', oembedError);
+          trackInfo.style.display = 'none';
+          submitButton.disabled = true;
         }
       }
     }
 
     function isYoutubeUrl(url) {
-        var p = /^(?:https?:\/\/)?(?:m\.|www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/;
-        return url.match(p);
+      var p = /^(?:https?:\/\/)?(?:m\.|www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/;
+      return url.match(p);
     }
   }
 
@@ -153,7 +153,7 @@ export function AddTrackModal({ playlistId, onClose, onTrackAdded }) {
 }
 
 
-export function ShareModal({ playlistId, isOwnerOrAdmin, onClose }) {
+export function ShareModal({ playlistId, isOwnerOrAdmin, onClose, onUsersChanged = async () => {}, repo = null }) {
   const modalHtml = (
       <div id="share-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
         <div class="bg-neutral-900 border border-border rounded-lg p-8 max-w-md w-full flex flex-col gap-5">
@@ -186,7 +186,8 @@ export function ShareModal({ playlistId, isOwnerOrAdmin, onClose }) {
     container.innerHTML = modalHtml;
 
     const usersList = container.querySelector('#shared-users-list');
-    const playlistRepo = new PlaylistRepository();
+
+    const playlistRepo = repo ?? new PlaylistRepository();
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') cleanupAndClose();
@@ -234,8 +235,8 @@ export function ShareModal({ playlistId, isOwnerOrAdmin, onClose }) {
         `).join('');
 
         if (isOwnerOrAdmin) {
-          usersList.querySelectorAll('.remove-user').forEach((btn) => {
-            btn.addEventListener('click', async () => {
+          usersList.querySelectorAll('.remove-user').forEach((btn: HTMLButtonElement) => {
+            btn.onclick = async () => {
               const userId = Number(btn.getAttribute('data-user-id'));
               btn.disabled = true;
 
@@ -247,11 +248,12 @@ export function ShareModal({ playlistId, isOwnerOrAdmin, onClose }) {
                   usersList.innerHTML = `<p class="text-sm text-muted-foreground">No users have access yet.</p>`;
                 }
                 new AlertManager().success("User removed successfully");
+                await onUsersChanged();
               } catch {
                 new AlertManager().error("Failed to remove user");
                 btn.disabled = false;
               }
-            });
+            };
           });
         }
 
@@ -289,16 +291,15 @@ export function ShareModal({ playlistId, isOwnerOrAdmin, onClose }) {
           Sharing...`;
 
         try {
-          const response = await new TrackRepository().share(playlistId, email, editor);
-          if (response == 200) {
-            new AlertManager().success("Playlist shared successfully");
-            emailInput.value = '';
-            editorInput.checked = false;
-            submitButton.disabled = true;
-            await loadUsers();
-            return;
-          }
-          throw new Error("Failed to share playlist");
+          await new TrackRepository().share(playlistId, email, editor);
+          // Invalide le cache pour forcer le rechargement des utilisateurs
+          playlistRepo.invalidateSharedWithCache(Number(playlistId));
+          new AlertManager().success("Playlist shared successfully");
+          emailInput.value = '';
+          editorInput.checked = false;
+          submitButton.disabled = true;
+          await onUsersChanged();
+          await loadUsers();
         } catch {
           new AlertManager().error("Failed to share playlist");
         } finally {

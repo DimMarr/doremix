@@ -1,9 +1,13 @@
+import os
+
+os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
+
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+import pytest_asyncio
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.pool import StaticPool
 from fastapi import FastAPI
-from fastapi.testclient import TestClient
+from httpx import AsyncClient, ASGITransport
 from database import Base, get_db
 from routes.playlists import router as playlists_router
 from routes.users import router as users_router
@@ -13,60 +17,41 @@ from models.enums import PlaylistVisibility
 from models.playlist import Playlist
 from middleware.auth_middleware import get_current_user_id, get_current_user
 
-# Crée une base de données SQLite en mémoire pour les tests
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
-test_engine = create_engine(
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+
+test_engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
-# Crée l'application FastAPI
+TestingSessionLocal = async_sessionmaker(
+    bind=test_engine,
+    class_=AsyncSession,
+    autocommit=False,
+    autoflush=False,
+    expire_on_commit=False,
+)
+
 app = FastAPI()
 app.include_router(playlists_router)
 app.include_router(users_router)
 app.include_router(search_router)
 
 
-@pytest.fixture(scope="function")
-def db():
-    """Crée une base de données pour chaque test."""
-    Base.metadata.create_all(bind=test_engine)
-    db = TestingSessionLocal()
-    yield db
-    db.close()
-    Base.metadata.drop_all(bind=test_engine)
+@pytest_asyncio.fixture(scope="function")
+async def db():
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    async with TestingSessionLocal() as session:
+        yield session
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
 
-@pytest.fixture(scope="function")
-def client(db, sample_user):
-    """Crée un client de test avec dépendance override et utilisateur simulé."""
-
-    def override_get_db():
-        try:
-            yield db
-        finally:
-            pass
-
-    def override_get_current_user_id():
-        return sample_user.idUser
-
-    app.dependency_overrides[get_db] = override_get_db
-
-    app.dependency_overrides[get_current_user_id] = (
-        lambda: override_get_current_user_id()
-    )
-    app.dependency_overrides[get_current_user] = lambda: sample_user
-
-    test_client = TestClient(app)
-    yield test_client
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture(scope="function")
-def sample_user(db: Session):
+@pytest_asyncio.fixture(scope="function")
+async def sample_user(db: AsyncSession):
     """Crée un utilisateur de test"""
     user = User(
         username="sarah",
@@ -74,13 +59,13 @@ def sample_user(db: Session):
         password="$2b$12$MfGljJQRrXEFoIXXniPzFueRzeO.wSwElO8U1uRqmq.f15VHw7kIK",
     )
     db.add(user)
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
     return user
 
 
-@pytest.fixture(scope="function")
-def other_user(db: Session):
+@pytest_asyncio.fixture(scope="function")
+async def other_user(db: AsyncSession):
     """Crée un second utilisateur (ni owner ni admin)."""
     user = User(
         username="alice",
@@ -88,13 +73,13 @@ def other_user(db: Session):
         password="hashed",
     )
     db.add(user)
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
     return user
 
 
-@pytest.fixture(scope="function")
-def admin_user(db: Session):
+@pytest_asyncio.fixture(scope="function")
+async def admin_user(db: AsyncSession):
     """Crée un utilisateur admin."""
     user = User(
         username="admin",
@@ -103,56 +88,23 @@ def admin_user(db: Session):
         idRole=3,
     )
     db.add(user)
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
     return user
 
 
-@pytest.fixture(scope="function")
-def client_as_other_user(db, other_user):
-    """Client authentifié en tant qu'utilisateur non owner non admin."""
-
-    def override_get_db():
-        yield db
-
-    app.dependency_overrides[get_db] = override_get_db
-    app.dependency_overrides[get_current_user_id] = lambda: other_user.idUser
-    app.dependency_overrides[get_current_user] = lambda: other_user
-
-    test_client = TestClient(app)
-    yield test_client
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture(scope="function")
-def client_as_admin(db, admin_user):
-    """Client authentifié en tant qu'admin."""
-
-    def override_get_db():
-        yield db
-
-    app.dependency_overrides[get_db] = override_get_db
-    app.dependency_overrides[get_current_user_id] = lambda: admin_user.idUser
-    app.dependency_overrides[get_current_user] = lambda: admin_user
-
-    test_client = TestClient(app)
-    yield test_client
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture(scope="function")
-def sample_genre(db: Session):
+@pytest_asyncio.fixture(scope="function")
+async def sample_genre(db: AsyncSession):
     """Crée un genre de test"""
     genre = Genre(label="Rock")
     db.add(genre)
-    db.commit()
-    db.refresh(genre)
+    await db.commit()
+    await db.refresh(genre)
     return genre
 
 
-@pytest.fixture
-def sample_playlist(db, sample_user, sample_genre):
-    """Crée une playlist de test"""
+@pytest_asyncio.fixture
+async def sample_playlist(db: AsyncSession, sample_user, sample_genre):
     playlist = Playlist(
         name="Test Playlist",
         idOwner=sample_user.idUser,
@@ -160,14 +112,13 @@ def sample_playlist(db, sample_user, sample_genre):
         visibility=PlaylistVisibility.PUBLIC,
     )
     db.add(playlist)
-    db.commit()
-    db.refresh(playlist)
+    await db.commit()
+    await db.refresh(playlist)
     return playlist
 
 
-@pytest.fixture
-def sample_playlists(db: Session, sample_user, sample_genre):
-    """Crée plusieurs playlists de test."""
+@pytest_asyncio.fixture
+async def sample_playlists(db: AsyncSession, sample_user, sample_genre):
     playlists = [
         Playlist(
             name="My Favorite Songs",
@@ -185,9 +136,68 @@ def sample_playlists(db: Session, sample_user, sample_genre):
         ),
     ]
     db.add_all(playlists)
-    db.commit()
-
+    await db.commit()
     for playlist in playlists:
-        db.refresh(playlist)
-
+        await db.refresh(playlist)
     return playlists
+
+
+@pytest_asyncio.fixture(scope="function")
+async def client(db: AsyncSession, sample_user):
+    async def override_get_db():
+        yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user_id] = lambda: sample_user.idUser
+    app.dependency_overrides[get_current_user] = lambda: sample_user
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+        follow_redirects=True,
+    ) as ac:
+        yield ac
+
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def client_as_other_user(db: AsyncSession, other_user):
+    """Client authentifié en tant qu'utilisateur non owner non admin."""
+
+    async def override_get_db():
+        yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user_id] = lambda: other_user.idUser
+    app.dependency_overrides[get_current_user] = lambda: other_user
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+        follow_redirects=True,
+    ) as ac:
+        yield ac
+
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def client_as_admin(db: AsyncSession, admin_user):
+    """Client authentifié en tant qu'admin."""
+
+    async def override_get_db():
+        yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user_id] = lambda: admin_user.idUser
+    app.dependency_overrides[get_current_user] = lambda: admin_user
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+        follow_redirects=True,
+    ) as ac:
+        yield ac
+
+    app.dependency_overrides.clear()

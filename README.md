@@ -59,7 +59,7 @@ For production deployments, ensure your .env file at the root is properly config
 DB_USER=your_username
 DB_PASSWORD=your_password
 DB_NAME=doremix_db
-DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+DATABASE_URL=postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
 
 # Security & Performance
 RATE_LIMIT=50/minute

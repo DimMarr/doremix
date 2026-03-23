@@ -2,73 +2,72 @@ import os
 import secrets
 import hashlib
 from datetime import datetime, timedelta, timezone
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy import delete
 from models.verification_token import VerificationToken
 from typing import cast
 
 
 class VerificationTokenRepository:
     @staticmethod
-    def hash_token(cookieToken: str) -> str:
+    def hash_token(cookie_token: str) -> str:
         secret_key = os.getenv("TOKEN_SECRET_KEY")
         if not secret_key:
             raise ValueError("TOKEN_SECRET_KEY is missing in .env file")
-
-        combined = cookieToken + secret_key
+        combined = cookie_token + secret_key
         return hashlib.sha256(combined.encode("utf-8")).hexdigest()
 
     @staticmethod
-    def create_token(
-        db: Session, userId: int, durationMinutes: int
+    async def create_token(
+        db: AsyncSession, user_id: int, duration_minutes: int
     ) -> VerificationToken:
-        cookieToken = secrets.token_urlsafe(64)  # not stored in DB
-        hashedToken = VerificationTokenRepository.hash_token(cookieToken)
-        expiresAt = datetime.now(timezone.utc) + timedelta(minutes=durationMinutes)
-
-        dbToken = VerificationToken(
-            token=hashedToken, idUser=userId, expiresAt=expiresAt
+        cookie_token = secrets.token_urlsafe(64)  # not stored in DB
+        hashed_token = VerificationTokenRepository.hash_token(cookie_token)
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=duration_minutes)
+        db_token = VerificationToken(
+            token=hashed_token, idUser=user_id, expiresAt=expires_at
         )
-
-        db.add(dbToken)
-        db.commit()
-        db.refresh(dbToken)
-
+        db.add(db_token)
+        await db.commit()
+        await db.refresh(db_token)
         # we return the unhashed token to use it in cookies
-        dbToken.token = cookieToken
-        return dbToken
+        db_token.token = cookie_token
+        return db_token
 
     @staticmethod
-    def get_valid_token(
-        db: Session,
-        cookieTokenStr: str,
+    async def get_valid_token(
+        db: AsyncSession, cookie_token_str: str
     ) -> VerificationToken | None:
-        hashedTokenToCheck = VerificationTokenRepository.hash_token(cookieTokenStr)
-
-        result = (
-            db.query(VerificationToken)
-            .filter(
-                VerificationToken.token == hashedTokenToCheck,
+        hashed_token = VerificationTokenRepository.hash_token(cookie_token_str)
+        result = await db.execute(
+            select(VerificationToken).filter(
+                VerificationToken.token == hashed_token,
                 VerificationToken.expiresAt > datetime.now(timezone.utc),
             )
-            .first()
         )
-        return cast(VerificationToken, result) if result else None
+        token = result.scalars().first()
+        return cast(VerificationToken, token) if token else None
 
     @staticmethod
-    def revoke_token(db: Session, cookieTokenStr: str):
-        hashedToken = VerificationTokenRepository.hash_token(cookieTokenStr)
-        db.query(VerificationToken).filter(
-            VerificationToken.token == hashedToken
-        ).delete()
-        db.commit()
+    async def revoke_token(db: AsyncSession, cookie_token_str: str) -> None:
+        hashed_token = VerificationTokenRepository.hash_token(cookie_token_str)
+        await db.execute(
+            delete(VerificationToken).filter(VerificationToken.token == hashed_token)
+        )
+        await db.commit()
 
     @staticmethod
-    def revoke_all_user_tokens(db: Session, userId: int):
-        db.query(VerificationToken).filter(VerificationToken.idUser == userId).delete()
-        db.commit()
+    async def revoke_all_user_tokens(db: AsyncSession, user_id: int) -> None:
+        await db.execute(
+            delete(VerificationToken).filter(VerificationToken.idUser == user_id)
+        )
+        await db.commit()
 
     @staticmethod
-    def clean_expired_tokens(db: Session):
+    async def clean_expired_tokens(db: AsyncSession) -> None:
         now = datetime.now(timezone.utc)
-        db.query(VerificationToken).filter(VerificationToken.expiresAt < now).delete()
-        db.commit()
+        await db.execute(
+            delete(VerificationToken).filter(VerificationToken.expiresAt < now)
+        )
+        await db.commit()

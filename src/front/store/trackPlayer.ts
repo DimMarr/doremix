@@ -54,7 +54,7 @@ declare global {
 }
 
 export const getYoutubePlayerStateFromCode = (code: number) => {
-    switch(code){
+    switch (code) {
         case -1:
             return 'UNSTARTED'
         case 0:
@@ -86,6 +86,18 @@ export class YoutubePlayer {
     private audioPlayer: YTPlayer;
     private isPlayerReady: boolean = false;
     private pendingAction: (() => void) | null = null;
+    private shuffleMode: boolean = false;
+    private shuffledIndices: number[] = [];
+    private currentShuffleIndex: number = 0;
+
+    //https://fr.wikipedia.org/wiki/M%C3%A9lange_de_Fisher-Yates
+    private generateShuffledIndices(): void {
+        this.shuffledIndices = Array.from({ length: this.tracks.length }, (_, i) => i);
+        for (let i = this.shuffledIndices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.shuffledIndices[i], this.shuffledIndices[j]] = [this.shuffledIndices[j], this.shuffledIndices[i]];
+        }
+    }
 
     constructor(
         { youtubePlayerHtmlElementId, playlist }: YoutubePlayerProps,
@@ -128,7 +140,7 @@ export class YoutubePlayer {
         this.playlist = playlist;
         this.tracks = this.playlist.tracks;
 
-        if(this.tracks.length === 0){
+        if (this.tracks.length === 0) {
             this.hide();
             return;
         }
@@ -250,15 +262,24 @@ export class YoutubePlayer {
 
     // Tracks control
     previousTrack(): void {
-        const newIndex =
-            (this.currentPlayingTrackIndex - 1 + this.tracks.length) %
-            this.tracks.length;
+        let newIndex: number;
+        if (this.shuffleMode && this.tracks.length > 0) {
+            this.currentShuffleIndex = (this.currentShuffleIndex - 1 + this.tracks.length) % this.tracks.length;
+            newIndex = this.shuffledIndices[this.currentShuffleIndex];
+        } else {
+            newIndex = (this.currentPlayingTrackIndex - 1 + this.tracks.length) % this.tracks.length;
+        }
         this.playTrack(newIndex);
     }
 
     nextTrack(): void {
-        const newIndex = (this.currentPlayingTrackIndex + 1) %
-            this.tracks.length;
+        let newIndex: number;
+        if (this.shuffleMode && this.tracks.length > 0) {
+            this.currentShuffleIndex = (this.currentShuffleIndex + 1) % this.tracks.length;
+            newIndex = this.shuffledIndices[this.currentShuffleIndex];
+        } else {
+            newIndex = (this.currentPlayingTrackIndex + 1) % this.tracks.length;
+        }
         this.playTrack(newIndex);
     }
 
@@ -268,7 +289,7 @@ export class YoutubePlayer {
             return;
         }
 
-        if(this.tracks.length === 0){
+        if (this.tracks.length === 0) {
             new AlertManager().error("No track to listen in this playlist");
         }
 
@@ -442,6 +463,15 @@ export class YoutubePlayer {
 
     getCurrentTrack(): Track | null {
         return this.tracks[this.currentPlayingTrackIndex] || null;
+    }
+
+    setShuffle(value: boolean): void {
+        this.shuffleMode = value;
+        if (value && this.tracks.length > 0) {
+            this.generateShuffledIndices();
+            this.currentShuffleIndex = 0;
+            this.playTrack(this.shuffledIndices[0]);
+        }
     }
 }
 

@@ -7,5 +7,6 @@ from .playlist import (
     SharedUserSchema,
 )
 from .track import TrackSchema
-from .user import UserSchema, ModerationUserSchema, BanUserResponse
+from .user import UserSchema, ModerationUserSchema, BanUserResponse, UserRegisterSchema
 from .genre import GenreSchema, GenreCreate, GenreUpdate
+from .artist import ArtistSchema

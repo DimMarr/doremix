@@ -10,6 +10,9 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   UV_CACHE_DIR: "$CI_PROJECT_DIR/.cache/uv"
 
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_DRIVER: overlay2
+
 pre_commit_check:
   stage: test
   image: ${CI_REGISTRY_IMAGE}/pre-commit
@@ -54,8 +57,17 @@ test:
   stage: build
   image: docker:27
   services:
-    - docker:27-dind
+    - name: docker:27-dind
+      alias: docker
+      command: ["--tls=false"]
   before_script:
+    # On attend que le daemon soit prêt
+    - |
+      for i in $(seq 1 30); do
+        docker info > /dev/null 2>&1 && break
+        echo "En attente du daemon Docker..."
+        sleep 1
+      done
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 
 build_backend_beta:
@@ -63,12 +75,7 @@ build_backend_beta:
   only:
     - beta
   script:
-    - echo "🔨 Build backend beta..."
-    - docker build
-      --cache-from $BACKEND_IMAGE:beta
-      -f build/backend/Dockerfile
-      -t $BACKEND_IMAGE:beta
-      .
+    - docker build --cache-from $BACKEND_IMAGE:beta -f build/backend/Dockerfile -t $BACKEND_IMAGE:beta .
     - docker push $BACKEND_IMAGE:beta
 
 build_frontend_beta:
@@ -76,12 +83,7 @@ build_frontend_beta:
   only:
     - beta
   script:
-    - echo "🔨 Build frontend beta..."
-    - docker build
-      --cache-from $FRONTEND_IMAGE:beta
-      -f build/frontend/Dockerfile-beta
-      -t $FRONTEND_IMAGE:beta
-      .
+    - docker build --cache-from $FRONTEND_IMAGE:beta -f build/frontend/Dockerfile-beta -t $FRONTEND_IMAGE:beta .
     - docker push $FRONTEND_IMAGE:beta
 
 build_backend_prod:

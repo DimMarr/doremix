@@ -17,19 +17,20 @@ INJECTION_PAYLOADS = [
 # =================== USERS ===================
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("payload", INJECTION_PAYLOADS)
-def test_users_id_injection(client, payload):
-    response = client.get(f"/users/{payload}")
-    response.status_code in [403, 404, 400, 422]
-    # 'detail' is present in error responses
+async def test_users_id_injection(client, payload):
+    response = await client.get(f"/users/{payload}")
+    assert response.status_code in [403, 404, 400, 422]
     assert "detail" in response.json() or "error" in response.json()
     assert response.status_code != 500
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("payload", INJECTION_PAYLOADS)
-def test_playlist_by_user_injection(client, payload):
-    response = client.get(f"/users/{payload}/playlists")
-    response.status_code in [403, 404, 400, 422]
+async def test_playlist_by_user_injection(client, payload):
+    response = await client.get(f"/users/{payload}/playlists")
+    assert response.status_code in [403, 404, 400, 422]
     assert "detail" in response.json() or "error" in response.json()
     assert response.status_code != 500
 
@@ -37,43 +38,46 @@ def test_playlist_by_user_injection(client, payload):
 # =================== PLAYLISTS ===================
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("payload", INJECTION_PAYLOADS)
-def test_playlist_create_injection(client, payload):
-    response = client.post(
+async def test_playlist_create_injection(client, payload):
+    response = await client.post(
         "/playlists/",
         json={"name": payload, "description": "Test description", "user_id": 1},
     )
     assert response.status_code in (200, 400, 422)
     assert response.status_code != 500
     data = response.json()
-
     if response.status_code == 200:
         assert data["name"] == payload
     else:
         assert "detail" in data or "error" in data
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("payload", INJECTION_PAYLOADS)
-def test_playlists_id_injection(client, payload):
-    response = client.get(f"/playlists/{payload}")
-    response.status_code in [403, 404, 400, 422]
+async def test_playlists_id_injection(client, payload):
+    response = await client.get(f"/playlists/{payload}")
+    assert response.status_code in [403, 404, 400, 422]
     assert response.status_code != 500
     assert "detail" in response.json() or "error" in response.json()
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("payload", INJECTION_PAYLOADS)
-def test_playlists_add_track_by_url_injection(client, payload):
-    response = client.post(
+async def test_playlists_add_track_by_url_injection(client, payload):
+    response = await client.post(
         "/playlists/1/tracks/by-url",
         json={"url": "https://x.com?v=1" + payload, "title": "x"},
     )
-    response.status_code in [403, 404, 400, 422]
+    assert response.status_code in [403, 404, 400, 422]
     assert response.status_code != 500
     assert "detail" in response.json() or "error" in response.json()
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("payload", INJECTION_PAYLOADS)
-def test_upload_playlist_cover_injection(client, payload):
+async def test_upload_playlist_cover_injection(client, payload):
     files = {
         "file": (
             "../../evil.php.jpg",
@@ -81,17 +85,18 @@ def test_upload_playlist_cover_injection(client, payload):
             "image/jpeg",
         )
     }
-    response = client.post(
+    response = await client.post(
         f"/playlists/{payload}/cover",
         files=files,
     )
-    response.status_code in [403, 404, 400, 422]
+    assert response.status_code in [403, 404, 400, 422]
     assert response.status_code != 500
     assert "detail" in response.json() or "error" in response.json()
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("payload", INJECTION_PAYLOADS)
-def test_cover_playlist_path_injection(client, payload):
+async def test_cover_playlist_path_injection(client, payload):
     files = {
         "file": (
             "../../evil.php.jpg",
@@ -99,7 +104,7 @@ def test_cover_playlist_path_injection(client, payload):
             "image/jpeg",
         )
     }
-    response = client.post(
+    response = await client.post(
         f"/playlists/covers/{payload}",
         files=files,
     )
@@ -108,25 +113,28 @@ def test_cover_playlist_path_injection(client, payload):
     assert "detail" in response.json() or "error" in response.json()
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("payload", INJECTION_PAYLOADS)
-def test_remove_playlist_path_injection(client, payload):
-    response = client.delete(f"/playlists/{payload}")
-    response.status_code in [403, 404, 400, 422]
+async def test_remove_playlist_path_injection(client, payload):
+    response = await client.delete(f"/playlists/{payload}")
+    assert response.status_code in [403, 404, 400, 422]
     assert "detail" in response.json() or "error" in response.json()
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("payload", INJECTION_PAYLOADS)
-def test_update_playlist_path_injection(client, payload):
-    response = client.put(f"/playlists/{payload}")
+async def test_update_playlist_path_injection(client, payload):
+    response = await client.put(f"/playlists/{payload}")
     assert response.status_code in [404, 405, 400, 422]
     assert response.status_code != 500
     assert "detail" in response.json() or "error" in response.json()
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("payload", INJECTION_PAYLOADS)
-def test_remove_track_from_playlist_path_injection(client, payload):
-    response = client.delete(f"/playlists/1/tracks/{payload}")
-    response.status_code in [403, 404, 400, 422]
+async def test_remove_track_from_playlist_path_injection(client, payload):
+    response = await client.delete(f"/playlists/1/tracks/{payload}")
+    assert response.status_code in [403, 404, 400, 422]
     assert response.status_code != 500
     assert "detail" in response.json() or "error" in response.json()
 
@@ -134,25 +142,24 @@ def test_remove_track_from_playlist_path_injection(client, payload):
 # =================== TRACKS ===================
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("payload", INJECTION_PAYLOADS)
-def test_add_track_by_url_injection(client, payload):
-    response = client.post(
+async def test_add_track_by_url_injection(client, payload):
+    response = await client.post(
         "/playlists/2/tracks/by-url",
         json={"url": "https://x.com?v=1" + payload, "title": "Test Track"},
     )
-    response.status_code in [403, 404, 400, 422]
+    assert response.status_code in [403, 404, 400, 422]
     assert response.status_code != 500
     assert "detail" in response.json() or "error" in response.json()
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("payload", INJECTION_PAYLOADS)
-def test_track_by_url_command_injection(client, payload):
-    response = client.get(
+async def test_track_by_url_command_injection(client, payload):
+    response = await client.get(
         "/tracks/by-url",
-        params={
-            "url": "https://www.youtube.com/watch?v=hT8nvc6fxBs&list=RDCLAK5uy_mztvVkPbbOgYQFQUOi9VbLcZ4ewdmBczw&index=2"
-            + payload
-        },
+        params={"url": "https://www.youtube.com/watch?v=hT8nvc6fxBs" + payload},
     )
     assert response.status_code in (400, 422, 404)
     assert response.status_code != 500
@@ -162,9 +169,10 @@ def test_track_by_url_command_injection(client, payload):
 # =================== ARTISTS ===================
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("payload", INJECTION_PAYLOADS)
-def test_artists_id_injection(client, payload):
-    response = client.get(f"/artists/{payload}")
-    response.status_code in [403, 404, 400, 422]
+async def test_artists_id_injection(client, payload):
+    response = await client.get(f"/artists/{payload}")
+    assert response.status_code in [403, 404, 400, 422]
     assert response.status_code != 500
     assert "detail" in response.json() or "error" in response.json()

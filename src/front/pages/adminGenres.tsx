@@ -3,6 +3,9 @@ import { GenreRepository, ModerationRepository } from "@repositories/index";
 import type { ModerationUser } from "@repositories/moderationRepository";
 import { AlertManager } from "@utils/alertManager";
 import { authService } from "@utils/authentication";
+import { PlaylistRepository } from "@repositories/playlistRepository";
+import Playlist, { Visibility } from "@models/playlist";
+import { Track } from "@models/track";
 
 function renderGenreRows(genres: Genre[], editingId: number | null): string {
   if (genres.length === 0) {
@@ -39,6 +42,122 @@ function renderGenreRows(genres: Genre[], editingId: number | null): string {
     .join("");
 }
 
+function renderPlaylistRows(
+  playlists: Playlist[],
+  expandedId: number | null,
+  editingId: number | null,
+  tracksByPlaylistId: Record<number, Track[]>,
+  genres: any[]
+): string {
+  if (playlists.length === 0) {
+    return '<p class="text-muted-foreground text-sm">No playlists found.</p>';
+  }
+
+  return playlists
+    .map((playlist) => {
+      const isExpanded = expandedId === playlist.idPlaylist;
+      const isEditing = editingId === playlist.idPlaylist;
+
+      const visibilityBadgeColor =
+        playlist.visibility === Visibility.private
+          ? "bg-red-800/60 text-red-200"
+          : playlist.visibility === Visibility.public
+          ? "bg-green-800/60 text-green-200"
+          : "bg-yellow-800/60 text-yellow-200";
+
+      const header = isEditing
+        ? (
+          <div class="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-white/5" data-playlist-id={playlist.idPlaylist}>
+            <input
+              type="text"
+              id={`edit-playlist-name-${playlist.idPlaylist}`}
+              value={playlist.name}
+              class="flex-1 min-w-[150px] px-3 py-1 rounded-lg bg-input border border-border text-foreground text-sm focus:ring-2 focus:ring-ring outline-none"
+            />
+            <select
+              id={`edit-playlist-visibility-${playlist.idPlaylist}`}
+              class="px-3 py-1 rounded-lg bg-input border border-border text-foreground text-sm"
+            >
+              {["PUBLIC", "PRIVATE", "OPEN"].map((v) =>
+                v.toLowerCase() === playlist.visibility
+                  ? `<option value="${v}" selected>${v}</option>`
+                  : `<option value="${v}">${v}</option>`
+              ).join("")}
+            </select>
+            <button data-save-playlist={playlist.idPlaylist} class="px-3 py-1 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-green-500 transition-colors">Save</button>
+            <button data-cancel-playlist-edit class="px-3 py-1 rounded-lg bg-neutral-700 text-white text-xs font-medium hover:bg-neutral-600 transition-colors">Cancel</button>
+          </div>
+        )
+        : (
+          <div class="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors" data-playlist-id={playlist.idPlaylist}>
+            <div class="flex items-center gap-3 min-w-0">
+              <span safe class="text-foreground text-sm font-medium truncate">{playlist.name}</span>
+              <span class={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide font-medium ${visibilityBadgeColor}`}>
+                {playlist.visibility}
+              </span>
+              {playlist.genreLabel
+                ? `<span class="text-white/40 text-xs">${playlist.genreLabel}</span>`
+                : ""}
+            </div>
+            <div class="flex gap-2 shrink-0">
+              <button data-expand-playlist={playlist.idPlaylist} class="px-3 py-1 rounded-lg bg-neutral-700 text-white text-xs font-medium hover:bg-neutral-600 transition-colors">
+                {isExpanded ? "Collapse" : "Tracks"}
+              </button>
+              <button data-edit-playlist={playlist.idPlaylist} class="px-3 py-1 rounded-lg bg-neutral-700 text-white text-xs font-medium hover:bg-neutral-600 transition-colors">Edit</button>
+              <button data-delete-playlist={playlist.idPlaylist} class="px-3 py-1 rounded-lg bg-red-600/80 text-white text-xs font-medium hover:bg-red-500 transition-colors">Delete</button>
+            </div>
+          </div>
+        );
+
+      const tracks = tracksByPlaylistId[playlist.idPlaylist] ?? null;
+
+      const trackPanel = isExpanded
+        ? (
+          <div class="mt-2 ml-4 p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+            <div id={`track-list-${playlist.idPlaylist}`} class="space-y-1">
+              {tracks === null
+                ? '<p class="text-muted-foreground text-xs">Loading tracks...</p>'
+                : tracks.length === 0
+                ? '<p class="text-muted-foreground text-xs">No tracks in this playlist.</p>'
+                : tracks.map((track) => (
+                  <div class="flex items-center justify-between gap-2 py-1">
+                    <span safe class="text-white/80 text-xs truncate">{track.title}</span>
+                    <button
+                      data-remove-track={track.idTrack}
+                      data-remove-track-playlist={playlist.idPlaylist}
+                      class="px-2 py-0.5 rounded bg-red-600/70 text-white text-[10px] hover:bg-red-500 transition-colors shrink-0"
+                    >Remove</button>
+                  </div>
+                )).join("")}
+            </div>
+            <form data-add-track-form={playlist.idPlaylist} class="flex flex-wrap gap-2 mt-2 pt-2 border-t border-white/10">
+              <input
+                type="text"
+                name="title"
+                placeholder="Track title"
+                required
+                class="flex-1 min-w-[120px] px-3 py-1 rounded-lg bg-input border border-border text-foreground text-xs focus:ring-2 focus:ring-ring outline-none"
+              />
+              <input
+                type="text"
+                name="url"
+                placeholder="YouTube URL"
+                required
+                class="flex-1 min-w-[200px] px-3 py-1 rounded-lg bg-input border border-border text-foreground text-xs focus:ring-2 focus:ring-ring outline-none"
+              />
+              <button type="submit" class="px-3 py-1 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/80 transition-colors">
+                Add
+              </button>
+            </form>
+          </div>
+        )
+        : "";
+
+      return `<div>${header}${trackPanel}</div>`;
+    })
+    .join("");
+}
+
 export async function AdminPage(container: HTMLElement | null) {
   if (!container) return;
 
@@ -63,14 +182,14 @@ export async function AdminPage(container: HTMLElement | null) {
         <div class="flex items-center justify-between mb-6">
           <div>
             <h1 class="text-3xl font-bold tracking-tight text-white/90">Admin</h1>
-            <p class="text-white/60 mt-1 text-sm">Manage genres</p>
+            <p class="text-white/60 mt-1 text-sm">Manage genres and playlists</p>
           </div>
           <a href="/" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">
             Back
           </a>
         </div>
 
-        <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full max-w-2xl shadow-2xl">
+        <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full max-w-2xl shadow-2xl mb-6">
           <h2 class="text-xl font-semibold text-white mb-4">Genres</h2>
           <div id="genre-list" class="space-y-2 mb-6 max-h-96 overflow-y-auto">
             <p class="text-muted-foreground text-sm">Loading...</p>
@@ -90,9 +209,17 @@ export async function AdminPage(container: HTMLElement | null) {
             </button>
           </form>
         </div>
+
+        <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full shadow-2xl">
+          <h2 class="text-xl font-semibold text-white mb-4">Playlists</h2>
+          <div id="admin-playlist-list" class="space-y-2 overflow-y-auto max-h-[60vh]">
+            <p class="text-muted-foreground text-sm">Loading...</p>
+          </div>
+        </div>
       </div>
     );
     await initGenreManagement(container);
+    await initAdminPlaylistManagement(container);
     return;
   }
 
@@ -119,8 +246,6 @@ export async function AdminPage(container: HTMLElement | null) {
 
   await initModerationPanel(container);
 }
-
-
 
 function renderBanRows(users: ModerationUser[]): string {
   if (users.length === 0) {
@@ -189,13 +314,22 @@ async function initGenreManagement(container: HTMLElement) {
       const newLabel = input?.value.trim();
       if (!newLabel) return;
 
+      if (genres.some((g) => g.label.toLowerCase() === newLabel.toLowerCase() && g.idGenre !== id)) {
+        new AlertManager().error("This genre already exists");
+        return;
+      }
+
       try {
         await repo.update(id, newLabel);
         new AlertManager().success("Genre updated");
         editingId = null;
         await refresh();
-      } catch {
-        new AlertManager().error("Failed to update genre");
+      } catch (error: any) {
+        if (error.message === "Conflict") {
+          new AlertManager().error("This genre already exists");
+        } else {
+          new AlertManager().error("Failed to update genre");
+        }
       }
       return;
     }
@@ -220,13 +354,167 @@ async function initGenreManagement(container: HTMLElement) {
     const label = newGenreInput.value.trim();
     if (!label) return;
 
+    if (genres.some((g) => g.label.toLowerCase() === label.toLowerCase())) {
+      new AlertManager().error("This genre already exists");
+      return;
+    }
+
     try {
       await repo.create(label);
       new AlertManager().success("Genre created");
       newGenreInput.value = "";
       await refresh();
+    } catch (error: any) {
+      if (error.message === "Conflict") {
+        new AlertManager().error("This genre already exists");
+      } else {
+        new AlertManager().error("Failed to create genre");
+      }
+    }
+  });
+
+  await refresh();
+}
+
+async function initAdminPlaylistManagement(container: HTMLElement) {
+  const listEl = container.querySelector("#admin-playlist-list") as HTMLElement | null;
+  if (!listEl) return;
+
+  const repo = new PlaylistRepository();
+  const alerts = new AlertManager();
+
+  let playlists: Playlist[] = [];
+  let expandedId: number | null = null;
+  let editingId: number | null = null;
+  const trackCache: Record<number, Track[]> = {};
+
+  const refresh = async () => {
+    try {
+      playlists = await repo.adminGetAll();
+      listEl.innerHTML = renderPlaylistRows(playlists, expandedId, editingId, trackCache, []);
     } catch {
-      new AlertManager().error("Failed to create genre");
+      listEl.innerHTML = '<p class="text-red-400 text-sm">Failed to load playlists.</p>';
+    }
+  };
+
+  const loadTracksForPlaylist = async (playlistId: number) => {
+    try {
+      const tracks = await repo.adminGetTracks(playlistId);
+      trackCache[playlistId] = tracks;
+      listEl.innerHTML = renderPlaylistRows(playlists, expandedId, editingId, trackCache, []);
+    } catch {
+      alerts.error("Failed to load tracks");
+    }
+  };
+
+  listEl.addEventListener("click", async (event) => {
+    const target = event.target as HTMLElement;
+
+    const expandBtn = target.closest("[data-expand-playlist]") as HTMLElement | null;
+    if (expandBtn) {
+      const id = parseInt(expandBtn.getAttribute("data-expand-playlist") || "", 10);
+      if (expandedId === id) {
+        expandedId = null;
+        listEl.innerHTML = renderPlaylistRows(playlists, expandedId, editingId, trackCache, []);
+      } else {
+        expandedId = id;
+        listEl.innerHTML = renderPlaylistRows(playlists, expandedId, editingId, trackCache, []);
+        if (!trackCache[id]) {
+          await loadTracksForPlaylist(id);
+        }
+      }
+      return;
+    }
+
+    const editBtn = target.closest("[data-edit-playlist]") as HTMLElement | null;
+    if (editBtn) {
+      editingId = parseInt(editBtn.getAttribute("data-edit-playlist") || "", 10);
+      listEl.innerHTML = renderPlaylistRows(playlists, expandedId, editingId, trackCache, []);
+      return;
+    }
+
+    const cancelBtn = target.closest("[data-cancel-playlist-edit]");
+    if (cancelBtn) {
+      editingId = null;
+      listEl.innerHTML = renderPlaylistRows(playlists, expandedId, editingId, trackCache, []);
+      return;
+    }
+
+    const saveBtn = target.closest("[data-save-playlist]") as HTMLElement | null;
+    if (saveBtn) {
+      const id = parseInt(saveBtn.getAttribute("data-save-playlist") || "", 10);
+      const nameInput = container.querySelector(`#edit-playlist-name-${id}`) as HTMLInputElement | null;
+      const visibilitySelect = container.querySelector(`#edit-playlist-visibility-${id}`) as HTMLSelectElement | null;
+
+      const updateData: Record<string, unknown> = {};
+      if (nameInput?.value.trim()) updateData.name = nameInput.value.trim();
+      if (visibilitySelect?.value) updateData.visibility = visibilitySelect.value;
+
+      try {
+        await repo.adminUpdate(id, updateData as Partial<Playlist>);
+        alerts.success("Playlist updated");
+        editingId = null;
+        await refresh();
+      } catch {
+        alerts.error("Failed to update playlist");
+      }
+      return;
+    }
+
+    const deleteBtn = target.closest("[data-delete-playlist]") as HTMLElement | null;
+    if (deleteBtn) {
+      const id = parseInt(deleteBtn.getAttribute("data-delete-playlist") || "", 10);
+      const playlist = playlists.find((p) => p.idPlaylist === id);
+      if (!confirm(`Delete playlist "${playlist?.name}"? This cannot be undone.`)) return;
+      try {
+        await repo.adminDelete(id);
+        alerts.success("Playlist deleted");
+        if (expandedId === id) expandedId = null;
+        delete trackCache[id];
+        await refresh();
+      } catch {
+        alerts.error("Failed to delete playlist");
+      }
+      return;
+    }
+
+    const removeBtn = target.closest("[data-remove-track]") as HTMLElement | null;
+    if (removeBtn) {
+      const trackId = parseInt(removeBtn.getAttribute("data-remove-track") || "", 10);
+      const playlistId = parseInt(removeBtn.getAttribute("data-remove-track-playlist") || "", 10);
+      try {
+        await repo.adminRemoveTrack(playlistId, trackId);
+        alerts.success("Track removed");
+        delete trackCache[playlistId];
+        await loadTracksForPlaylist(playlistId);
+      } catch {
+        alerts.error("Failed to remove track");
+      }
+      return;
+    }
+  });
+
+  listEl.addEventListener("submit", async (event) => {
+    const form = (event.target as HTMLElement).closest("[data-add-track-form]") as HTMLElement | null;
+    if (!form) return;
+    event.preventDefault();
+
+    const playlistId = parseInt(form.getAttribute("data-add-track-form") || "", 10);
+    const titleInput = form.querySelector("[name='title']") as HTMLInputElement;
+    const urlInput = form.querySelector("[name='url']") as HTMLInputElement;
+    const title = titleInput.value.trim();
+    const url = urlInput.value.trim();
+    if (!title || !url) return;
+
+    try {
+      await repo.adminAddTrack(playlistId, url, title);
+      alerts.success("Track added");
+      titleInput.value = "";
+      urlInput.value = "";
+      delete trackCache[playlistId];
+      await loadTracksForPlaylist(playlistId);
+    } catch {
+      alerts.error("Failed to add track");
     }
   });
 
