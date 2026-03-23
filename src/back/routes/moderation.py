@@ -1,9 +1,11 @@
+from typing import List
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from controllers import UserController
 from database import get_db
 from middleware.auth_middleware import require_role, get_current_user_id
-from schemas.user import ModerationUserSchema, BanUserResponse
+from schemas.user import ModerationUserSchema, UserBanStatusResponse
 
 router = APIRouter(prefix="/moderation", tags=["Moderation"])
 
@@ -28,41 +30,48 @@ async def get_ban_candidates(
     summary="List users that can be unbanned",
     description="Returns banned users. Reserved to moderators.",
 )
-def get_unban_candidates(
-    db: Session = Depends(get_db),
+async def get_unban_candidates(
+    db: AsyncSession = Depends(get_db),
     _moderator=Depends(require_role(["MODERATOR"])),
 ):
-    return UserController.get_unban_candidates(db)
-
-
-@router.get(
-    "/unban-candidates",
-    response_model=List[ModerationUserSchema],
-    summary="List users that can be unbanned",
-    description="Returns banned users. Reserved to moderators.",
-)
-def get_unban_candidates(
-    db: Session = Depends(get_db),
-    _moderator=Depends(require_role(["MODERATOR"])),
-):
-    return UserController.get_unban_candidates(db)
+    return await UserController.get_unban_candidates(db)
 
 
 @router.post(
-    "/users/{user_id}/ban",
-    response_model=BanUserResponse,
+    "/users/{idUser}/ban",
+    response_model=UserBanStatusResponse,
     summary="Ban a user",
     description="Ban a non-admin user and revoke all their tokens. Reserved to moderators.",
 )
 async def ban_user(
-    user_id: int,
+    idUser: int,
     db: AsyncSession = Depends(get_db),
     moderator_id: int = Depends(get_current_user_id),
     _moderator=Depends(require_role(["MODERATOR"])),
 ):
-    user = await UserController.ban_user(db, moderator_id, user_id)
+    user = await UserController.ban_user(db, moderator_id, idUser)
     return {
         "idUser": user.idUser,
         "banned": user.banned,
         "detail": "User banned and tokens revoked",
+    }
+
+
+@router.post(
+    "/users/{idUser}/unban",
+    response_model=UserBanStatusResponse,
+    summary="Unban a user",
+    description="Unban a user. Reserved to moderators.",
+)
+async def unban_user(
+    idUser: int,
+    db: AsyncSession = Depends(get_db),
+    moderator_id: int = Depends(get_current_user_id),
+    _moderator=Depends(require_role(["MODERATOR"])),
+):
+    user = await UserController.unban_user(db, moderator_id, idUser)
+    return {
+        "idUser": user.idUser,
+        "banned": user.banned,
+        "detail": "User unbanned",
     }

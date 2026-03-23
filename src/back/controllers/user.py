@@ -1,94 +1,88 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
-from models.user import User
-from repositories.user_repository import UserRepository
-from repositories.access_token_repository import AccessTokenRepository
-from repositories.refresh_token_repository import RefreshTokenRepository
+from models import User
+from sqlalchemy.orm import Session
+from repositories import UserRepository, AccessTokenRepository, RefreshTokenRepository
 
 
 class UserController:
     @staticmethod
-    def get_all_users(db: Session):
-        return UserRepository.get_all(db)
+    async def get_all_users(db: AsyncSession):
+        users = await UserRepository.get_all(db)
+        if not users:
+            raise HTTPException(status_code=404, detail="No users found")
+        return users
 
     @staticmethod
-    def get_all_verified_users(db: Session):
-        return db.query(User).filter(User.isVerified).all()
+    async def get_all_verified_users(db: AsyncSession):
+        users = await UserRepository.get_all(db)
+        if not users:
+            raise HTTPException(status_code=404, detail="No verified users found")
+        return [u for u in users if u.isVerified]
 
     @staticmethod
-    def get_user(db: Session, idUser: int):
-        user = UserRepository.get_user_by_id(db, idUser)
+    async def get_user(db: AsyncSession, user_id: int):
+        user = await UserRepository.get_user_by_id(db, user_id)
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User {idUser} not found",
-            )
+            raise HTTPException(status_code=404, detail="User not found")
         return user
 
     @staticmethod
-    def get_user_playlists(db: Session, idUser: int):
-        user = UserRepository.get_user_by_id(db, idUser)
+    async def get_user_playlists(db: AsyncSession, user_id: int):
+        user = await UserRepository.get_user_by_id(db, user_id)
         if user:
             return user.playlists
         return []
 
     @staticmethod
-    def get_ban_candidates(db: Session, moderator_id: int):
-        return UserRepository.get_non_admin_ban_candidates(db, moderator_id)
+    async def get_ban_candidates(db: AsyncSession, moderator_id: int):
+        return await UserRepository.get_non_admin_ban_candidates(db, moderator_id)
 
     @staticmethod
-    def get_unban_candidates(db: Session):
-        return db.query(User).filter(User.banned).all()
+    async def get_unban_candidates(db: AsyncSession):
+        users = await UserRepository.get_all(db)
+        return [u for u in users if u.banned]
 
     @staticmethod
-    def ban_user(db: Session, moderator_id: int, target_user_id: int):
+    async def ban_user(db: AsyncSession, moderator_id: int, target_user_id: int):
         if moderator_id == target_user_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="You cannot ban yourself",
-            )
+            raise HTTPException(status_code=400, detail="You cannot ban yourself")
 
-        target_user = UserRepository.get_user_by_id(db, target_user_id)
+        target_user = await UserRepository.get_user_by_id(db, target_user_id)
         if not target_user:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User {target_user_id} not found",
+                status_code=404, detail=f"User {target_user_id} not found"
             )
-
         if target_user.idRole == UserRepository.ADMIN_ROLE_ID:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Moderators cannot ban admin users",
-            )
+            raise HTTPException(status_code=403, detail="You cannot ban an admin user")
 
         try:
             target_user.banned = True
-            AccessTokenRepository.revoke_all_user_tokens(
+            await AccessTokenRepository.revoke_all_user_tokens(
                 db, target_user_id, commit=False
             )
-            RefreshTokenRepository.revoke_all_user_tokens(
+            await RefreshTokenRepository.revoke_all_user_tokens(
                 db, target_user_id, commit=False
             )
-            db.commit()
-            db.refresh(target_user)
+            await db.commit()
+            await db.refresh(target_user)
         except Exception as e:
-            db.rollback()
+            await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to ban user: {str(e)}",
             )
-
         return target_user
 
     @staticmethod
-    def unban_user(db: Session, moderator_id: int, target_user_id: int):
+    async def unban_user(db: AsyncSession, moderator_id: int, target_user_id: int):
         if moderator_id == target_user_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="You cannot unban yourself",
             )
 
-        target_user = UserRepository.get_user_by_id(db, target_user_id)
+        target_user = await UserRepository.get_user_by_id(db, target_user_id)
         if not target_user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -104,10 +98,10 @@ class UserController:
 
         try:
             target_user.banned = False
-            db.commit()
-            db.refresh(target_user)
+            await db.commit()
+            await db.refresh(target_user)
         except Exception as e:
-            db.rollback()
+            await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to unban user: {str(e)}",

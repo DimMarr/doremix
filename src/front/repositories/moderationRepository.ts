@@ -10,7 +10,7 @@ export interface ModerationUser {
     banned: boolean;
 }
 
-interface BanUserResponse {
+interface UserBanStatusResponse {
     idUser: number;
     banned: boolean;
     detail: string;
@@ -55,7 +55,7 @@ export class ModerationRepository {
         }
     }
 
-    async banUser(idUser: number): Promise<BanUserResponse> {
+    async banUser(idUser: number): Promise<UserBanStatusResponse> {
         try {
             const response = await fetch(`${API_BASE_URL}/moderation/users/${idUser}/ban`, {
                 method: "POST",
@@ -75,7 +75,7 @@ export class ModerationRepository {
         }
     }
 
-    async unbanUser(idUser: number): Promise<BanUserResponse> {
+    async unbanUser(idUser: number): Promise<UserBanStatusResponse> {
         try {
             const response = await fetch(`${API_BASE_URL}/moderation/users/${idUser}/unban`, {
                 method: "POST",
