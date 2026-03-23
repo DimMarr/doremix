@@ -545,10 +545,12 @@ export async function PlaylistDetailPage(
         draggedRow.style.display = '';
 
         if (newIndex !== -1 && newIndex !== draggedTrackIndex) {
-          const trackToMove = tracks[draggedTrackIndex];
-          tracks.splice(draggedTrackIndex, 1);
-          tracks.splice(newIndex, 0, trackToMove);
+          const newTracks = [...tracks];
+          const trackToMove = newTracks[draggedTrackIndex];
+          newTracks.splice(draggedTrackIndex, 1);
+          newTracks.splice(newIndex, 0, trackToMove);
 
+          tracks = newTracks;
           playlist.tracks = [...tracks];
           trackPlayerInstance.setPlaylist({ ...playlist });
           updateTrackListDisplay();
