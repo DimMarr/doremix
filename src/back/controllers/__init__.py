@@ -3,6 +3,7 @@ from .user import UserController
 from .track import TrackController
 from .artist import ArtistController
 from .genre import GenreController
+from .admin_playlist_controller import AdminPlaylistController
 
 __all__ = [
     "PlaylistController",
@@ -10,4 +11,5 @@ __all__ = [
     "TrackController",
     "ArtistController",
     "GenreController",
+    "AdminPlaylistController",
 ]
