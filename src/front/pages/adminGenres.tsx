@@ -43,7 +43,7 @@ export async function AdminPage(container: HTMLElement | null) {
           </a>
         </div>
 
-        <div class="flex gap-5">
+        <div class="flex gap-5 items-stretch">
           {/* Genre Managing Panel */}
           <AdminPanel title="Genres" name="genre" content={
             <form id="add-genre-form" class="flex gap-2 mt-4">
@@ -53,7 +53,7 @@ export async function AdminPage(container: HTMLElement | null) {
                 id="new-genre-input"
                 placeholder="New genre name"
                 required
-                class="flex-1 px-4 py-2 rounded-lg bg-input border border-border text-foreground focus:ring-2 focus:ring-ring outline-none text-sm"
+                class="flex-1 px-4 py-2 rounded-lg bg-input border border-border text-foreground focus:ring-2 focus:ring-ring outline-none text-sm m-px"
               />
               <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/80 transition-colors">
                 Add
@@ -62,7 +62,7 @@ export async function AdminPage(container: HTMLElement | null) {
           }/>
 
           {/* Moderators Managing Panel */}
-          <AdminPanel title="Moderators" name="moderators" />
+          <AdminPanel title="Moderators" name="moderators"/>
         </div>
       </div>
     );
