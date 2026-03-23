@@ -374,6 +374,212 @@ export async function AdminPage(container: HTMLElement | null) {
 
 function renderBanRows(users: ModerationUser[]): string {
 function renderModeratorsRows(users: User[]): string {
+function renderPlaylistRows(
+  playlists: Playlist[],
+  expandedId: number | null,
+  editingId: number | null,
+  tracksByPlaylistId: Record<number, Track[]>,
+  genres: any[]
+): string {
+  if (playlists.length === 0) {
+    return '<p class="text-muted-foreground text-sm">No playlists found.</p>';
+  }
+
+  return playlists
+    .map((playlist) => {
+      const isExpanded = expandedId === playlist.idPlaylist;
+      const isEditing = editingId === playlist.idPlaylist;
+
+      const visibilityBadgeColor =
+        playlist.visibility === Visibility.private
+          ? "bg-red-800/60 text-red-200"
+          : playlist.visibility === Visibility.public
+          ? "bg-green-800/60 text-green-200"
+          : "bg-yellow-800/60 text-yellow-200";
+
+      const header = isEditing
+        ? (
+          <div class="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-white/5" data-playlist-id={playlist.idPlaylist}>
+            <input
+              type="text"
+              id={`edit-playlist-name-${playlist.idPlaylist}`}
+              value={playlist.name}
+              class="flex-1 min-w-[150px] px-3 py-1 rounded-lg bg-input border border-border text-foreground text-sm focus:ring-2 focus:ring-ring outline-none"
+            />
+            <select
+              id={`edit-playlist-visibility-${playlist.idPlaylist}`}
+              class="px-3 py-1 rounded-lg bg-input border border-border text-foreground text-sm"
+            >
+              {["PUBLIC", "PRIVATE", "OPEN"].map((v) =>
+                v.toLowerCase() === playlist.visibility
+                  ? `<option value="${v}" selected>${v}</option>`
+                  : `<option value="${v}">${v}</option>`
+              ).join("")}
+            </select>
+            <button data-save-playlist={playlist.idPlaylist} class="px-3 py-1 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-green-500 transition-colors">Save</button>
+            <button data-cancel-playlist-edit class="px-3 py-1 rounded-lg bg-neutral-700 text-white text-xs font-medium hover:bg-neutral-600 transition-colors">Cancel</button>
+          </div>
+        )
+        : (
+          <div class="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors" data-playlist-id={playlist.idPlaylist}>
+            <div class="flex items-center gap-3 min-w-0">
+              <a href={`/playlist/${playlist.idPlaylist}`} safe class="text-foreground text-sm font-medium truncate hover:underline cursor-pointer">{playlist.name}</a>
+              <span class={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide font-medium ${visibilityBadgeColor}`}>
+                {playlist.visibility}
+              </span>
+              {playlist.genreLabel
+                ? `<span class="text-white/40 text-xs">${playlist.genreLabel}</span>`
+                : ""}
+            </div>
+            <div class="flex gap-2 shrink-0">
+              <button data-expand-playlist={playlist.idPlaylist} class="px-3 py-1 rounded-lg bg-neutral-700 text-white text-xs font-medium hover:bg-neutral-600 transition-colors">
+                {isExpanded ? "Collapse" : "Tracks"}
+              </button>
+              <button data-edit-playlist={playlist.idPlaylist} class="px-3 py-1 rounded-lg bg-neutral-700 text-white text-xs font-medium hover:bg-neutral-600 transition-colors">Edit</button>
+              <button data-delete-playlist={playlist.idPlaylist} class="px-3 py-1 rounded-lg bg-red-600/80 text-white text-xs font-medium hover:bg-red-500 transition-colors">Delete</button>
+            </div>
+          </div>
+        );
+
+      const tracks = tracksByPlaylistId[playlist.idPlaylist] ?? null;
+
+      const trackPanel = isExpanded
+        ? (
+          <div class="mt-2 ml-4 p-3 rounded-lg bg-white/5 border border-white/10 space-y-2">
+            <div id={`track-list-${playlist.idPlaylist}`} class="space-y-1">
+              {tracks === null
+                ? '<p class="text-muted-foreground text-xs">Loading tracks...</p>'
+                : tracks.length === 0
+                ? '<p class="text-muted-foreground text-xs">No tracks in this playlist.</p>'
+                : tracks.map((track) => (
+                  <div class="flex items-center justify-between gap-2 py-1">
+                    <span safe class="text-white/80 text-xs truncate">{track.title}</span>
+                    <button
+                      data-remove-track={track.idTrack}
+                      data-remove-track-playlist={playlist.idPlaylist}
+                      class="px-2 py-0.5 rounded bg-red-600/70 text-white text-[10px] hover:bg-red-500 transition-colors shrink-0"
+                    >Remove</button>
+                  </div>
+                )).join("")}
+            </div>
+            <form data-add-track-form={playlist.idPlaylist} class="flex flex-wrap gap-2 mt-2 pt-2 border-t border-white/10">
+              <input
+                type="text"
+                name="title"
+                placeholder="Track title"
+                required
+                class="flex-1 min-w-[120px] px-3 py-1 rounded-lg bg-input border border-border text-foreground text-xs focus:ring-2 focus:ring-ring outline-none"
+              />
+              <input
+                type="text"
+                name="url"
+                placeholder="YouTube URL"
+                required
+                class="flex-1 min-w-[200px] px-3 py-1 rounded-lg bg-input border border-border text-foreground text-xs focus:ring-2 focus:ring-ring outline-none"
+              />
+              <button type="submit" class="px-3 py-1 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/80 transition-colors">
+                Add
+              </button>
+            </form>
+          </div>
+        )
+        : "";
+
+      return `<div>${header}${trackPanel}</div>`;
+    })
+    .join("");
+}
+
+export async function AdminPage(container: HTMLElement | null) {
+  if (!container) return;
+
+  const userInfos = await authService.infos();
+  const isAdmin = userInfos.role === "ADMIN";
+  const isModerator = userInfos.role === "MODERATOR";
+
+  if (!isAdmin && !isModerator) {
+    container.innerHTML = (
+      <div class="py-12 text-center">
+        <h1 class="text-2xl font-bold mb-2">Forbidden</h1>
+        <p class="text-muted-foreground mb-6">Only admins and moderators can access this page.</p>
+        <a href="/" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">Back to Home</a>
+      </div>
+    );
+    return;
+  }
+
+  if (isAdmin) {
+    container.innerHTML = (
+      <div class="px-4 py-6 md:px-8">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-3xl font-bold tracking-tight text-white/90">Admin</h1>
+            <p class="text-white/60 mt-1 text-sm">Manage genres and playlists</p>
+          </div>
+          <a href="/" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">
+            Back
+          </a>
+        </div>
+
+        <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full max-w-2xl shadow-2xl mb-6">
+          <h2 class="text-xl font-semibold text-white mb-4">Genres</h2>
+          <div id="genre-list" class="space-y-2 mb-6 max-h-96 overflow-y-auto">
+            <p class="text-muted-foreground text-sm">Loading...</p>
+          </div>
+
+          <form id="add-genre-form" class="flex gap-2 mt-4">
+            <input
+              type="text"
+              name="label"
+              id="new-genre-input"
+              placeholder="New genre name"
+              required
+              class="flex-1 px-4 py-2 rounded-lg bg-input border border-border text-foreground focus:ring-2 focus:ring-ring outline-none text-sm"
+            />
+            <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/80 transition-colors">
+              Add
+            </button>
+          </form>
+        </div>
+
+        <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full shadow-2xl">
+          <h2 class="text-xl font-semibold text-white mb-4">Playlists</h2>
+          <div id="admin-playlist-list" class="space-y-2 overflow-y-auto max-h-[60vh]">
+            <p class="text-muted-foreground text-sm">Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
+    await initGenreManagement(container);
+    await initAdminPlaylistManagement(container);
+    return;
+  }
+
+  container.innerHTML = (
+    <div class="px-4 py-6 md:px-8">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-3xl font-bold tracking-tight text-white/90">Moderation</h1>
+          <p class="text-white/60 mt-1 text-sm">Ban non-admin users and revoke their tokens</p>
+        </div>
+        <a href="/" data-link class="px-4 py-2 rounded-lg bg-neutral-700 text-white text-sm font-medium hover:bg-neutral-600 transition-colors">
+          Back
+        </a>
+      </div>
+
+      <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full shadow-2xl min-h-[70vh]">
+        <h2 class="text-xl font-semibold text-white mb-4">Manage Users</h2>
+        <div id="ban-user-list" class="space-y-3 overflow-y-auto h-[calc(70vh-5rem)]">
+          <p class="text-muted-foreground text-sm">Loading...</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  await initModerationPanel(container);
+}
+
+function renderBanRows(users: ModerationUser[]): string {
   if (users.length === 0) {
     return '<p class="text-muted-foreground text-sm">No user.</p>';
   }
