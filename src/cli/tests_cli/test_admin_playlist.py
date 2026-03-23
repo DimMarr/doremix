@@ -64,7 +64,6 @@ def mock_auth_and_http():
 
 # --- get_all_playlists ---
 
-
 def test_get_all_playlists_success(mock_auth_and_http):
     mock_auth_and_http.return_value = _response(200, [PLAYLIST_PAYLOAD])
     playlists = get_all_playlists()
@@ -91,7 +90,6 @@ def test_get_all_playlists_raises_on_403(mock_auth_and_http):
 
 
 # --- get_playlist_tracks ---
-
 
 def test_get_playlist_tracks_success(mock_auth_and_http):
     mock_auth_and_http.return_value = _response(200, [TRACK_PAYLOAD])
@@ -120,7 +118,6 @@ def test_get_playlist_tracks_raises_on_401(mock_auth_and_http):
 
 # --- update_playlist ---
 
-
 def test_update_playlist_success(mock_auth_and_http):
     updated = {**PLAYLIST_PAYLOAD, "name": "Updated Name"}
     mock_auth_and_http.return_value = _response(200, updated)
@@ -142,7 +139,6 @@ def test_update_playlist_raises_on_401(mock_auth_and_http):
 
 
 # --- delete_playlist ---
-
 
 def test_delete_playlist_success_on_200(mock_auth_and_http):
     mock_auth_and_http.return_value = _response(200, {"message": "Deleted"})
@@ -170,7 +166,6 @@ def test_delete_playlist_raises_on_401(mock_auth_and_http):
 
 # --- add_track ---
 
-
 def test_add_track_success(mock_auth_and_http):
     mock_auth_and_http.return_value = _response(200, TRACK_PAYLOAD)
     track = add_track(1, title="Test Track", url="https://youtube.com/watch?v=abc")
@@ -197,7 +192,6 @@ def test_add_track_raises_on_403(mock_auth_and_http):
 
 
 # --- remove_track ---
-
 
 def test_remove_track_success(mock_auth_and_http):
     mock_auth_and_http.return_value = _response(200, PLAYLIST_PAYLOAD)
