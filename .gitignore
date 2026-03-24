@@ -12,3 +12,7 @@ uv.lock
 
 uploads/
 .coverage
+
+# Planning/docs (local only)
+docs/
+.planning/
