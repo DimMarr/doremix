@@ -491,7 +491,7 @@ export async function PlaylistDetailPage(
           <div>
               <div id="playlist-vote-controls"></div>
           </div>
-            <div class="flex flex-wrap gap-2 mt-1">
+          <div class="flex flex-wrap gap-2 mt-1">
             {await canEdit(repo, playlist) &&
               <button id="add-track-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Add Track">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
