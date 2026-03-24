@@ -126,10 +126,16 @@ class UserController:
             )
 
         # Check that user is neither Moderator nor Admin
+        if user.role == UserRole.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_418_IM_A_TEAPOT,
+                detail="User is an admin",
+            )
+
         if user.role != UserRole.USER:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User is already moderator or admin",
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User is already moderator",
             )
 
         updated_user = await UserRepository.update_role(db, user_id, UserRole.MODERATOR)
@@ -144,10 +150,16 @@ class UserController:
                 status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
             )
 
+        if user.role == UserRole.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_418_IM_A_TEAPOT,
+                detail="User is an admin",
+            )
+
         # Check that user is moderator
         if user.role != UserRole.MODERATOR:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="User is not a moderator",
             )
 
