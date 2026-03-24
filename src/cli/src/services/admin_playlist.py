@@ -78,13 +78,14 @@ def update_playlist(
     return PlaylistSchema.model_validate(response.json())
 
 
-def delete_playlist(playlist_id: int) -> dict:
+def delete_playlist(playlist_id: int) -> dict[str, Any]:
     response = make_authenticated_request(
         "DELETE", f"/admin/playlists/{playlist_id}"
     )
     if response.status_code not in (200, 204):
         _map_playlist_error(response, "Failed to delete playlist")
-    return response.json() if response.status_code == 200 else {}
+    result: dict[str, Any] = response.json() if response.status_code == 200 else {}
+    return result
 
 
 def add_track(playlist_id: int, title: str, url: str) -> TrackSchema:
