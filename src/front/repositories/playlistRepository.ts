@@ -466,7 +466,7 @@ export class PlaylistRepository {
         return response.json();
     }
 
-    async transfer(id: number, new_owner_email: string) {
+    async transfer_ownership(id: number, new_owner_email: string) {
         try {
             const response = await fetch(`${API_BASE_URL}/playlists/${id}/transfer`, {
                 method: "POST",

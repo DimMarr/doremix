@@ -289,7 +289,7 @@ export function ShareModal({ playlistId, onClose }) {
       submitTransfer.disabled = true;
 
       try {
-        const response = await new PlaylistRepository().transfer(playlistId, email);
+        const response = await new PlaylistRepository().transfer_ownership(playlistId, email);
         if (response === 200) {
             window.location.href = '/playlists';
             return;
