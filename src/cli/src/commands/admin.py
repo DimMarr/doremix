@@ -135,7 +135,9 @@ def playlist_update(
         raise typer.Abort()
 
     try:
-        updated = update_playlist(playlist_id, name=name, id_genre=genre, visibility=visibility)
+        updated = update_playlist(
+            playlist_id, name=name, id_genre=genre, visibility=visibility
+        )
         console.print("[green]✓ Playlist successfully updated![/green]")
 
         table = Table(show_header=False)
@@ -172,7 +174,9 @@ def playlist_delete(
 
     try:
         if not force:
-            confirm = typer.confirm(f"Do you really want to delete playlist {playlist_id}?")
+            confirm = typer.confirm(
+                f"Do you really want to delete playlist {playlist_id}?"
+            )
             if not confirm:
                 console.print("[yellow]Deletion cancelled.[/yellow]")
                 raise typer.Abort()
@@ -202,7 +206,9 @@ def playlist_add_track(
 
     try:
         track = add_track(playlist_id, title=title, url=url)
-        console.print(f"[green]✓ Track '{track.title}' added to playlist {playlist_id}.[/green]")
+        console.print(
+            f"[green]✓ Track '{track.title}' added to playlist {playlist_id}.[/green]"
+        )
 
         tracks = get_playlist_tracks(playlist_id)
 
