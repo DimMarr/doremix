@@ -120,9 +120,11 @@ CREATE TABLE TRACK_PLAYLIST (
     idTrack INTEGER NOT NULL,
     idPlaylist INTEGER NOT NULL,
     nameInPlaylist VARCHAR(255),
+    next_track_id INTEGER,
     PRIMARY KEY (idTrack, idPlaylist),
     CONSTRAINT fk_trackplaylist_track FOREIGN KEY (idTrack) REFERENCES TRACK(idTrack) ON DELETE CASCADE,
-    CONSTRAINT fk_trackplaylist_playlist FOREIGN KEY (idPlaylist) REFERENCES PLAYLIST(idPlaylist) ON DELETE CASCADE
+    CONSTRAINT fk_trackplaylist_playlist FOREIGN KEY (idPlaylist) REFERENCES PLAYLIST(idPlaylist) ON DELETE CASCADE,
+    CONSTRAINT fk_trackplaylist_next FOREIGN KEY (next_track_id) REFERENCES TRACK(idTrack) ON DELETE SET NULL
 );
 
 CREATE TABLE USER_PLAYLIST (

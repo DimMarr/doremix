@@ -137,6 +137,7 @@ export class YoutubePlayer {
     }
 
     public setPlaylist(playlist: Playlist): void {
+        const currentTrack = this.getCurrentTrack();
         this.playlist = playlist;
         this.tracks = this.playlist.tracks;
 
@@ -145,14 +146,15 @@ export class YoutubePlayer {
             return;
         }
 
-        this.currentPlayingTrackIndex = 0;
-        const currentTrack = this.getCurrentTrack();
-
         if (currentTrack) {
             const newIndex = this.tracks.findIndex(t => t.idTrack === currentTrack.idTrack);
             if (newIndex !== -1) {
                 this.currentPlayingTrackIndex = newIndex;
+            } else {
+                this.currentPlayingTrackIndex = 0;
             }
+        } else {
+            this.currentPlayingTrackIndex = 0;
         }
     }
 
@@ -463,6 +465,10 @@ export class YoutubePlayer {
 
     getCurrentTrack(): Track | null {
         return this.tracks[this.currentPlayingTrackIndex] || null;
+    }
+
+    getCurrentTrackIndex(): number {
+        return this.currentPlayingTrackIndex;
     }
 
     setShuffle(value: boolean): void {

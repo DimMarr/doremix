@@ -146,7 +146,7 @@ const initializePlayer = (container: HTMLElement, playerStore: YoutubePlayer) =>
   const originalSetPlaylist = playerStore.setPlaylist.bind(playerStore);
   playerStore.setPlaylist = (playlist) => {
     originalSetPlaylist(playlist);
-    currentTrackIndex = 0;
+    currentTrackIndex = playerStore.getCurrentTrackIndex();
     updateNowPlayingMeta(container, playerStore);
   };
 
