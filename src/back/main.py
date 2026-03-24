@@ -89,6 +89,32 @@ app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 for router in routers:
     app.include_router(router)
 
+
+# Create all tables
+@app.on_event("startup")
+async def on_startup():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(
+            text(
+                """
+                UPDATE playlist
+                SET vote = COALESCE(vote_totals.score, 0)
+                FROM (
+                    SELECT
+                        playlist.idplaylist,
+                        COALESCE(SUM(playlist_vote.value), 0) AS score
+                    FROM playlist
+                    LEFT JOIN playlist_vote
+                        ON playlist_vote.idplaylist = playlist.idplaylist
+                    GROUP BY playlist.idplaylist
+                ) AS vote_totals
+                WHERE vote_totals.idplaylist = playlist.idplaylist
+                """
+            )
+        )
+
+
 cors_origins = os.getenv("CORS_ORIGINS", "")
 
 # On sépare les origines par des virgules et on enlève les espaces inutiles
