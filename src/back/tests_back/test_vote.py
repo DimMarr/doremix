@@ -109,7 +109,9 @@ class TestPlaylistVotes:
     async def test_switching_vote_replaces_previous_value(
         self, client, db: AsyncSession, sample_playlist: Playlist
     ):
-        await client.put(f"/playlists/{sample_playlist.idPlaylist}/vote", json={"value": 1})
+        await client.put(
+            f"/playlists/{sample_playlist.idPlaylist}/vote", json={"value": 1}
+        )
 
         response = await client.put(
             f"/playlists/{sample_playlist.idPlaylist}/vote",
@@ -126,7 +128,9 @@ class TestPlaylistVotes:
     async def test_repeating_active_vote_removes_it(
         self, client, db: AsyncSession, sample_playlist: Playlist, sample_user: User
     ):
-        await client.put(f"/playlists/{sample_playlist.idPlaylist}/vote", json={"value": 1})
+        await client.put(
+            f"/playlists/{sample_playlist.idPlaylist}/vote", json={"value": 1}
+        )
 
         response = await client.put(
             f"/playlists/{sample_playlist.idPlaylist}/vote",
@@ -151,7 +155,9 @@ class TestPlaylistVotes:
     async def test_playlist_responses_include_user_vote(
         self, client, sample_playlist: Playlist
     ):
-        await client.put(f"/playlists/{sample_playlist.idPlaylist}/vote", json={"value": -1})
+        await client.put(
+            f"/playlists/{sample_playlist.idPlaylist}/vote", json={"value": -1}
+        )
 
         detail_response = await client.get(f"/playlists/{sample_playlist.idPlaylist}")
         assert detail_response.status_code == 200
