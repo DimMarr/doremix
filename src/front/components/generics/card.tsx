@@ -143,6 +143,11 @@ export function buildCardsFromPlaylists(playlists: Playlist[]) {
   const svg1 = new URL("../../assets/icons/play.svg", import.meta.url).href;
 
   return playlists.map((p) => {
+    const scoreBadge = (
+      <span class="mt-1 inline-flex w-fit items-center rounded-full border border-amber-400/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-200">
+        Score {p.vote ?? 0}
+      </span>
+    );
     const genreBadge = p.genreLabel ? (
       <span class="mt-1 inline-flex w-fit px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
         {p.genreLabel}
@@ -153,7 +158,12 @@ export function buildCardsFromPlaylists(playlists: Playlist[]) {
       title: p.name || "Untitled Playlist",
       image: p.image,
       content: p.description || "",
-      children: genreBadge,
+      children: (
+        <div class="flex flex-wrap gap-2">
+          {scoreBadge}
+          {genreBadge}
+        </div>
+      ),
       icon: svg1,
       className: "w-full",
       href: `/playlist/${p.idPlaylist}`,
