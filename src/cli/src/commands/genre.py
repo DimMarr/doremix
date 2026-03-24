@@ -5,6 +5,7 @@ from rich.console import Console
 from rich.table import Table
 
 from src.services.genre import get_all, create, update, delete
+from src.utils.privileges import _require_admin
 from src.utils.token_storage import get_user
 from src.utils.exceptions import (
     ApiRequestError,
@@ -16,21 +17,6 @@ from src.utils.exceptions import (
 
 app = typer.Typer(name="genres", help="Genre management commands (Admin only).")
 console = Console()
-
-
-def _require_admin() -> None:
-    try:
-        user = get_user()
-        if user.get("role") != "ADMIN":
-            raise ForbiddenError(
-                "Access denied. This command requires Administrator privileges."
-            )
-    except NotAuthenticatedError as exc:
-        console.print(f"[yellow]⚠ {exc}[/yellow]")
-        raise typer.Exit(code=1)
-    except ForbiddenError as exc:
-        console.print(f"[red]✗ {exc}[/red]")
-        raise typer.Exit(code=1)
 
 
 @app.command("list", help="List all available musical genres.")
