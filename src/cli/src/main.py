@@ -10,6 +10,7 @@ from src.commands.track import app as track_app
 from src.commands.user import app as user_app
 from src.commands.group import app as group_app
 
+from src.commands.mod import app as mod_app
 from src.services import auth_service
 from src.utils.exceptions import (
     ApiRequestError,
@@ -164,6 +165,7 @@ root_app.add_typer(track_app, name="track", help="Track commands.")
 root_app.add_typer(genre_app, name="genre", help="Genre commands.")
 root_app.add_typer(user_app, name="user", help="User management commands.")
 root_app.add_typer(group_app, name="group", help="Groups management commands.")
+root_app.add_typer(mod_app, name="mod", help="Moderator commands.")
 
 app = root_app
 
