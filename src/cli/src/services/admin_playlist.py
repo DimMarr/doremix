@@ -32,9 +32,7 @@ def _map_playlist_error(response: requests.Response, context: str) -> None:
     if response.status_code == 403:
         raise ForbiddenError(f"{context}: Access denied. Admins only.")
     if response.status_code == 401:
-        raise NotAuthenticatedError(
-            f"{context}: Session expired. Please login again."
-        )
+        raise NotAuthenticatedError(f"{context}: Session expired. Please login again.")
     raise ApiRequestError(
         f"{context}: unexpected status {response.status_code} - {fallback}"
     )
@@ -79,9 +77,7 @@ def update_playlist(
 
 
 def delete_playlist(playlist_id: int) -> dict[str, Any]:
-    response = make_authenticated_request(
-        "DELETE", f"/admin/playlists/{playlist_id}"
-    )
+    response = make_authenticated_request("DELETE", f"/admin/playlists/{playlist_id}")
     if response.status_code not in (200, 204):
         _map_playlist_error(response, "Failed to delete playlist")
     result: dict[str, Any] = response.json() if response.status_code == 200 else {}
