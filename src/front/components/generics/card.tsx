@@ -160,6 +160,7 @@ export function buildCardsFromPlaylists(playlists: Playlist[]) {
       "data-link": "",
       "data-playlist-card": "1",
       "data-playlist-id": String(p.idPlaylist),
+      "data-genre-id": p.idGenre != null ? String(p.idGenre) : "",
       visibility: p.visibility,
       // Restore onClickPlay for potential inline handling or reference
       onClickPlay: () => {
