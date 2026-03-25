@@ -154,13 +154,13 @@ export async function HomePage(container: HTMLElement | null) {
   // Setup genre filter chips
   const genreFilterSection = container.querySelector("#genreFilterSection") as HTMLElement | null;
   if (genreFilterSection && genres.length > 0) {
-    let activeGenreId: number | null = null;
+    const activeGenreIds = new Set<number>();
 
     const renderChips = () => {
       const chipsHtml = [
         `<button
           class="genre-chip px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border ${
-            activeGenreId === null
+            activeGenreIds.size === 0
               ? "bg-primary text-black border-primary shadow-md shadow-primary/30"
               : "bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:text-white"
           }"
@@ -169,7 +169,7 @@ export async function HomePage(container: HTMLElement | null) {
         ...genres.map((g: Genre) =>
           `<button
             class="genre-chip px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border ${
-              activeGenreId === g.idGenre
+              activeGenreIds.has(g.idGenre)
                 ? "bg-primary text-black border-primary shadow-md shadow-primary/30"
                 : "bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:text-white"
             }"
@@ -181,12 +181,14 @@ export async function HomePage(container: HTMLElement | null) {
       genreFilterSection.innerHTML = `<div class="flex flex-wrap gap-2 justify-center">${chipsHtml}</div>`;
     };
 
-    const applyFilter = (genreId: number | null) => {
+    const applyFilter = () => {
       const allCards = container.querySelectorAll("[data-playlist-card]");
 
       allCards.forEach((card) => {
         const cardGenreId = (card as HTMLElement).getAttribute("data-genre-id");
-        const matches = genreId === null || cardGenreId === String(genreId);
+        const numericGenreId = cardGenreId ? parseInt(cardGenreId, 10) : null;
+
+        const matches = activeGenreIds.size === 0 || (numericGenreId !== null && activeGenreIds.has(numericGenreId));
         (card as HTMLElement).style.display = matches ? "" : "none";
       });
 
@@ -197,7 +199,7 @@ export async function HomePage(container: HTMLElement | null) {
         const anyVisible = Array.from(visibleCards).some(
           (c) => (c as HTMLElement).style.display !== "none"
         );
-        (section as HTMLElement).style.display = anyVisible || genreId === null ? "" : "none";
+        (section as HTMLElement).style.display = anyVisible || activeGenreIds.size === 0 ? "" : "none";
       });
     };
 
@@ -208,10 +210,19 @@ export async function HomePage(container: HTMLElement | null) {
       if (!chip) return;
 
       const val = chip.getAttribute("data-genre-chip");
-      activeGenreId = val === "all" ? null : parseInt(val!, 10);
+      if (val === "all") {
+        activeGenreIds.clear();
+      } else {
+        const id = parseInt(val!, 10);
+        if (activeGenreIds.has(id)) {
+          activeGenreIds.delete(id);
+        } else {
+          activeGenreIds.add(id);
+        }
+      }
 
       renderChips();
-      applyFilter(activeGenreId);
+      applyFilter();
     });
   }
 
