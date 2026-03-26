@@ -167,7 +167,11 @@ export async function AdminPage(container: HTMLElement | null) {
           </a>
         </div>
 
+<<<<<<< HEAD
         <div class="flex gap-5">
+=======
+        <div class="flex gap-5 items-stretch flex-wrap md:flex-nowrap">
+>>>>>>> 115c89f (refactor: renamed admin page)
           {/* Genre Managing Panel */}
           <AdminPanel title="Genres" name="genre" content={
             <form id="add-genre-form" class="flex gap-2 mt-4">
