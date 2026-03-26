@@ -1,5 +1,6 @@
 import { Genre } from "@models/genre";
-import { GenreRepository, ModerationRepository } from "@repositories/index";
+import type User from "@models/user";
+import { GenreRepository, ModerationRepository, UserRepository } from "@repositories/index";
 import type { ModerationUser } from "@repositories/moderationRepository";
 import { AlertManager } from "@utils/alertManager";
 import { authService } from "@utils/authentication";
@@ -189,25 +190,34 @@ export async function AdminPage(container: HTMLElement | null) {
           </a>
         </div>
 
-        <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full shadow-2xl mb-6">
-          <h2 class="text-xl font-semibold text-white mb-4">Genres</h2>
-          <div id="genre-list" class="space-y-2 mb-6 max-h-96 overflow-y-auto">
-            <p class="text-muted-foreground text-sm">Loading...</p>
+        <div class="grid gap-6 lg:grid-cols-2 mb-6">
+          <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full shadow-2xl">
+            <h2 class="text-xl font-semibold text-white mb-4">Genres</h2>
+            <div id="genre-list" class="space-y-2 mb-6 max-h-96 overflow-y-auto">
+              <p class="text-muted-foreground text-sm">Loading...</p>
+            </div>
+
+            <form id="add-genre-form" class="flex gap-2 mt-4">
+              <input
+                type="text"
+                name="label"
+                id="new-genre-input"
+                placeholder="New genre name"
+                required
+                class="flex-1 px-4 py-2 rounded-lg bg-input border border-border text-foreground focus:ring-2 focus:ring-ring outline-none text-sm"
+              />
+              <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/80 transition-colors">
+                Add
+              </button>
+            </form>
           </div>
 
-          <form id="add-genre-form" class="flex gap-2 mt-4">
-            <input
-              type="text"
-              name="label"
-              id="new-genre-input"
-              placeholder="New genre name"
-              required
-              class="flex-1 px-4 py-2 rounded-lg bg-input border border-border text-foreground focus:ring-2 focus:ring-ring outline-none text-sm"
-            />
-            <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/80 transition-colors">
-              Add
-            </button>
-          </form>
+          <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full shadow-2xl">
+            <h2 class="text-xl font-semibold text-white mb-4">Moderators</h2>
+            <div id="moderators-list" class="space-y-2 max-h-96 overflow-y-auto">
+              <p class="text-muted-foreground text-sm">Loading...</p>
+            </div>
+          </div>
         </div>
 
         <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full shadow-2xl">
@@ -219,6 +229,7 @@ export async function AdminPage(container: HTMLElement | null) {
       </div>
     );
     await initGenreManagement(container);
+    await initAddModeratorPanel(container);
     await initAdminPlaylistManagement(container);
     return;
   }
@@ -280,6 +291,36 @@ function renderBanRows(users: ModerationUser[]): string {
         </div>
       );
     })
+    .join("");
+}
+
+function renderModeratorsRows(users: User[]): string {
+  if (users.length === 0) {
+    return '<p class="text-muted-foreground text-sm">No users.</p>';
+  }
+
+  return users
+    .map((user) => (
+      <label
+        class={`flex items-center justify-between gap-3 p-3 rounded-lg border border-white/10 ${user.role === "ADMIN" ? "bg-white/5 opacity-80" : "hover:bg-white/5"} transition-colors`}
+        data-mod-user-row={user.idUser}
+      >
+        <div class="min-w-0">
+          <p safe class="text-foreground text-sm font-medium truncate">{user.username}</p>
+          <p safe class="text-white/60 text-xs truncate">{user.email}</p>
+          <span class="inline-block mt-2 px-2 py-1 rounded-full bg-neutral-700 text-white text-[10px] uppercase tracking-wide">
+            {user.role}
+          </span>
+        </div>
+        <input
+          type="checkbox"
+          class="h-4 w-4 accent-primary shrink-0"
+          checked={user.role === "MODERATOR" || user.role === "ADMIN"}
+          disabled={user.role === "ADMIN"}
+          data-mod-user={user.idUser}
+        />
+      </label>
+    ))
     .join("");
 }
 
@@ -602,6 +643,68 @@ async function initModerationPanel(container: HTMLElement) {
         unbanBtn.classList.remove("opacity-70", "cursor-not-allowed");
       }
       return;
+    }
+  });
+
+  await refresh();
+}
+
+async function initAddModeratorPanel(container: HTMLElement) {
+  const moderatorList = container.querySelector("#moderators-list") as HTMLElement | null;
+  if (!moderatorList) return;
+
+  const repo = new UserRepository();
+  const alerts = new AlertManager();
+  let users: User[] = [];
+
+  const refresh = async () => {
+    try {
+      users = await repo.getAllUsers();
+      users.sort((a, b) => a.idUser - b.idUser);
+      moderatorList.innerHTML = renderModeratorsRows(users);
+    } catch {
+      moderatorList.innerHTML = '<p class="text-red-400 text-sm">Failed to load users.</p>';
+    }
+  };
+
+  moderatorList.addEventListener("change", async (event) => {
+    const target = event.target as HTMLInputElement;
+    const checkbox = target.closest("[data-mod-user]") as HTMLInputElement | null;
+    if (!checkbox) return;
+
+    const userId = parseInt(checkbox.getAttribute("data-mod-user") || "", 10);
+    if (!userId) return;
+
+    const nextCheckedState = checkbox.checked;
+
+    if (nextCheckedState) {
+      if (!confirm("Promote this user to moderator?")) {
+        checkbox.checked = false;
+        return;
+      }
+    } else if (!confirm("Demote this moderator?")) {
+      checkbox.checked = true;
+      return;
+    }
+
+    checkbox.setAttribute("disabled", "true");
+    checkbox.classList.add("opacity-70", "cursor-not-allowed");
+
+    try {
+      if (nextCheckedState) {
+        await repo.addModerator(userId);
+        alerts.success("User is now a moderator.");
+      } else {
+        await repo.demoteModerator(userId);
+        alerts.success("User is no longer a moderator.");
+      }
+
+      await refresh();
+    } catch {
+      checkbox.checked = !nextCheckedState;
+      alerts.error("Failed to change user's role.");
+      checkbox.removeAttribute("disabled");
+      checkbox.classList.remove("opacity-70", "cursor-not-allowed");
     }
   });
 
