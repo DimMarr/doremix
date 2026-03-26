@@ -257,3 +257,32 @@ def search_tracks_in_playlist(playlist_id: str, query: str) -> list[TrackSchema]
 
     query_lower = query.lower()
     return [track for track in all_tracks if query_lower in track.title.lower()]
+
+
+def transfer_ownership(
+    playlist_id: str,
+    email: str,
+) -> dict:
+    user_id = _get_current_user_id()
+    playlist = _get_playlist_from_api(playlist_id)
+    _assert_owner(playlist, user_id)
+
+    payload = {
+        "new_owner_email": email,
+    }
+
+    res = make_authenticated_request(
+        "POST",
+        f"/playlists/{playlist_id}/transfer",
+        json=payload,
+    )
+
+    if res.status_code == 404:
+        raise Exception("Playlist or user not found")
+    if res.status_code == 403:
+        raise Exception("You don't have permission to transfer this playlist")
+    if res.status_code != 200:
+        raise Exception(f"Error while transferring ownership: {_detail(res)}")
+
+    res_json: dict[str, Any] = res.json()
+    return res_json

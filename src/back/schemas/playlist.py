@@ -42,3 +42,7 @@ class SharePlaylistRequest(BaseModel):
 
 class ShareGroupRequest(BaseModel):
     group_name: str
+
+
+class TransferPlaylistRequest(BaseModel):
+    new_owner_email: str

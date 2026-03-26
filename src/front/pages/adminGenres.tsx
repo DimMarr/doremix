@@ -4,6 +4,9 @@ import { Input, AdminPanel } from "@components/index";
 import type { ModerationUser } from "@repositories/moderationRepository";
 import { AlertManager } from "@utils/alertManager";
 import { authService } from "@utils/authentication";
+import { PlaylistRepository } from "@repositories/playlistRepository";
+import Playlist, { Visibility } from "@models/playlist";
+import { Track } from "@models/track";
 
 // Main function : Handle behavior based on role
 export async function AdminPage(container: HTMLElement | null) {
@@ -284,6 +287,151 @@ async function initGenreManagement(container: HTMLElement) {
       } else {
         new AlertManager().error("Failed to create genre");
       }
+    }
+  });
+
+  await refresh();
+}
+
+async function initAdminPlaylistManagement(container: HTMLElement) {
+  const listEl = container.querySelector("#admin-playlist-list") as HTMLElement | null;
+  if (!listEl) return;
+
+  const repo = new PlaylistRepository();
+  const alerts = new AlertManager();
+
+  let playlists: Playlist[] = [];
+  let expandedId: number | null = null;
+  let editingId: number | null = null;
+  const trackCache: Record<number, Track[]> = {};
+
+  const refresh = async () => {
+    try {
+      playlists = await repo.adminGetAll();
+      listEl.innerHTML = renderPlaylistRows(playlists, expandedId, editingId, trackCache, []);
+    } catch {
+      listEl.innerHTML = '<p class="text-red-400 text-sm">Failed to load playlists.</p>';
+    }
+  };
+
+  const loadTracksForPlaylist = async (playlistId: number) => {
+    try {
+      const tracks = await repo.adminGetTracks(playlistId);
+      trackCache[playlistId] = tracks;
+      listEl.innerHTML = renderPlaylistRows(playlists, expandedId, editingId, trackCache, []);
+    } catch {
+      alerts.error("Failed to load tracks");
+    }
+  };
+
+  listEl.addEventListener("click", async (event) => {
+    const target = event.target as HTMLElement;
+
+    const expandBtn = target.closest("[data-expand-playlist]") as HTMLElement | null;
+    if (expandBtn) {
+      const id = parseInt(expandBtn.getAttribute("data-expand-playlist") || "", 10);
+      if (expandedId === id) {
+        expandedId = null;
+        listEl.innerHTML = renderPlaylistRows(playlists, expandedId, editingId, trackCache, []);
+      } else {
+        expandedId = id;
+        listEl.innerHTML = renderPlaylistRows(playlists, expandedId, editingId, trackCache, []);
+        if (!trackCache[id]) {
+          await loadTracksForPlaylist(id);
+        }
+      }
+      return;
+    }
+
+    const editBtn = target.closest("[data-edit-playlist]") as HTMLElement | null;
+    if (editBtn) {
+      editingId = parseInt(editBtn.getAttribute("data-edit-playlist") || "", 10);
+      listEl.innerHTML = renderPlaylistRows(playlists, expandedId, editingId, trackCache, []);
+      return;
+    }
+
+    const cancelBtn = target.closest("[data-cancel-playlist-edit]");
+    if (cancelBtn) {
+      editingId = null;
+      listEl.innerHTML = renderPlaylistRows(playlists, expandedId, editingId, trackCache, []);
+      return;
+    }
+
+    const saveBtn = target.closest("[data-save-playlist]") as HTMLElement | null;
+    if (saveBtn) {
+      const id = parseInt(saveBtn.getAttribute("data-save-playlist") || "", 10);
+      const nameInput = container.querySelector(`#edit-playlist-name-${id}`) as HTMLInputElement | null;
+      const visibilitySelect = container.querySelector(`#edit-playlist-visibility-${id}`) as HTMLSelectElement | null;
+
+      const updateData: Record<string, unknown> = {};
+      if (nameInput?.value.trim()) updateData.name = nameInput.value.trim();
+      if (visibilitySelect?.value) updateData.visibility = visibilitySelect.value;
+
+      try {
+        await repo.adminUpdate(id, updateData as Partial<Playlist>);
+        alerts.success("Playlist updated");
+        editingId = null;
+        await refresh();
+      } catch {
+        alerts.error("Failed to update playlist");
+      }
+      return;
+    }
+
+    const deleteBtn = target.closest("[data-delete-playlist]") as HTMLElement | null;
+    if (deleteBtn) {
+      const id = parseInt(deleteBtn.getAttribute("data-delete-playlist") || "", 10);
+      const playlist = playlists.find((p) => p.idPlaylist === id);
+      if (!confirm(`Delete playlist "${playlist?.name}"? This cannot be undone.`)) return;
+      try {
+        await repo.adminDelete(id);
+        alerts.success("Playlist deleted");
+        if (expandedId === id) expandedId = null;
+        delete trackCache[id];
+        await refresh();
+      } catch {
+        alerts.error("Failed to delete playlist");
+      }
+      return;
+    }
+
+    const removeBtn = target.closest("[data-remove-track]") as HTMLElement | null;
+    if (removeBtn) {
+      const trackId = parseInt(removeBtn.getAttribute("data-remove-track") || "", 10);
+      const playlistId = parseInt(removeBtn.getAttribute("data-remove-track-playlist") || "", 10);
+      try {
+        await repo.adminRemoveTrack(playlistId, trackId);
+        alerts.success("Track removed");
+        delete trackCache[playlistId];
+        await loadTracksForPlaylist(playlistId);
+      } catch {
+        alerts.error("Failed to remove track");
+      }
+      return;
+    }
+  });
+
+  listEl.addEventListener("submit", async (event) => {
+    const form = (event.target as HTMLElement).closest("[data-add-track-form]") as HTMLElement | null;
+    if (!form) return;
+    event.preventDefault();
+
+    const playlistId = parseInt(form.getAttribute("data-add-track-form") || "", 10);
+    const titleInput = form.querySelector("[name='title']") as HTMLInputElement;
+    const urlInput = form.querySelector("[name='url']") as HTMLInputElement;
+    const title = titleInput.value.trim();
+    const url = urlInput.value.trim();
+    if (!title || !url) return;
+
+    try {
+      await repo.adminAddTrack(playlistId, url, title);
+      alerts.success("Track added");
+      titleInput.value = "";
+      urlInput.value = "";
+      delete trackCache[playlistId];
+      await loadTracksForPlaylist(playlistId);
+    } catch {
+      alerts.error("Failed to add track");
     }
   });
 
