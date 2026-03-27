@@ -398,6 +398,21 @@ export async function PlaylistDetailPage(
         </div>
       </div>
 
+      <div class="mb-4 mt-2">
+        <div class="relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35" />
+          </svg>
+          <input
+            id="track-search-input"
+            type="text"
+            placeholder="Rechercher un titre ou un artiste..."
+            class="w-full pl-9 pr-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all"
+          />
+        </div>
+      </div>
+
       <div id="track-list-container" class="flex flex-col gap-4">
         {await renderTrackList({ ...playlist, tracks }, canEditPlaylist) as 'safe'}
       </div>
@@ -406,6 +421,28 @@ export async function PlaylistDetailPage(
 
   // Initialize functionality
   updateTrackListDisplay();
+
+  // Search filter
+  const searchInput = container.querySelector('#track-search-input') as HTMLInputElement | null;
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.toLowerCase().trim();
+      const trackListContainer = container.querySelector('#track-list-container');
+      if (!trackListContainer) return;
+
+      // Select all track rows (they have a data-track-index attribute)
+      const rows = trackListContainer.querySelectorAll('[data-track-index]');
+      rows.forEach((row) => {
+        const htmlRow = row as HTMLElement;
+        const text = htmlRow.textContent?.toLowerCase() ?? '';
+        if (!query || text.includes(query)) {
+          htmlRow.style.display = '';
+        } else {
+          htmlRow.style.display = 'none';
+        }
+      });
+    });
+  }
 
   // Event delegation
   container.onclick = (e: MouseEvent) => {
