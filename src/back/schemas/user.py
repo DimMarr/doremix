@@ -33,7 +33,7 @@ class ModerationUserSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class BanUserResponse(BaseModel):
+class UserBanStatusResponse(BaseModel):
     idUser: int
     banned: bool
     detail: str
