@@ -8,6 +8,8 @@ from src.commands.playlist import app as playlist_app
 from src.commands.genre import app as genre_app
 from src.commands.track import app as track_app
 from src.commands.mod import app as mod_app
+from src.commands.user import app as user_app
+
 from src.services import auth_service
 from src.utils.exceptions import (
     ApiRequestError,
@@ -161,6 +163,7 @@ root_app.add_typer(playlist_app, name="playlist", help="Playlist commands.")
 root_app.add_typer(track_app, name="track", help="Track commands.")
 root_app.add_typer(genre_app, name="genre", help="Genre commands.")
 root_app.add_typer(mod_app, name="mod", help="Moderator commands.")
+root_app.add_typer(user_app, name="user", help="User management commands.")
 
 app = root_app
 

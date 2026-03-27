@@ -7,6 +7,11 @@ from .playlist import (
     TransferPlaylistRequest,
 )
 from .track import TrackSchema
-from .user import UserSchema, ModerationUserSchema, BanUserResponse, UserRegisterSchema
+from .user import (
+    UserSchema,
+    ModerationUserSchema,
+    UserBanStatusResponse,
+    UserRegisterSchema,
+)
 from .genre import GenreSchema, GenreCreate, GenreUpdate
 from .artist import ArtistSchema
