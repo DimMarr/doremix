@@ -39,9 +39,12 @@ export function VoteControls({ initialScore, initialUserVote }: VoteControlsProp
         data-vote-direction="1"
         class={getButtonClass(initialUserVote === 1, "up")}
         aria-pressed={initialUserVote === 1 ? "true" : "false"}
-        title="Upvote playlist"
+        title="Like playlist"
       >
-        ▲
+        <svg class="w-5 h-5 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14 9V5a3 3 0 00-3-3l-4 10v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3" />
+        </svg>
       </button>
       <span data-vote-score class="min-w-10 text-center text-sm font-semibold text-white">
         {initialScore}
@@ -51,9 +54,12 @@ export function VoteControls({ initialScore, initialUserVote }: VoteControlsProp
         data-vote-direction="-1"
         class={getButtonClass(initialUserVote === -1, "down")}
         aria-pressed={initialUserVote === -1 ? "true" : "false"}
-        title="Downvote playlist"
+        title="Dislike playlist"
       >
-        ▼
+        <svg class="w-5 h-5 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 15v4a3 3 0 003 3l4-10V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 2h2.67A2.31 2.31 0 0122 4v7a2.31 2.31 0 01-2.33 2H17" />
+        </svg>
       </button>
     </div>
   );
