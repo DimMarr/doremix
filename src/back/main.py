@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
@@ -11,6 +12,7 @@ from middleware.auth_middleware import AuthMiddleware
 from middleware.rate_limiter import limiter, rate_limit_exceeded_handler
 import uvicorn
 from fastapi.staticfiles import StaticFiles
+from scheduler import start_scheduler, scheduler
 
 # Import routes
 from routes import (
@@ -41,8 +43,6 @@ routers = [
     adminPlaylistsRouter,
 ]
 
-app = FastAPI()
-
 pepper = os.getenv("PEPPER_KEY")
 token_secret = os.getenv("TOKEN_SECRET_KEY")
 
@@ -51,18 +51,9 @@ if not pepper:
 if not token_secret:
     raise ValueError("TOKEN_SECRET_KEY is missing in .env file")
 
-# Setup du rate limiter
-print("Setting up rate limiter with limit:", os.getenv("RATE_LIMIT", "100/minute"))
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
-for router in routers:
-    app.include_router(router)
-
-
-# Create all tables
-@app.on_event("startup")
-async def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         await conn.execute(
@@ -83,7 +74,19 @@ async def on_startup():
                 """
             )
         )
+    start_scheduler()
+    yield
+    scheduler.shutdown()
 
+
+app = FastAPI(lifespan=lifespan)
+
+print("Setting up rate limiter with limit:", os.getenv("RATE_LIMIT", "100/minute"))
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
+for router in routers:
+    app.include_router(router)
 
 cors_origins = os.getenv("CORS_ORIGINS", "")
 

@@ -12,3 +12,4 @@ yt_dlp
 slowapi
 passlib
 bcrypt==3.2.2
+apscheduler>=3.10.0
