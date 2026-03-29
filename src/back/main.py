@@ -13,6 +13,7 @@ from middleware.rate_limiter import limiter, rate_limit_exceeded_handler
 import uvicorn
 from fastapi.staticfiles import StaticFiles
 from scheduler import start_scheduler, scheduler
+from sqlalchemy import text
 
 # Import routes
 from routes import (
