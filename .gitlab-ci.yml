@@ -123,36 +123,67 @@ deploy_beta:
   image: alpine:3.23.2
   only:
     - beta
+    - feat/deployment-cluster
   variables:
     DEPLOY_PATH: "/home/$SSH_USER_BETA/doremix"
     IMAGE_TAG: "beta"
+    STACK_NAME: "doremix-beta"
   before_script:
     - apk add --no-cache openssh-client rsync bash
     - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY_BETA" | base64 -d | ssh-add -
+    - |
+      if [ -n "$SSH_PRIVATE_KEYS_BETA" ]; then
+        echo "$SSH_PRIVATE_KEYS_BETA" | tr ',' '\n' | while IFS= read -r KEY_B64; do
+          [ -z "$KEY_B64" ] && continue
+          echo "$KEY_B64" | base64 -d | ssh-add -
+        done
+      else
+        echo "$SSH_PRIVATE_KEY_BETA" | base64 -d | ssh-add -
+      fi
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan -H "$SSH_HOST_BETA" >> ~/.ssh/known_hosts
+    - |
+      BETA_NODES="$(echo "${SSH_HOSTS_BETA:-$SSH_HOST_BETA}" | tr ',' ' ')"
+      for HOST in $BETA_NODES; do
+        ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
+      done
   script:
-    - echo "📂 Début du déploiement..."
-    - ssh $SSH_USER_BETA@$SSH_HOST_BETA "mkdir -p $DEPLOY_PATH"
-    - rsync -avz
-      --exclude='.git/'
-      --exclude='.gitlab-ci.yml'
-      --exclude='.env'
-      --exclude='__pycache__/'
-      --exclude='node_modules/'
-      --exclude='uploads/covers/'
-      --exclude='src/'
-      .
-      $SSH_USER_BETA@$SSH_HOST_BETA:$DEPLOY_PATH
+    - |
+      set -e
+      BETA_NODES="$(echo "${SSH_HOSTS_BETA:-$SSH_HOST_BETA}" | tr ',' ' ')"
+      MANAGER_HOST="${SSH_MANAGER_HOST_BETA:-$(echo "$BETA_NODES" | awk '{print $1}')}"
 
-    - echo "🚀 Déploiement des images beta..."
-    - ssh $SSH_USER_BETA@$SSH_HOST_BETA "
-      cd $DEPLOY_PATH &&
-      docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
-      CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE IMAGE_TAG=$IMAGE_TAG docker compose -f docker-compose_beta.yml pull &&
-      CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE IMAGE_TAG=$IMAGE_TAG docker compose -f docker-compose_beta.yml up -d --remove-orphans
+      echo "📂 Début du déploiement sur tous les noeuds beta..."
+      for HOST in $BETA_NODES; do
+        ssh "$SSH_USER_BETA@$HOST" "mkdir -p $DEPLOY_PATH"
+        rsync -avz \
+          --exclude='.git/' \
+          --exclude='.gitlab-ci.yml' \
+          --exclude='.env' \
+          --exclude='__pycache__/' \
+          --exclude='node_modules/' \w
+          --exclude='uploads/covers/' \
+          --exclude='src/' \
+          . \
+          "$SSH_USER_BETA@$HOST:$DEPLOY_PATH"
+      done
+
+      echo "Initialisation Docker Swarm sur le manager: $MANAGER_HOST"
+      ssh "$SSH_USER_BETA@$MANAGER_HOST" "docker swarm init --advertise-addr $MANAGER_HOST || true"
+      WORKER_TOKEN="$(ssh "$SSH_USER_BETA@$MANAGER_HOST" "docker swarm join-token -q worker")"
+
+      for HOST in $BETA_NODES; do
+        if [ "$HOST" != "$MANAGER_HOST" ]; then
+          echo "Noeud : $HOST a quitté le cluster swarm"
+          ssh "$SSH_USER_BETA@$HOST" "docker swarm leave --force || true && docker swarm join --token $WORKER_TOKEN $MANAGER_HOST:2377 || true"
+        fi
+      done
+
+      echo "Déploiement de la stack beta..."
+      ssh "$SSH_USER_BETA@$MANAGER_HOST" "
+        cd $DEPLOY_PATH &&
+        docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+        CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE IMAGE_TAG=$IMAGE_TAG docker stack deploy --with-registry-auth -c docker-compose_beta.yml $STACK_NAME
       "
 
 deploy_prod:
