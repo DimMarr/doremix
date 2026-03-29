@@ -12,6 +12,7 @@ DROP TABLE IF EXISTS USERS CASCADE;
 DROP TYPE IF EXISTS playlist_visibility;
 
 CREATE TYPE playlist_visibility AS ENUM ('PUBLIC', 'PRIVATE', 'OPEN');
+CREATE TYPE track_status AS ENUM ('ok', 'unavailable');
 
 CREATE TABLE GENRE (
     idGenre SERIAL PRIMARY KEY,
@@ -58,7 +59,8 @@ CREATE TABLE TRACK (
     youtubeLink VARCHAR(2048),
     listeningCount INTEGER DEFAULT 0,
     durationSeconds INTEGER,
-    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status track_status NOT NULL DEFAULT 'ok'
 );
 
 CREATE TABLE PLAYLIST (

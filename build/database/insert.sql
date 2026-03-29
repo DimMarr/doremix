@@ -51,26 +51,26 @@ INSERT INTO GROUP_USER (idUser, idGroup) VALUES
 (4, 3),
 (3, 3);
 
-INSERT INTO TRACK (title, youtubeLink, listeningCount, durationSeconds) VALUES
-('Bohemian Rhapsody', 'https://www.youtube.com/watch?v=fJ9rUzIMcZQ', 15000000, 354),
-('We Will Rock You', 'https://www.youtube.com/watch?v=-tJYN-eG1zk', 8000000, 121),
-('Enter Sandman', 'https://www.youtube.com/watch?v=CD-E-LDc384', 5000000, 331),
-('Nothing Else Matters', 'https://www.youtube.com/watch?v=tAGnKpE4NCI', 6500000, 388),
-('Get Lucky', 'https://www.youtube.com/watch?v=5NV6Rdv1a3I', 980000, 248),
-('Instant Crush', 'https://www.youtube.com/watch?v=PtFMh6T4F5A', 450000, 337),
-('Rolling in the Deep', 'https://www.youtube.com/watch?v=rYEDA3JcQqw', 2100000, 228),
-('Someone Like You', 'https://www.youtube.com/watch?v=hLQl3WQQoQ0', 1800000, 285),
-('Blinding Lights', 'https://www.youtube.com/watch?v=4NRXx6U8ABQ', 3500000, 200),
-('Starboy', 'https://www.youtube.com/watch?v=34Na4j8AVgA', 2900000, 230),
-('Lose Yourself', 'https://www.youtube.com/watch?v=_Yhyp-_hX2s', 4000000, 326),
-('Stan', 'https://www.youtube.com/watch?v=gOMhN-hfMtY', 1200000, 384),
-('HUMBLE.', 'https://www.youtube.com/watch?v=tvTRZJ-4EyI', 3100000, 177),
-('Umbrella', 'https://www.youtube.com/watch?v=CvBfHwUxHIk', 5500000, 275),
-('So What', 'https://www.youtube.com/watch?v=ylXk1LBvIqU', 45000, 562),
-('Blue in Green', 'https://www.youtube.com/watch?v=PoPL7BExSQU', 30000, 327),
-('Requiem', 'https://www.youtube.com/watch?v=Zi8vJ_lMxQI', 800000, 300),
-('Inception Time', 'https://www.youtube.com/watch?v=YoHD9XEInc0', 150000, 275),
-('Interstellar Main Theme', 'https://www.youtube.com/watch?v=zSWdZVtXT7E', 200000, 250);
+INSERT INTO TRACK (title, youtubeLink, listeningCount, durationSeconds, status) VALUES
+('Bohemian Rhapsody', 'https://www.youtube.com/watch?v=fJ9rUzIMcZQ', 15000000, 354, 'ok'),
+('We Will Rock You', 'https://www.youtube.com/watch?v=-tJYN-eG1zk', 8000000, 121, 'ok'),
+('Enter Sandman', 'https://www.youtube.com/watch?v=CD-E-LDc384', 5000000, 331, 'ok'),
+('Nothing Else Matters', 'https://www.youtube.com/watch?v=tAGnKpE4NCI', 6500000, 388, 'ok'),
+('Get Lucky', 'https://www.youtube.com/watch?v=5NV6Rdv1a3I', 980000, 248, 'ok'),
+('Instant Crush', 'https://www.youtube.com/watch?v=PtFMh6T4F5A', 450000, 337, 'ok'),
+('Rolling in the Deep', 'https://www.youtube.com/watch?v=rYEDA3JcQqw', 2100000, 228, 'ok'),
+('Someone Like You', 'https://www.youtube.com/watch?v=hLQl3WQQoQ0', 1800000, 285, 'ok'),
+('Blinding Lights', 'https://www.youtube.com/watch?v=4NRXx6U8ABQ', 3500000, 200, 'ok'),
+('Starboy', 'https://www.youtube.com/watch?v=34Na4j8AVgA', 2900000, 230, 'ok'),
+('Lose Yourself', 'https://www.youtube.com/watch?v=_Yhyp-_hX2s', 4000000, 326, 'ok'),
+('Stan', 'https://www.youtube.com/watch?v=gOMhN-hfMtY', 1200000, 384, 'ok'),
+('HUMBLE.', 'https://www.youtube.com/watch?v=tvTRZJ-4EyI', 3100000, 177, 'ok'),
+('Umbrella', 'https://www.youtube.com/watch?v=CvBfHwUxHIk', 5500000, 275, 'ok'),
+('So What', 'https://www.youtube.com/watch?v=ylXk1LBvIqU', 45000, 562, 'ok'),
+('Blue in Green', 'https://www.youtube.com/watch?v=PoPL7BExSQU', 30000, 327, 'ok'),
+('Requiem', 'https://www.youtube.com/watch?v=Zi8vJ_lMxQI', 800000, 300, 'ok'),
+('Inception Time', 'https://www.youtube.com/watch?v=YoHD9XEInc0', 150000, 275, 'ok'),
+('Interstellar Main Theme', 'https://www.youtube.com/watch?v=zSWdZVtXT7E', 200000, 250, 'ok');
 
 
 INSERT INTO TRACK_ARTIST (idTrack, idArtist) VALUES
