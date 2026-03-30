@@ -391,43 +391,20 @@ class PlaylistRepository:
 
     @staticmethod
     async def remove_shared_user(
-        db: AsyncSession, playlist_id: int, target_user_id: int, current_user_id: int
-    ):
-        playlist_result = await db.execute(
-            select(Playlist).filter(Playlist.idPlaylist == playlist_id)
-        )
-
-        playlist = playlist_result.scalars().first()
-
-        if not playlist:
-            return False, "playlist_not_found"
-
-        current_user_result = await db.execute(
-            select(User).filter(User.idUser == current_user_id)
-        )
-        current_user = current_user_result.scalars().first()
-
-        is_admin = current_user is not None and current_user.idRole == 3
-
-        if playlist.idOwner != current_user_id and not is_admin:
-            return False, "forbidden"
-
+        db: AsyncSession, playlist_id: int, target_user_id: int
+    ) -> bool:
         link_result = await db.execute(
             select(UserPlaylist).filter(
                 UserPlaylist.idPlaylist == playlist_id,
                 UserPlaylist.idUser == target_user_id,
             )
         )
-
         link = link_result.scalars().first()
-
         if not link:
-            return False, "user_not_found"
-
+            return False
         await db.delete(link)
         await db.commit()
-
-        return True, "success"
+        return True
 
     @staticmethod
     async def transfer_ownership(

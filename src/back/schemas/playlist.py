@@ -44,25 +44,5 @@ class ShareGroupRequest(BaseModel):
     group_name: str
 
 
-class SharedUserSchema(BaseModel):
-    idUser: int
-    idPlaylist: int
-    editor: bool
-    username: str
-    email: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-    @classmethod
-    def from_user_playlist(cls, up):
-        return cls(
-            idUser=up.idUser,
-            idPlaylist=up.idPlaylist,
-            editor=up.editor,
-            username=up.user.username,
-            email=up.user.email,
-        )
-
-
 class TransferPlaylistRequest(BaseModel):
     new_owner_email: str

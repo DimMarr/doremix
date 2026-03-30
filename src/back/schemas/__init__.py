@@ -4,7 +4,6 @@ from .playlist import (
     PlaylistUpdate,
     SharePlaylistRequest,
     ShareGroupRequest,
-    SharedUserSchema,
     TransferPlaylistRequest,
 )
 from .track import TrackSchema
@@ -13,6 +12,7 @@ from .user import (
     ModerationUserSchema,
     UserBanStatusResponse,
     UserRegisterSchema,
+    SharedUserSchema,
 )
 from .genre import GenreSchema, GenreCreate, GenreUpdate
 from .artist import ArtistSchema

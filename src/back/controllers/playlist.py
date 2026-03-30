@@ -185,17 +185,22 @@ class PlaylistController:
     async def unshare_user(
         db: AsyncSession, playlist_id: int, target_user_id: int, current_user_id: int
     ):
-        success, msg = await PlaylistRepository.remove_shared_user(
-            db, playlist_id, target_user_id, current_user_id
-        )
-        if msg == "playlist_not_found":
+        playlist = await PlaylistRepository.get_by_id_raw(db, playlist_id)
+        if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
-        if msg == "forbidden":
+
+        current_user = await UserRepository.get_user_by_id(db, current_user_id)
+        is_admin = current_user is not None and current_user.idRole == 3
+        if playlist.idOwner != current_user_id and not is_admin:
             raise HTTPException(
                 status_code=403,
                 detail="You're not allowed to remove users from this playlist",
             )
-        if msg == "user_not_found":
+
+        removed = await PlaylistRepository.remove_shared_user(
+            db, playlist_id, target_user_id
+        )
+        if not removed:
             raise HTTPException(
                 status_code=404,
                 detail="This user does not have access to this playlist",
