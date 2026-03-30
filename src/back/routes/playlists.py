@@ -13,6 +13,7 @@ from schemas import (
     SharePlaylistRequest,
     ShareGroupRequest,
     SharedUserSchema,
+    TransferPlaylistRequest,
 )
 from database import get_db
 import os
@@ -249,4 +250,21 @@ async def unshare_playlist_user(
 ):
     return await PlaylistController.unshare_user(
         db, playlist_id, target_user_id, current_user_id
+    )
+
+
+@router.post(
+    "/{playlist_id}/transfer",
+    response_model=PlaylistSchema,
+    summary="Transfer playlist ownership",
+    description="Transfers playlist ownership to another user by email. Only the current owner can do this.",
+)
+async def transfer_playlist(
+    playlist_id: int,
+    body: TransferPlaylistRequest,
+    db: AsyncSession = Depends(get_db),
+    owner: User = Depends(get_current_user),
+):
+    return await PlaylistController.transfer_playlist(
+        db, playlist_id, owner, body.new_owner_email
     )

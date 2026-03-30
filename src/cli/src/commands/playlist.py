@@ -19,6 +19,7 @@ from src.services.playlist import (
     search_tracks_in_playlist,
     get_shared_users,
     remove_shared_user,
+    transfer_ownership,
 )
 
 app = typer.Typer()
@@ -407,3 +408,38 @@ def unshare(
         pass
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(help="Transfer ownership of a playlist to another user (by email).")
+def transfer(
+    playlist_id: int = typer.Argument(..., help="Playlist ID"),
+    email: str = typer.Option(..., "--email", "-e", help="New owner email"),
+):
+    try:
+        playlist = get_playlist(str(playlist_id))
+
+        confirm = typer.confirm(
+            f"Do you really want to transfer ownership of '{playlist.name}' to {email}? This action is irreversible."
+        )
+        if not confirm:
+            console.print("[yellow]Transfer cancelled.[/yellow]")
+            raise typer.Abort()
+
+        result = transfer_ownership(str(playlist_id), email)
+
+        console.print("[green]Ownership transferred successfully![/green]")
+
+        table = Table(show_header=False)
+        table.add_column("Field", style="cyan")
+        table.add_column("Value", style="magenta")
+
+        table.add_row("playlist_id", str(playlist_id))
+        table.add_row("new_owner", email)
+        table.add_row("message", result.get("message", "Success"))
+
+        console.print(table)
+
+    except typer.Abort:
+        pass
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")

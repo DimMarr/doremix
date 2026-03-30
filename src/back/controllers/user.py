@@ -38,6 +38,11 @@ class UserController:
         return await UserRepository.get_non_admin_ban_candidates(db, moderator_id)
 
     @staticmethod
+    async def get_unban_candidates(db: AsyncSession):
+        users = await UserRepository.get_all(db)
+        return [u for u in users if u.banned]
+
+    @staticmethod
     async def ban_user(db: AsyncSession, moderator_id: int, target_user_id: int):
         if moderator_id == target_user_id:
             raise HTTPException(status_code=400, detail="You cannot ban yourself")
@@ -66,4 +71,39 @@ class UserController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to ban user: {str(e)}",
             )
+        return target_user
+
+    @staticmethod
+    async def unban_user(db: AsyncSession, moderator_id: int, target_user_id: int):
+        if moderator_id == target_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="You cannot unban yourself",
+            )
+
+        target_user = await UserRepository.get_user_by_id(db, target_user_id)
+        if not target_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User {target_user_id} not found",
+            )
+
+        # Should not happen bc ban candidates cannot be admins, but just in case ;)
+        if target_user.idRole == UserRepository.ADMIN_ROLE_ID:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Moderators cannot unban admin users",
+            )
+
+        try:
+            target_user.banned = False
+            await db.commit()
+            await db.refresh(target_user)
+        except Exception as e:
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to unban user: {str(e)}",
+            )
+
         return target_user

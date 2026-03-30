@@ -62,3 +62,7 @@ class SharedUserSchema(BaseModel):
             username=up.user.username,
             email=up.user.email,
         )
+
+
+class TransferPlaylistRequest(BaseModel):
+    new_owner_email: str

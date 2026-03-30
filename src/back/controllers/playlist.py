@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from repositories import PlaylistRepository
+from repositories import PlaylistRepository, UserRepository
 from fastapi import HTTPException, UploadFile
 from models.enums import PlaylistVisibility
 from utils.image_processor import save_cover_image
@@ -201,3 +201,23 @@ class PlaylistController:
                 detail="This user does not have access to this playlist",
             )
         return {"message": "User successfully removed from playlist"}
+
+    @staticmethod
+    async def transfer_playlist(
+        db: AsyncSession, playlist_id: int, current_owner: User, new_owner_email: str
+    ) -> Playlist:
+        if current_owner.email == new_owner_email:
+            raise HTTPException(
+                status_code=400,
+                detail="You cannot transfer ownership to yourself",
+            )
+
+        playlist = await PlaylistRepository.transfer_ownership(
+            db, playlist_id, current_owner.idUser, new_owner_email
+        )
+        if not playlist:
+            raise HTTPException(
+                status_code=404,
+                detail="Playlist not found, you are not the owner, or user not found",
+            )
+        return playlist

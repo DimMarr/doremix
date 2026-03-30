@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.pool import StaticPool
 from fastapi import FastAPI
 from httpx import AsyncClient, ASGITransport
-from database import Base, get_db
+from database import Base, get_db, engine
 from routes.playlists import router as playlists_router
 from routes.users import router as users_router
 from routes.search_router import router as search_router
@@ -95,7 +95,6 @@ async def admin_user(db: AsyncSession):
 
 @pytest_asyncio.fixture(scope="function")
 async def sample_genre(db: AsyncSession):
-    """Crée un genre de test"""
     genre = Genre(label="Rock")
     db.add(genre)
     await db.commit()

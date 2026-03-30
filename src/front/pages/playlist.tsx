@@ -241,10 +241,12 @@ export async function PlaylistDetailPage(
   }
 
   const handleVisibilityChange = async (newVis: Visibility) => {
+    // Optimistic update
     const oldVis = playlist.visibility;
     playlist.visibility = newVis;
     updateHeader();
 
+    // Determine backend enum value (uppercase)
     const backendVis = newVis === Visibility.public ? "PUBLIC" : newVis === Visibility.private ? "PRIVATE" : "OPEN";
 
     try {
@@ -253,6 +255,7 @@ export async function PlaylistDetailPage(
     } catch (err) {
       console.error("Failed to update visibility", err);
       new AlertManager().error("Failed to update visibility");
+      // Revert
       playlist.visibility = oldVis;
       updateHeader();
     }
@@ -337,10 +340,12 @@ export async function PlaylistDetailPage(
 
     const wasPlaying = trackPlayerInstance.getCurrentTrack()?.idTrack === track.idTrack;
 
+    // On supprime la playlist du track store.
     tracks = tracks.filter((_, i) => i !== trackIndex);
     playlist.tracks = tracks;
     trackPlayerInstance.setPlaylist({ ...playlist });
 
+    // Si la track supprimée était en cours on la stoppe et on passe à la track suivante (s'il reste des tracks)
     if (wasPlaying) {
       trackPlayerInstance.stopVideo();
       if (tracks.length > 0) {
@@ -356,6 +361,7 @@ export async function PlaylistDetailPage(
       console.error(err);
       new AlertManager().error("Failed to remove track");
 
+      // S'il y a une erreur lors de la suppression du track, on revient en arrière en affichant la track qui n'a pas pu être supprimé.
       tracks.splice(trackIndex, 0, track);
       playlist.tracks = tracks;
       trackPlayerInstance.setPlaylist({ ...playlist });
@@ -370,6 +376,7 @@ export async function PlaylistDetailPage(
     trackPlayerInstance.playTrack(index);
   };
 
+  // Render page
   function renderGenreSection() {
     if (!playlist.genreLabel) return '';
 
@@ -444,14 +451,51 @@ export async function PlaylistDetailPage(
           </div>
         </div>
 
-        <div id="track-list-container" class="flex flex-col gap-4">
-          {await renderTrackList({ ...playlist, tracks }, canEditPlaylist) as 'safe'}
+      <div class="mb-4 mt-2">
+        <div class="relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35" />
+          </svg>
+          <input
+            id="track-search-input"
+            type="text"
+            placeholder="Rechercher un titre ou un artiste..."
+            class="w-full pl-9 pr-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all"
+          />
         </div>
       </div>
+
+      <div id="track-list-container" class="flex flex-col gap-4">
+        {await renderTrackList({ ...playlist, tracks }, canEditPlaylist) as 'safe'}
+      </div>
+    </div>
   );
 
   // Initialize functionality
   updateTrackListDisplay();
+
+  // Search filter
+  const searchInput = container.querySelector('#track-search-input') as HTMLInputElement | null;
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.toLowerCase().trim();
+      const trackListContainer = container.querySelector('#track-list-container');
+      if (!trackListContainer) return;
+
+      // Select all track rows (they have a data-track-index attribute)
+      const rows = trackListContainer.querySelectorAll('[data-track-index]');
+      rows.forEach((row) => {
+        const htmlRow = row as HTMLElement;
+        const text = htmlRow.textContent?.toLowerCase() ?? '';
+        if (!query || text.includes(query)) {
+          htmlRow.style.display = '';
+        } else {
+          htmlRow.style.display = 'none';
+        }
+      });
+    });
+  }
 
   // Event delegation
   container.onclick = (e: MouseEvent) => {
@@ -461,12 +505,15 @@ export async function PlaylistDetailPage(
     const menu = container.querySelector('#visibility-menu');
     const trigger = target.closest('[data-visibility-trigger]');
 
+    // Toggle Menu
     if (trigger) {
       e.stopPropagation();
       menu?.classList.toggle('hidden');
+      // Close other menus if any? (we assume only one here)
       return;
     }
 
+    // Handle Option Selection
     const option = target.closest('[data-visibility-option]') as HTMLElement | null;
     if (option) {
       e.stopPropagation();
@@ -478,6 +525,10 @@ export async function PlaylistDetailPage(
       return;
     }
 
+    // Close menu when clicking outside (since we used stopPropagation on trigger/option, any bubbling click here is "outside" for them)
+    // But wait, if we click somewhere else inside `container`, this handler fires.
+    // If we click inside the menu but not on an option (e.g. padding), we should probably not close?
+    // Let's refine:
     if (menu && !menu.classList.contains('hidden') && !menu.contains(target)) {
       menu.classList.add('hidden');
     }
