@@ -13,6 +13,7 @@ from .user import (
     ModerationUserSchema,
     UserBanStatusResponse,
     UserRegisterSchema,
+    SharedUserSchema,
 )
 from .genre import GenreSchema, GenreCreate, GenreUpdate
 from .artist import ArtistSchema

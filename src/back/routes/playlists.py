@@ -2,6 +2,7 @@ from models.user import User
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 from pydantic import BaseModel
 from controllers import PlaylistController
 from schemas import (
@@ -11,6 +12,7 @@ from schemas import (
     PlaylistUpdate,
     SharePlaylistRequest,
     ShareGroupRequest,
+    SharedUserSchema,
     TransferPlaylistRequest,
     VoteRequest,
     VoteResponse,
@@ -209,6 +211,7 @@ async def update_playlist(
 
 @router.get(
     "/{playlist_id}/shared-with",
+    response_model=List[SharedUserSchema],
     summary="List users the playlist is shared with and their permissions",
 )
 async def shared_with(
@@ -216,7 +219,8 @@ async def shared_with(
     current_user_id: int = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    return await PlaylistController.shared_with(db, playlist_id, current_user_id)
+    users = await PlaylistController.shared_with(db, playlist_id, current_user_id)
+    return [SharedUserSchema.from_user_playlist(u) for u in users]
 
 
 @router.post(
@@ -246,6 +250,22 @@ async def share_playlist_group(
 ):
     return await PlaylistController.share_group(
         db, playlist_id, user_id, req.group_name
+    )
+
+
+@router.delete(
+    "/{playlist_id}/share/user/{target_user_id}",
+    response_model=dict,
+    summary="Retirer un utilisateur du partage d'une playlist",
+)
+async def unshare_playlist_user(
+    playlist_id: int,
+    target_user_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    return await PlaylistController.unshare_user(
+        db, playlist_id, target_user_id, current_user_id
     )
 
 

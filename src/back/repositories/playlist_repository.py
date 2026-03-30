@@ -368,9 +368,21 @@ class PlaylistRepository:
         )
         owner_id = owner_result.scalar()
 
-        if current_user_id != owner_id and current_user_id not in [
-            u.idUser for u in users
-        ]:
+        if owner_id is None:
+            return [], "You're not allowed to see shared users for this playlist"
+
+        current_user_result = await db.execute(
+            select(User).filter(User.idUser == current_user_id)
+        )
+
+        current_user = current_user_result.scalars().first()
+        is_admin = current_user is not None and current_user.idRole == 3
+
+        if (
+            not is_admin
+            and current_user_id != owner_id
+            and current_user_id not in [u.idUser for u in users]
+        ):
             return [], "You're not allowed to see shared users for this playlist"
 
         return users, None
@@ -434,6 +446,23 @@ class PlaylistRepository:
             await db.commit()
 
         return True, "success"
+
+    @staticmethod
+    async def remove_shared_user(
+        db: AsyncSession, playlist_id: int, target_user_id: int
+    ) -> bool:
+        link_result = await db.execute(
+            select(UserPlaylist).filter(
+                UserPlaylist.idPlaylist == playlist_id,
+                UserPlaylist.idUser == target_user_id,
+            )
+        )
+        link = link_result.scalars().first()
+        if not link:
+            return False
+        await db.delete(link)
+        await db.commit()
+        return True
 
     @staticmethod
     async def transfer_ownership(
