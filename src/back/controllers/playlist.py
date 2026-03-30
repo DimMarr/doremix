@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from repositories import PlaylistRepository, VoteRepository
+from repositories import PlaylistRepository, VoteRepository, UserRepository
 from fastapi import HTTPException, UploadFile
 from models.enums import PlaylistVisibility
 from utils.image_processor import save_cover_image
