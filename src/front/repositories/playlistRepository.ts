@@ -5,6 +5,11 @@ import { Artist } from "@models/artist";
 import { AlertManager } from "@utils/alertManager";
 import { handleHttpError } from "@utils/errorHandling";
 
+export interface VoteResponse {
+    score: number;
+    userVote: number | null;
+}
+
 export class PlaylistRepository {
     private async _fetchAll() {
         try {
@@ -166,6 +171,7 @@ export class PlaylistRepository {
                     genreLabel: item.genre?.label,
                     image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
                     visibility: visibility,
+                    userVote: item.userVote ?? null,
                     tracks: [], // Initialize with empty tracks
                 });
             });
@@ -196,6 +202,7 @@ export class PlaylistRepository {
                     genreLabel: item.genre?.label,
                     image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
                     visibility: visibility,
+                    userVote: item.userVote ?? null,
                     tracks: [], // Initialize with empty tracks
                 });
             });
@@ -236,6 +243,7 @@ export class PlaylistRepository {
                 ...item,
                 image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
                 visibility,
+                userVote: item.userVote ?? null,
                 tracks,
                 });
             })
@@ -258,6 +266,31 @@ export class PlaylistRepository {
         return tracks;
     }
 
+    async castVote(playlistId: number, value: -1 | 0 | 1): Promise<VoteResponse> {
+        try {
+            const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/vote`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({ value }),
+            });
+
+            if (!response.ok) {
+                handleHttpError(response, "Vote");
+                throw new Error("Failed to cast vote");
+            }
+
+            return response.json();
+        } catch (error) {
+            if (error instanceof TypeError) {
+                new AlertManager().error("Network error. Check your connection.");
+            }
+            throw error;
+        }
+    }
+
     async getById(id: number): Promise<Playlist> {
         const rawData = await this._fetchById(id);
         const rawDataTracks = await this._fetchTracks(id);
@@ -271,6 +304,7 @@ export class PlaylistRepository {
             genreLabel: rawData.genre?.label,
             image: rawData.coverImage ? this.getCoverUrl(rawData.coverImage) : img1,
             visibility: rawData.visibility ? rawData.visibility.toLowerCase() as Visibility : Visibility.public,
+            userVote: rawData.userVote ?? null,
             tracks: tracks,
             artists: artists
         });

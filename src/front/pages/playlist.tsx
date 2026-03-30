@@ -1,5 +1,5 @@
 import { TrackRepository } from "@repositories/trackRepository";
-import { Button, AddTrackModal, ShareModal } from "@components/index";
+import { Button, AddTrackModal, ShareModal, initVoteControls } from "@components/index";
 import { TrackListHeader } from "@components/tracks/header";
 import { TrackRow } from "@components/tracks/row";
 import { AlertManager } from "@utils/alertManager";
@@ -157,6 +157,21 @@ export async function PlaylistDetailPage(
   // Local state
   let tracks: Track[] = playlist.tracks || [];
 
+  const mountVoteControls = () => {
+    const voteControlsContainer = container.querySelector('#playlist-vote-controls') as HTMLElement | null;
+    if (!voteControlsContainer || !playlist.idPlaylist) return;
+
+    initVoteControls(voteControlsContainer, {
+      playlistId: playlist.idPlaylist,
+      initialScore: playlist.vote ?? 0,
+      initialUserVote: playlist.userVote ?? null,
+      onSync: (state) => {
+        playlist.vote = state.score;
+        playlist.userVote = state.userVote;
+      }
+    });
+  };
+
   const updateHeader = async () => {
     const headerContainer = container.querySelector('#playlist-header-info');
     if (headerContainer) {
@@ -169,6 +184,10 @@ export async function PlaylistDetailPage(
           {renderGenreSection() as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
+          <div>
+            <p class="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/45">Community score</p>
+            <div id="playlist-vote-controls"></div>
+          </div>
           <div class="flex flex-wrap gap-2 mt-1">
             {await canEdit(repo, playlist) &&
               <button id="add-track-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Add Track">
@@ -194,6 +213,7 @@ export async function PlaylistDetailPage(
           </div>
         </>
       );
+      mountVoteControls();
     }
   }
 
@@ -372,6 +392,10 @@ export async function PlaylistDetailPage(
           {renderGenreSection() as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
+          <div>
+            <p class="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/45">Community score</p>
+            <div id="playlist-vote-controls"></div>
+          </div>
           <div class="flex flex-wrap gap-2 mt-1">
             {await canEdit(repo, playlist) &&
               <button id="add-track-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Add Track">
@@ -421,6 +445,7 @@ export async function PlaylistDetailPage(
 
   // Initialize functionality
   updateTrackListDisplay();
+  mountVoteControls();
 
   // Search filter
   const searchInput = container.querySelector('#track-search-input') as HTMLInputElement | null;

@@ -12,6 +12,7 @@ class PlaylistSchema(BaseModel):
     idGenre: int
     idOwner: int
     vote: int
+    userVote: Optional[int] = None
     visibility: PlaylistVisibility
     coverImage: Optional[str] = None
     createdAt: datetime
@@ -32,6 +33,7 @@ class PlaylistUpdate(BaseModel):
     name: Optional[str] = None
     idGenre: Optional[int] = None
     visibility: Optional[PlaylistVisibility] = None
+    # Deliberately excludes `vote` so clients cannot patch aggregate scores directly.
     model_config = ConfigDict(from_attributes=True)
 
 
