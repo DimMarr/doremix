@@ -2,6 +2,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
+from sqlalchemy import text
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -64,6 +65,24 @@ for router in routers:
 async def on_startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(
+            text(
+                """
+                UPDATE playlist
+                SET vote = COALESCE(vote_totals.score, 0)
+                FROM (
+                    SELECT
+                        playlist.idplaylist,
+                        COALESCE(SUM(playlist_vote.value), 0) AS score
+                    FROM playlist
+                    LEFT JOIN playlist_vote
+                        ON playlist_vote.idplaylist = playlist.idplaylist
+                    GROUP BY playlist.idplaylist
+                ) AS vote_totals
+                WHERE vote_totals.idplaylist = playlist.idplaylist
+                """
+            )
+        )
 
 
 cors_origins = os.getenv("CORS_ORIGINS", "")

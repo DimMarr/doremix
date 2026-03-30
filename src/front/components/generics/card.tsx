@@ -153,7 +153,11 @@ export function buildCardsFromPlaylists(playlists: Playlist[]) {
       title: p.name || "Untitled Playlist",
       image: p.image,
       content: p.description || "",
-      children: genreBadge,
+      children: genreBadge ? (
+        <div class="flex flex-wrap gap-2">
+          {genreBadge}
+        </div>
+      ) : undefined,
       icon: svg1,
       className: "w-full",
       href: `/playlist/${p.idPlaylist}`,

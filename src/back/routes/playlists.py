@@ -14,6 +14,8 @@ from schemas import (
     ShareGroupRequest,
     SharedUserSchema,
     TransferPlaylistRequest,
+    VoteRequest,
+    VoteResponse,
 )
 from database import get_db
 import os
@@ -91,6 +93,20 @@ async def get_playlist(
     user: User = Depends(get_current_user),
 ):
     return await PlaylistController.get_playlist(db, playlist_id, user)
+
+
+@router.put(
+    "/{playlist_id}/vote",
+    response_model=VoteResponse,
+    summary="Cast or remove a playlist vote",
+)
+async def cast_vote(
+    playlist_id: int,
+    vote: VoteRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    return await PlaylistController.cast_vote(db, playlist_id, vote.value, user)
 
 
 @router.get(

@@ -1,10 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from repositories import PlaylistRepository, UserRepository
+from repositories import PlaylistRepository, VoteRepository, UserRepository
 from fastapi import HTTPException, UploadFile
 from models.enums import PlaylistVisibility
 from utils.image_processor import save_cover_image
 from models import Playlist
 from models import User
+from schemas.vote import VoteResponse
 
 
 class PlaylistController:
@@ -26,6 +27,19 @@ class PlaylistController:
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
         return playlist
+
+    @staticmethod
+    async def cast_vote(
+        db: AsyncSession, playlist_id: int, value: int, user: User
+    ) -> VoteResponse:
+        playlist = await PlaylistRepository.get_by_id(db, playlist_id, user)
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+
+        score, user_vote = await VoteRepository.upsert_vote(
+            db, user.idUser, playlist_id, value
+        )
+        return VoteResponse(score=score, userVote=user_vote)
 
     @staticmethod
     async def get_playlist_tracks(db: AsyncSession, playlist_id: int, user: User):
