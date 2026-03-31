@@ -74,6 +74,7 @@ export class TrackRepository {
     } catch (err) {
       new AlertManager().error("Failed to share playlist");
     }
+    return response.status;
   }
 
   async move(playlistId: number, trackId: number, prev_track_id: number | null) {

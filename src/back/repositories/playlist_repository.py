@@ -5,6 +5,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy import and_, or_, exists
 from re import findall as regex_match
 from models.playlist import Playlist, PlaylistVisibility
+from models.playlist_vote import PlaylistVote
 from models.track_playlist import TrackPlaylist
 from models.track import Track
 from models.artist import Artist
@@ -18,6 +19,11 @@ from utils.youtube_utils import get_youtube_video_info
 
 class PlaylistRepository:
     @staticmethod
+    def _attach_user_vote(playlist: Playlist, user_vote: int | None) -> Playlist:
+        setattr(playlist, "userVote", user_vote)
+        return playlist
+
+    @staticmethod
     async def get_accessible_playlists(
         db: AsyncSession, user_id: int
     ) -> list[Playlist]:
@@ -29,8 +35,15 @@ class PlaylistRepository:
             GroupPlaylist.idGroup.in_(my_group_ids)
         )
         result = await db.execute(
-            select(Playlist)
+            select(Playlist, PlaylistVote.value)
             .options(joinedload(Playlist.genre))
+            .outerjoin(
+                PlaylistVote,
+                and_(
+                    PlaylistVote.idPlaylist == Playlist.idPlaylist,
+                    PlaylistVote.idUser == user_id,
+                ),
+            )
             .filter(
                 or_(
                     Playlist.idOwner == user_id,
@@ -43,29 +56,52 @@ class PlaylistRepository:
             )
             .distinct()
         )
-        return list(result.scalars().all())
+        return [
+            PlaylistRepository._attach_user_vote(playlist, user_vote)
+            for playlist, user_vote in result.all()
+        ]
 
     @staticmethod
     async def get_public_playlists(db: AsyncSession, user: User) -> list[Playlist]:
         result = await db.execute(
-            select(Playlist)
+            select(Playlist, PlaylistVote.value)
             .options(joinedload(Playlist.genre))
+            .outerjoin(
+                PlaylistVote,
+                and_(
+                    PlaylistVote.idPlaylist == Playlist.idPlaylist,
+                    PlaylistVote.idUser == user.idUser,
+                ),
+            )
             .filter(
                 Playlist.visibility == PlaylistVisibility.PUBLIC,
                 Playlist.idOwner != user.idUser,
                 ~exists().where(UserPlaylist.idPlaylist == Playlist.idPlaylist),
             )
         )
-        return list(result.scalars().all())
+        return [
+            PlaylistRepository._attach_user_vote(playlist, user_vote)
+            for playlist, user_vote in result.all()
+        ]
 
     @staticmethod
     async def get_shared_playlist(db: AsyncSession, user_id: int) -> list[Playlist]:
         result = await db.execute(
-            select(Playlist)
+            select(Playlist, PlaylistVote.value)
             .join(UserPlaylist, UserPlaylist.idPlaylist == Playlist.idPlaylist)
+            .outerjoin(
+                PlaylistVote,
+                and_(
+                    PlaylistVote.idPlaylist == Playlist.idPlaylist,
+                    PlaylistVote.idUser == user_id,
+                ),
+            )
             .filter(UserPlaylist.idUser == user_id)
         )
-        return list(result.scalars().all())
+        return [
+            PlaylistRepository._attach_user_vote(playlist, user_vote)
+            for playlist, user_vote in result.all()
+        ]
 
     @staticmethod
     async def get_by_id(
@@ -82,15 +118,33 @@ class PlaylistRepository:
 
         if user.role == UserRole.ADMIN:
             result = await db.execute(
-                select(Playlist)
+                select(Playlist, PlaylistVote.value)
                 .options(joinedload(Playlist.genre))
+                .outerjoin(
+                    PlaylistVote,
+                    and_(
+                        PlaylistVote.idPlaylist == Playlist.idPlaylist,
+                        PlaylistVote.idUser == user_id,
+                    ),
+                )
                 .filter(Playlist.idPlaylist == playlist_id)
             )
-            return cast(Playlist | None, result.scalars().first())
+            row = result.first()
+            if not row:
+                return None
+            playlist, user_vote = row
+            return PlaylistRepository._attach_user_vote(playlist, user_vote)
 
         result = await db.execute(
-            select(Playlist)
+            select(Playlist, PlaylistVote.value)
             .options(joinedload(Playlist.genre))
+            .outerjoin(
+                PlaylistVote,
+                and_(
+                    PlaylistVote.idPlaylist == Playlist.idPlaylist,
+                    PlaylistVote.idUser == user_id,
+                ),
+            )
             .filter(
                 Playlist.idPlaylist == playlist_id,
                 or_(
@@ -103,7 +157,11 @@ class PlaylistRepository:
                 ),
             )
         )
-        return cast(Playlist | None, result.scalars().first())
+        row = result.first()
+        if not row:
+            return None
+        playlist, user_vote = row
+        return PlaylistRepository._attach_user_vote(playlist, user_vote)
 
     @staticmethod
     async def get_by_id_raw(db: AsyncSession, playlist_id: int) -> Playlist | None:
@@ -433,9 +491,21 @@ class PlaylistRepository:
         )
         owner_id = owner_result.scalar()
 
-        if current_user_id != owner_id and current_user_id not in [
-            u.idUser for u in users
-        ]:
+        if owner_id is None:
+            return [], "You're not allowed to see shared users for this playlist"
+
+        current_user_result = await db.execute(
+            select(User).filter(User.idUser == current_user_id)
+        )
+
+        current_user = current_user_result.scalars().first()
+        is_admin = current_user is not None and current_user.idRole == 3
+
+        if (
+            not is_admin
+            and current_user_id != owner_id
+            and current_user_id not in [u.idUser for u in users]
+        ):
             return [], "You're not allowed to see shared users for this playlist"
 
         return users, None
@@ -499,6 +569,23 @@ class PlaylistRepository:
             await db.commit()
 
         return True, "success"
+
+    @staticmethod
+    async def remove_shared_user(
+        db: AsyncSession, playlist_id: int, target_user_id: int
+    ) -> bool:
+        link_result = await db.execute(
+            select(UserPlaylist).filter(
+                UserPlaylist.idPlaylist == playlist_id,
+                UserPlaylist.idUser == target_user_id,
+            )
+        )
+        link = link_result.scalars().first()
+        if not link:
+            return False
+        await db.delete(link)
+        await db.commit()
+        return True
 
     @staticmethod
     async def transfer_ownership(
