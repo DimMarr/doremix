@@ -319,6 +319,10 @@ def reorder_track(
     if res.status_code != 200:
         raise Exception(f"Error while reordering track: {_detail(res)}")
 
+    data: dict[str, Any] = res.json()
+    return data
+
+
 def get_shared_users(playlist_id: str) -> list[SharedUserSchema]:
     user_id = _get_current_user_id()
     playlist = _get_playlist_from_api(playlist_id)
