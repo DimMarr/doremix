@@ -6,10 +6,18 @@ from typing import Optional, List
 
 class ArtistRepository:
     @staticmethod
-    async def create(db: AsyncSession, artist_name: str) -> Artist:
+    async def create(
+        db: AsyncSession, artist_name: str, channel_url: Optional[str] = None
+    ) -> Artist:
         artist = await ArtistRepository.get_by_name(db, artist_name)
         if not artist:
-            artist = Artist(name=artist_name)
+            image_url = None
+            if channel_url:
+                from utils.youtube_utils import get_youtube_channel_avatar
+
+                image_url = get_youtube_channel_avatar(channel_url)
+
+            artist = Artist(name=artist_name, imageUrl=image_url)
             db.add(artist)
             await db.commit()
             await db.refresh(artist)

@@ -33,6 +33,16 @@ class TrackRepository:
         return cast(Track | None, result.scalars().first())
 
     @staticmethod
+    async def get_by_artist(db: AsyncSession, artist_id: int) -> list[Track]:
+        result = await db.execute(
+            select(Track)
+            .join(Track.artists)
+            .options(joinedload(Track.artists))
+            .filter(Artist.idArtist == artist_id)
+        )
+        return list(result.unique().scalars().all())
+
+    @staticmethod
     async def search_tracks(
         db: AsyncSession, query: str, limit: int = 10
     ) -> list[Track]:
