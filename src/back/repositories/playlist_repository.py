@@ -312,7 +312,9 @@ class PlaylistRepository:
         clean_url = match[0]
 
         if not track:
-            duration_seconds, author_name = get_youtube_video_info(clean_url)
+            duration_seconds, author_name, channel_url = get_youtube_video_info(
+                clean_url
+            )
 
             if author_name == "Video unavailable":
                 return track, "invalid url"
@@ -322,7 +324,10 @@ class PlaylistRepository:
             if author_name is None:
                 author_name = "Unknown Artist"
 
-            artist = await ArtistRepository.create(db, author_name)
+            artist = await ArtistRepository.create(
+                db, author_name, channel_url=channel_url
+            )
+
             track = await TrackRepository.create(
                 db,
                 Track(
