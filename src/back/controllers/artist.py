@@ -17,3 +17,13 @@ class ArtistController:
         if not artist:
             raise HTTPException(status_code=404, detail="Artist not found")
         return artist
+
+    @staticmethod
+    async def get_artist_tracks(db: AsyncSession, artist_id: int):
+        from repositories.track_repository import TrackRepository
+
+        artist = await ArtistRepository.get_by_id(db, artist_id)
+        if not artist:
+            raise HTTPException(status_code=404, detail="Artist not found")
+        tracks = await TrackRepository.get_by_artist(db, artist_id)
+        return tracks
