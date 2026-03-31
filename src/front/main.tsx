@@ -53,10 +53,6 @@ export default async function init() {
     VerifyEmailPage(container);
   })
 
-  router.register("/cgu", async(container) => {
-    CguPage(container);
-  })
-
   router.onRouteChange();
   routerInstance = router;
 }
