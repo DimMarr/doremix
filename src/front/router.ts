@@ -5,7 +5,8 @@ import { authService } from '@utils/authentication';
 export enum AppRoutes {
   LOGIN = '/login',
   SIGNUP = '/signup',
-  HOME = '/'
+  HOME = '/',
+  ARTISTS = '/artists'
 }
 
 export class Router {
@@ -64,6 +65,18 @@ export class Router {
     }
 
     if (path === "") path = AppRoutes.HOME;
+
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.getAttribute('href') === path) {
+          link.classList.add('text-white');
+          link.classList.remove('text-white/60');
+        } else {
+          link.classList.remove('text-white');
+          link.classList.add('text-white/60');
+        }
+      });
+    });
 
     if (!(new Sanitize()).isValidPath(path)) {
       console.warn('Invalid path detected:', path);
