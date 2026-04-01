@@ -1,12 +1,14 @@
 stages:
   - test
   - build
+  - package
   - deploy
 
 variables:
   PRE_COMMIT_HOME: ${CI_PROJECT_DIR}/.cache/pre-commit
   BACKEND_IMAGE: ${CI_REGISTRY_IMAGE}/backend
   FRONTEND_IMAGE: ${CI_REGISTRY_IMAGE}/frontend
+  CLI_PACKAGE_NAME: doremix-cli
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   UV_CACHE_DIR: "$CI_PROJECT_DIR/.cache/uv"
 
@@ -117,6 +119,136 @@ build_frontend_prod:
       .
     - docker push $FRONTEND_IMAGE:latest
     - docker push $FRONTEND_IMAGE:$CI_COMMIT_TAG
+
+package_cli:
+  stage: package
+  image: python:3.12-slim
+  rules:
+    - if: "$CI_COMMIT_TAG"
+      when: on_success
+  before_script:
+    - apt-get update
+    - apt-get install -y --no-install-recommends curl ca-certificates binutils
+    - rm -rf /var/lib/apt/lists/*
+    - pip install --no-cache-dir uv
+    - |
+      curl -sSfL https://github.com/goreleaser/nfpm/releases/download/v2.41.3/nfpm_2.41.3_Linux_x86_64.tar.gz \
+      | tar -xz -C /usr/local/bin nfpm
+    - chmod +x /usr/local/bin/nfpm
+  script:
+    - cd src/cli
+    - uv sync --frozen
+    - uv run --with pyinstaller pyinstaller --clean --noconfirm --onefile --name doremix src/main.py
+    - cd "$CI_PROJECT_DIR"
+    - |
+      case "$(uname -m)" in
+        x86_64) export PKG_ARCH="amd64" ;;
+        aarch64|arm64) export PKG_ARCH="arm64" ;;
+        *) echo "Unsupported architecture: $(uname -m)" && exit 1 ;;
+      esac
+    - export PKG_VERSION="${CI_COMMIT_TAG#v}"
+    - mkdir -p dist/packages
+    - nfpm package --config build/cli/nfpm.yaml --packager deb --target "dist/packages/${CLI_PACKAGE_NAME}_${PKG_VERSION}_${PKG_ARCH}.deb"
+    - nfpm package --config build/cli/nfpm.yaml --packager rpm --target "dist/packages/${CLI_PACKAGE_NAME}-${PKG_VERSION}-1.${PKG_ARCH}.rpm"
+    - ls -lh dist/packages
+  artifacts:
+    name: "cli-packages-${CI_COMMIT_TAG}"
+    paths:
+      - dist/packages/*.deb
+      - dist/packages/*.rpm
+    expire_in: 14 days
+
+publish_cli_packages:
+  stage: package
+  image: curlimages/curl:8.16.0
+  needs:
+    - job: package_cli
+      artifacts: true
+  rules:
+    - if: "$CI_COMMIT_TAG"
+      when: on_success
+  script:
+    - export PACKAGE_VERSION="${CI_COMMIT_TAG#v}"
+    - |
+      for pkg in dist/packages/*.deb dist/packages/*.rpm; do
+        if [ ! -f "$pkg" ]; then
+          continue
+        fi
+
+        filename="$(basename "$pkg")"
+        upload_url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CLI_PACKAGE_NAME}/${PACKAGE_VERSION}/${filename}"
+
+        echo "Uploading ${filename}"
+        curl --fail-with-body --location \
+          --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+          --upload-file "$pkg" \
+          "$upload_url"
+      done
+
+package_cli_beta:
+  stage: package
+  image: python:3.12-slim
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "beta"'
+      when: on_success
+  before_script:
+    - apt-get update
+    - apt-get install -y --no-install-recommends curl ca-certificates binutils
+    - rm -rf /var/lib/apt/lists/*
+    - pip install --no-cache-dir uv
+    - |
+      curl -sSfL https://github.com/goreleaser/nfpm/releases/download/v2.41.3/nfpm_2.41.3_Linux_x86_64.tar.gz \
+      | tar -xz -C /usr/local/bin nfpm
+    - chmod +x /usr/local/bin/nfpm
+  script:
+    - cd src/cli
+    - uv sync --frozen
+    - uv run --with pyinstaller pyinstaller --clean --noconfirm --onefile --name doremix src/main.py
+    - cd "$CI_PROJECT_DIR"
+    - |
+      case "$(uname -m)" in
+        x86_64) export PKG_ARCH="amd64" ;;
+        aarch64|arm64) export PKG_ARCH="arm64" ;;
+        *) echo "Unsupported architecture: $(uname -m)" && exit 1 ;;
+      esac
+    - export PKG_VERSION="0.0.0-beta.${CI_PIPELINE_IID}"
+    - mkdir -p dist/packages
+    - nfpm package --config build/cli/nfpm.yaml --packager deb --target "dist/packages/${CLI_PACKAGE_NAME}_beta_${CI_COMMIT_SHORT_SHA}_${PKG_ARCH}.deb"
+    - nfpm package --config build/cli/nfpm.yaml --packager rpm --target "dist/packages/${CLI_PACKAGE_NAME}_beta_${CI_COMMIT_SHORT_SHA}.${PKG_ARCH}.rpm"
+    - ls -lh dist/packages
+  artifacts:
+    name: "cli-packages-beta-${CI_COMMIT_SHORT_SHA}"
+    paths:
+      - dist/packages/*.deb
+      - dist/packages/*.rpm
+    expire_in: 14 days
+
+publish_cli_packages_beta_latest:
+  stage: package
+  image: curlimages/curl:8.16.0
+  needs:
+    - job: package_cli_beta
+      artifacts: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "beta"'
+      when: on_success
+  script:
+    - export PACKAGE_VERSION="latest"
+    - |
+      for pkg in dist/packages/*.deb dist/packages/*.rpm; do
+        if [ ! -f "$pkg" ]; then
+          continue
+        fi
+
+        filename="$(basename "$pkg")"
+        upload_url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CLI_PACKAGE_NAME}/${PACKAGE_VERSION}/${filename}"
+
+        echo "Uploading ${filename} to ${PACKAGE_VERSION}"
+        curl --fail-with-body --location \
+          --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+          --upload-file "$pkg" \
+          "$upload_url"
+      done
 
 deploy_beta:
   stage: deploy

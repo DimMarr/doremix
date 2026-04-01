@@ -1,0 +1,30 @@
+name: doremix-cli
+arch: ${PKG_ARCH}
+platform: linux
+version: ${PKG_VERSION}
+release: 1
+section: utils
+priority: optional
+maintainer: DoReMix Team <dev@doremix.fr>
+description: |
+  DoReMix command-line client.
+vendor: DoReMix
+homepage: https://gitlab.polytech.umontpellier.fr/pwa-group-b/doremix
+contents:
+  - src: src/cli/dist/doremix
+    dst: /usr/bin/doremix
+    file_info:
+      mode: 0755
+overrides:
+  deb:
+    depends:
+      - libc6
+      - libgcc-s1
+      - libstdc++6
+      - vlc
+  rpm:
+    depends:
+      - glibc
+      - libgcc
+      - libstdc++
+      - vlc
