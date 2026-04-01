@@ -720,3 +720,110 @@ def shared_groups(
 
     except Exception as e:
         console.print(f"[red] Error: {e}[/red]")
+@app.command(name="reorder-track", help="Reorder a track in a playlist.")
+def reorder_track_cmd(
+    playlist_id: int = typer.Option(
+        ...,
+        "--playlist",
+        "-p",
+        help="ID of the playlist",
+    ),
+    track_id: int = typer.Option(
+        ...,
+        "--track",
+        "-t",
+        help="ID of the track to move",
+    ),
+    after_track_id: int = typer.Option(
+        None,
+        "--after",
+        "-a",
+        help="ID of the track after which to insert. (Default: moves to the top if neither provided)",
+    ),
+    before_track_id: int = typer.Option(
+        None,
+        "--before",
+        "-b",
+        help="ID of the track before which to insert.",
+    ),
+):
+    try:
+        if after_track_id is not None and before_track_id is not None:
+            console.print(
+                "[red]✗ Error: You cannot specify both --after and --before at the same time.[/red]"
+            )
+            return
+
+        tracks_current = get_playlist_tracks(str(playlist_id))
+
+        current_idx = next(
+            (i for i, t in enumerate(tracks_current) if t.idTrack == track_id), None
+        )
+        if current_idx is None:
+            console.print(
+                f"[red]✗ Error: Track '{track_id}' not found in playlist '{playlist_id}'.[/red]"
+            )
+            return
+
+        current_prev_id = (
+            None if current_idx == 0 else tracks_current[current_idx - 1].idTrack
+        )
+
+        final_prev_id = None
+
+        if after_track_id is not None:
+            if not any(t.idTrack == after_track_id for t in tracks_current):
+                console.print(
+                    f"[red]✗ Error: Reference track (after) '{after_track_id}' not found in playlist.[/red]"
+                )
+                return
+            final_prev_id = after_track_id
+
+        elif before_track_id is not None:
+            idx = next(
+                (
+                    i
+                    for i, t in enumerate(tracks_current)
+                    if t.idTrack == before_track_id
+                ),
+                None,
+            )
+            if idx is None:
+                console.print(
+                    f"[red]✗ Error: Reference track (before) '{before_track_id}' not found in playlist.[/red]"
+                )
+                return
+
+            if idx == 0:
+                final_prev_id = None
+            else:
+                final_prev_id = tracks_current[idx - 1].idTrack
+
+        if final_prev_id == current_prev_id:
+            console.print(
+                "[yellow]! Note: Track is already at this position. No changes made.[/yellow]"
+            )
+        else:
+            reorder_track(str(playlist_id), track_id, final_prev_id)
+            console.print(
+                f"[green]✓ Track '{track_id}' successfully moved in playlist '{playlist_id}'![/green]"
+            )
+
+        # Refresh and display
+        playlist = get_playlist(str(playlist_id))
+        tracks = get_playlist_tracks(str(playlist_id))
+
+        tracks_table = Table(title=f"All tracks in '{playlist.name}'")
+        tracks_table.add_column("#", justify="right", style="dim")
+        tracks_table.add_column("Track ID", style="cyan", justify="right")
+        tracks_table.add_column("title", style="magenta")
+        tracks_table.add_column("artists", style="blue")
+
+        for idx, t in enumerate(tracks, start=1):
+            t_artists = ", ".join([artist.name for artist in t.artists])
+            tracks_table.add_row(str(idx), str(t.idTrack), t.title, t_artists)
+
+        console.print(tracks_table)
+
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")

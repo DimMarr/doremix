@@ -115,6 +115,7 @@ INSERT INTO PLAYLIST (name, idGenre, idOwner, visibility, vote, coverImage) VALU
 ('Indie Pop Mix', 2, 4, 'PRIVATE', 0, NULL);
 
 INSERT INTO TRACK_PLAYLIST (idTrack, idPlaylist, nameInPlaylist, next_track_id) VALUES
+(2, 1, NULL, 3),
 (2, 1, NULL, 18),
 (18, 1, 'Inception (Best OST)', 3),
 (3, 1, NULL, 4),
