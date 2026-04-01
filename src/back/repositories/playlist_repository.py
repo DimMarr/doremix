@@ -15,6 +15,7 @@ from models.group import GroupUser, GroupPlaylist, UserGroup
 from repositories.track_repository import TrackRepository
 from repositories.artist_repository import ArtistRepository
 from utils.youtube_utils import get_youtube_video_info
+import asyncio
 
 
 class PlaylistRepository:
@@ -312,8 +313,8 @@ class PlaylistRepository:
         clean_url = match[0]
 
         if not track:
-            duration_seconds, author_name, channel_url = get_youtube_video_info(
-                clean_url
+            duration_seconds, author_name, channel_url = await asyncio.to_thread(
+                get_youtube_video_info, clean_url
             )
 
             if author_name == "Video unavailable":
