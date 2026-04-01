@@ -4,3 +4,4 @@ export { PlaylistDetailPage } from "@pages/playlist";
 export { LoginPage } from '@pages/login'
 export { SignupPage } from '@pages/signup'
 export { AdminPage } from '@pages/adminGenres'
+export { VerifyEmailPage } from '@pages/verifyEmail'
