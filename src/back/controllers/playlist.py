@@ -168,6 +168,15 @@ class PlaylistController:
         return users
 
     @staticmethod
+    async def shared_groups(db: AsyncSession, playlist_id: int, current_user_id: int):
+        groups, err = await PlaylistRepository.list_shared_groups(
+            db, playlist_id, current_user_id
+        )
+        if err:
+            raise HTTPException(403, err)
+        return groups
+
+    @staticmethod
     async def share_user(
         db: AsyncSession, playlist_id: int, owner_id: int, email: str, is_editor: bool
     ):
@@ -240,3 +249,26 @@ class PlaylistController:
                 detail="Playlist not found, you are not the owner, or user not found",
             )
         return playlist
+
+    @staticmethod
+    async def unshare_group(
+        db: AsyncSession, playlist_id: int, target_group_id: int, current_user_id: int
+    ):
+        playlist = await PlaylistRepository.get_by_id_raw(db, playlist_id)
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+
+        current_user = await UserRepository.get_user_by_id(db, current_user_id)
+        is_admin = current_user is not None and current_user.idRole == 3
+        if playlist.idOwner != current_user_id and not is_admin:
+            raise HTTPException(
+                status_code=403,
+                detail="Not allowed to remove groups from this playlist",
+            )
+
+        success = await PlaylistRepository.remove_shared_group(
+            db, playlist_id, target_group_id
+        )
+        if not success:
+            raise HTTPException(status_code=404, detail="Group share not found")
+        return {"message": "Group removed successfully"}

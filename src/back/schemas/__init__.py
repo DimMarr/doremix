@@ -17,3 +17,4 @@ from .user import (
 )
 from .genre import GenreSchema, GenreCreate, GenreUpdate
 from .artist import ArtistSchema
+from .group import GroupSchema

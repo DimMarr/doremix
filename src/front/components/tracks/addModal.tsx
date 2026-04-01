@@ -2,6 +2,7 @@ import { PlaylistRepository, TrackRepository } from "@repositories/index";
 import { Button, Input } from "@components/generics";
 import { isValidEmail } from "@utils/authentication";
 import { AlertManager } from "@utils/alertManager";
+import { API_BASE_URL } from "@config/index";
 
 export function AddTrackModal({ playlistId, onClose, onTrackAdded }) {
   const modalHtml = (
@@ -170,8 +171,22 @@ export function ShareModal({ playlistId, isOwnerOrAdmin, onClose, onUsersChanged
 
         <div id="panel-share">
           <form id="share-form" class="flex flex-col gap-5">
+            <div class="flex items-center gap-3">
+              <label class="text-sm font-medium text-muted-foreground">Share type</label>
+              <select id="share-type" class="px-2 py-1 rounded bg-input text-foreground text-sm">
+                <option value="user">User (email)</option>
+                <option value="group">Group (name)</option>
+              </select>
+            </div>
+
             <div class="flex flex-col gap-5">
               <Input label="Email address" placeholder="vincent.berry@umontpellier.fr" id="email"/>
+              <div id="group-select-wrapper" style="display: none;">
+                <label class="text-sm font-medium text-muted-foreground">Group</label>
+                <select id="group-select" class="px-2 py-1 rounded bg-input text-foreground text-sm w-full">
+                  <option value="">Select a group...</option>
+                </select>
+              </div>
               <Input label="Is Editor?" id="editor" type="checkbox"/>
             </div>
             <div class="flex justify-end gap-4">
@@ -196,9 +211,13 @@ export function ShareModal({ playlistId, isOwnerOrAdmin, onClose, onUsersChanged
         </div>
           <div class="flex flex-col gap-2">
               <p class="text-sm font-semibold text-muted-foreground uppercase tracking-wider">People with access</p>
-              <div id="shared-users-list" class="flex flex-col gap-2 max-h-64 overflow-y-auto">
-                  <p class="text-sm text-muted-foreground">Loading...</p>
-              </div>
+                  <div id="shared-users-list" class="flex flex-col gap-2 max-h-48 overflow-y-auto">
+                    <p class="text-sm text-muted-foreground">Loading...</p>
+                  </div>
+                  <p class="text-sm font-semibold text-muted-foreground uppercase tracking-wider mt-3">Groups with access</p>
+                  <div id="shared-groups-list" class="flex flex-col gap-2 max-h-32 overflow-y-auto">
+                    <p class="text-sm text-muted-foreground">Loading...</p>
+                  </div>
           </div>
       </div>
     </div>
@@ -306,54 +325,159 @@ export function ShareModal({ playlistId, isOwnerOrAdmin, onClose, onUsersChanged
           }
       };
 
+      const loadGroups = async () => {
+          try {
+              const groups = await playlistRepo.sharedGroups(playlistId);
+              const groupsList = container.querySelector('#shared-groups-list');
+              if (!groups || groups.length === 0) {
+                  groupsList.innerHTML = `<p class="text-sm text-muted-foreground">No groups have access yet.</p>`;
+                  return;
+              }
+              groupsList.innerHTML = groups.map((g: any) => `
+                <div class="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-white/5 border border-white/8" data-group-id="${g.idGroup || g.id}">
+                  <div class="flex items-center gap-3">
+                    <div class="flex items-center justify-center w-8 h-8 rounded-full bg-neutral-700 text-sm font-semibold text-white">${g.groupName.charAt(0).toUpperCase()}</div>
+                    <div>
+                      <p class="text-sm font-medium text-white truncate">${g.groupName}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    ${isOwnerOrAdmin
+                      ? `<button class="remove-group flex items-center justify-center w-7 h-7 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors" data-group-id="${g.idGroup || g.id}">✕</button>`
+                      : ''
+                    }
+                  </div>
+                </div>
+              `).join('');
+
+              if (isOwnerOrAdmin) {
+                  groupsList.querySelectorAll('.remove-group').forEach((btn: HTMLButtonElement) => {
+                      btn.onclick = async () => {
+                          const groupId = Number(btn.getAttribute('data-group-id'));
+                          btn.disabled = true;
+
+                          try {
+                              await playlistRepo.removeSharedGroup(playlistId, groupId);
+                              const row = groupsList.querySelector(`[data-group-id="${groupId}"]`);
+                              row?.remove();
+                              if (groupsList.children.length === 0) {
+                                  groupsList.innerHTML = `<p class="text-sm text-muted-foreground">No groups have access yet.</p>`;
+                              }
+                              new AlertManager().success("Group removed successfully");
+                              await onUsersChanged();
+                          } catch {
+                              new AlertManager().error("Failed to remove group");
+                              btn.disabled = false;
+                          }
+                      };
+                  });
+              }
+          } catch (err) {
+              const groupsList = container.querySelector('#shared-groups-list');
+              groupsList.innerHTML = `<p class="text-sm text-red-400">Failed to load groups.</p>`;
+          }
+      };
+
       loadUsers();
+      loadGroups();
 
-      if (isOwnerOrAdmin) {
+        if (isOwnerOrAdmin) {
           const emailInput = container.querySelector('#email');
-          const editorInput = container.querySelector('#editor');
-          const submitShare = container.querySelector('#submit-share');
+          const groupSelect = container.querySelector('#group-select') as HTMLSelectElement;
+          const groupWrapper = container.querySelector('#group-select-wrapper') as HTMLElement;
+        const editorInput = container.querySelector('#editor');
+        const submitShare = container.querySelector('#submit-share');
+        const shareTypeSelect = container.querySelector('#share-type');
 
-          container.querySelector('#cancel-share').onclick = () => cleanupAndClose();
+        container.querySelector('#cancel-share').onclick = () => cleanupAndClose();
 
-          let debounceTimer;
-          emailInput.addEventListener('keyup', (e) => {
-              clearTimeout(debounceTimer);
-              debounceTimer = setTimeout(() => {
-                  submitShare.disabled = !isValidEmail(e.target.value);
-              }, 300);
+        let debounceTimer;
+        emailInput.addEventListener('keyup', (e) => {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(() => {
+            if (shareTypeSelect.value === 'user') {
+              submitShare.disabled = !isValidEmail(e.target.value);
+            }
+          }, 300);
+        });
+
+          shareTypeSelect.addEventListener('change', (e) => {
+          const val = shareTypeSelect.value;
+          if (val === 'group') {
+              emailInput.style.display = 'none';
+              editorInput.parentElement.style.display = 'none';
+              groupWrapper.style.display = '';
+              submitShare.disabled = !(groupSelect && groupSelect.value);
+          } else {
+            emailInput.style.display = '';
+            editorInput.parentElement.style.display = '';
+              groupWrapper.style.display = 'none';
+              submitShare.disabled = !isValidEmail(emailInput.value);
+          }
+        });
+
+          groupSelect?.addEventListener('change', (e) => {
+            submitShare.disabled = shareTypeSelect.value === 'group' && !groupSelect.value;
           });
 
-          container.querySelector('#share-form').onsubmit = async (e) => {
-              e.preventDefault();
-              const email = emailInput.value;
-              const editor = container.querySelector('#editor').checked;
-              const originalContent = submitShare.innerHTML;
-
-
-              submitShare.disabled = true;
-              submitShare.innerHTML = `
-                  <svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Sharing...`;
-
-              try {
-                  await new TrackRepository().share(playlistId, email, editor);
-                  new AlertManager().success('Playlist shared successfully');
-                  emailInput.value = '';
-                  editorInput.checked = false;
-                  submitShare.disabled = true;
-                  playlistRepo.invalidateSharedWithCache(Number(playlistId));
-                  await onUsersChanged();
-                  await loadUsers();
-                  cleanupAndClose();
-              } catch {
-                  submitShare.disabled = false;
-                  submitShare.innerHTML = originalContent;
-                  new AlertManager().error('Error sharing playlist');
+          // Load available groups for current user
+          (async () => {
+            try {
+              const resp = await fetch(`${API_BASE_URL}/users/groups`, { credentials: 'include' });
+              if (!resp.ok) throw new Error('Failed to fetch groups');
+              const groups = await resp.json();
+              if (!groups || groups.length === 0) {
+                // no groups
+                groupWrapper.innerHTML = `<p class="text-sm text-muted-foreground">No groups found.</p>`;
+                return;
               }
-          };
+              // Populate select
+              groupSelect.innerHTML = `<option value="">Select a group...</option>` + groups.map((g: any) => `\n<option value="${g.groupName}">${g.groupName}</option>`).join('');
+            } catch (err) {
+              console.error('Failed to load groups', err);
+              groupWrapper.innerHTML = `<p class="text-sm text-red-400">Failed to load groups.</p>`;
+            }
+          })();
+
+        container.querySelector('#share-form').onsubmit = async (e) => {
+          e.preventDefault();
+          const shareType = shareTypeSelect.value;
+          const originalContent = submitShare.innerHTML;
+
+          submitShare.disabled = true;
+          submitShare.innerHTML = `
+            <svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Sharing...`;
+
+            try {
+              if (shareType === 'group') {
+                const groupName = groupSelect.value;
+                await new TrackRepository().shareGroup(playlistId, groupName);
+              } else {
+                const email = emailInput.value;
+                const editor = container.querySelector('#editor').checked;
+                await new TrackRepository().share(playlistId, email, editor);
+              }
+
+            new AlertManager().success('Playlist shared successfully');
+            emailInput.value = '';
+            if (groupSelect) groupSelect.value = '';
+            editorInput.checked = false;
+            submitShare.disabled = true;
+            playlistRepo.invalidateSharedWithCache(Number(playlistId));
+            await onUsersChanged();
+            await loadUsers();
+            cleanupAndClose();
+          } catch (err) {
+            console.error('Error sharing playlist:', err);
+            submitShare.disabled = false;
+            submitShare.innerHTML = originalContent;
+            new AlertManager().error('Error sharing playlist');
+          }
+        };
 
           const transferEmailInput = container.querySelector('#transfer-email');
           const submitTransfer = container.querySelector('#submit-transfer');

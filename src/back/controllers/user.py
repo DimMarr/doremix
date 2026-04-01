@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
 from models import User
 from repositories import UserRepository, AccessTokenRepository, RefreshTokenRepository
+from sqlalchemy.future import select
 
 
 class UserController:
@@ -41,6 +42,14 @@ class UserController:
     async def get_unban_candidates(db: AsyncSession):
         users = await UserRepository.get_all(db)
         return [u for u in users if u.banned]
+
+    @staticmethod
+    async def get_all_groups(db: AsyncSession):
+        from models.group import UserGroup
+
+        result = await db.execute(select(UserGroup))
+        groups = result.scalars().all()
+        return groups
 
     @staticmethod
     async def ban_user(db: AsyncSession, moderator_id: int, target_user_id: int):

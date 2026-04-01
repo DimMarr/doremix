@@ -4,6 +4,8 @@ from controllers import UserController
 from schemas import UserSchema, PlaylistSchema
 from database import get_db
 from middleware.auth_middleware import require_role
+from middleware.auth_middleware import get_current_user
+from schemas import GroupSchema
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -19,6 +21,18 @@ async def get_users(
     _admin=Depends(require_role(["ADMIN"])),
 ):
     return await UserController.get_all_users(db)
+
+
+@router.get(
+    "/groups",
+    response_model=list[GroupSchema],
+    summary="List all groups",
+)
+async def get_all_groups(
+    _: UserSchema = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await UserController.get_all_groups(db)
 
 
 @router.get(

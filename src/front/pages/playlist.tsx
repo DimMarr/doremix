@@ -164,6 +164,48 @@ async function getSharedUsersElement(repo: PlaylistRepository, playlist: Playlis
   `;
 }
 
+async function getSharedGroupsElement(repo: PlaylistRepository, playlist: Playlist, isPlaylistOwner: boolean): Promise<string> {
+  const adminUser = await isAdmin();
+
+  if (!isPlaylistOwner && !adminUser) return '';
+
+  let groups: any[] = [];
+  try {
+    groups = await repo.sharedGroups(playlist.idPlaylist);
+  } catch {
+    return '';
+  }
+
+  if (!groups || groups.length === 0) return '';
+
+  const MAX_VISIBLE = 5;
+  const visible = groups.slice(0, MAX_VISIBLE);
+  const overflow = groups.length - MAX_VISIBLE;
+
+  const avatars = visible.map((g: any) => {
+    const initial = g.groupName.charAt(0).toUpperCase();
+    const roleTitle = `${g.groupName}`;
+    return `<div
+      title="${roleTitle}"
+      class="shared-group-avatar flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-700/80 border-2 border-neutral-900 text-xs font-semibold text-white -ml-2 first:ml-0 cursor-default select-none hover:z-10 hover:scale-110 transition-transform"
+    >${initial}</div>`;
+  }).join('');
+
+  const overflowBadge = overflow > 0
+      ? `<div class="flex items-center justify-center w-7 h-7 rounded-lg bg-neutral-600 border-2 border-neutral-900 text-xs font-semibold text-muted-foreground -ml-2 select-none">+${overflow}</div>`
+      : '';
+
+  return `
+    <div id="shared-groups-section" class="flex items-center gap-2 mt-1">
+      <div class="flex items-center">
+        ${avatars}
+        ${overflowBadge}
+      </div>
+      <span class="text-xs text-muted-foreground">${groups.length} ${groups.length === 1 ? 'group' : 'groups'} with access</span>
+    </div>
+  `;
+}
+
 async function renderTrackList(playlist: Playlist, canEditPlaylist: boolean): Promise<string> {
   const tracks = playlist.tracks || [];
   const currentTrack = trackPlayerInstance.getCurrentTrack();
@@ -254,6 +296,7 @@ export async function PlaylistDetailPage(
             }
           </div>
           {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
+          {await getSharedGroupsElement(repo, playlist, isPlaylistOwner) as 'safe'}
         </>
       );
       mountVoteControls();
@@ -472,6 +515,7 @@ export async function PlaylistDetailPage(
             }
           </div>
          {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
+         {await getSharedGroupsElement(repo, playlist, isPlaylistOwner) as 'safe'}
         </div>
       </div>
 

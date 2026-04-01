@@ -17,6 +17,7 @@ from schemas import (
     VoteRequest,
     VoteResponse,
 )
+from schemas import GroupSchema
 from database import get_db
 import os
 from middleware.auth_middleware import get_current_user, get_current_user_id
@@ -223,6 +224,20 @@ async def shared_with(
     return [SharedUserSchema.from_user_playlist(u) for u in users]
 
 
+@router.get(
+    "/{playlist_id}/shared-groups",
+    response_model=List[GroupSchema],
+    summary="List groups the playlist is shared with",
+)
+async def shared_groups(
+    playlist_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    groups = await PlaylistController.shared_groups(db, playlist_id, current_user_id)
+    return groups
+
+
 @router.post(
     "/{playlist_id}/share/user",
     summary="Share a playlist with a user",
@@ -256,7 +271,7 @@ async def share_playlist_group(
 @router.delete(
     "/{playlist_id}/share/user/{target_user_id}",
     response_model=dict,
-    summary="Retirer un utilisateur du partage d'une playlist",
+    summary="Remove a user from a shared playlist",
 )
 async def unshare_playlist_user(
     playlist_id: int,
@@ -283,4 +298,20 @@ async def transfer_playlist(
 ):
     return await PlaylistController.transfer_playlist(
         db, playlist_id, owner, body.new_owner_email
+    )
+
+
+@router.delete(
+    "/{playlist_id}/share/group/{target_group_id}",
+    response_model=dict,
+    summary="Remove a group from a shared playlist",
+)
+async def unshare_playlist_group(
+    playlist_id: int,
+    target_group_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    return await PlaylistController.unshare_group(
+        db, playlist_id, target_group_id, current_user_id
     )

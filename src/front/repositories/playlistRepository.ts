@@ -354,6 +354,27 @@ export class PlaylistRepository {
         return promise;
     }
 
+    async sharedGroups(playlist_id: Number) {
+        const id = Number(playlist_id);
+        try {
+            const response = await fetch(`${API_BASE_URL}/playlists/${id}/shared-groups`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+            });
+
+            if (response.status == 403) return [];
+            if (!response.ok) throw new Error('Failed to get shared groups');
+            return response.json();
+        } catch (error) {
+            if (error instanceof TypeError) {
+                new AlertManager().error('Network error. Check your connection.');
+            }
+            console.error('Error getting shared groups for a playlist:', error);
+            throw error;
+        }
+    }
+
     async removeSharedUser(playlistId: number, targetUserId: number): Promise<void> {
         try {
             const response = await fetch(
@@ -544,6 +565,31 @@ export class PlaylistRepository {
                 new AlertManager().error("Network error. Check your connection.");
             }
             console.error("Error transferring ownership of the playlist:", error);
+            throw error;
+        }
+    }
+
+
+    async removeSharedGroup(playlistId: number, targetGroupId: number): Promise<void> {
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/playlists/${playlistId}/share/group/${targetGroupId}`,
+                {
+                    method: 'DELETE',
+                    credentials: 'include',
+                }
+            );
+
+            if (!response.ok) {
+                handleHttpError(response, 'Remove shared group');
+                throw new Error('Failed to remove shared group');
+            }
+            this.invalidateSharedWithCache(playlistId);
+        } catch (error) {
+            if (error instanceof TypeError) {
+                new AlertManager().error('Network error. Check your connection.');
+                return;
+            }
             throw error;
         }
     }
