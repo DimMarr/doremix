@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from models.artist import Artist
 from typing import Optional, List
+import asyncio
 
 
 class ArtistRepository:
@@ -15,7 +16,9 @@ class ArtistRepository:
             if channel_url:
                 from utils.youtube_utils import get_youtube_channel_avatar
 
-                image_url = get_youtube_channel_avatar(channel_url)
+                image_url = await asyncio.to_thread(
+                    get_youtube_channel_avatar, channel_url
+                )
 
             artist = Artist(name=artist_name, imageUrl=image_url)
             db.add(artist)
