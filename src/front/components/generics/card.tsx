@@ -88,7 +88,7 @@ export function Card({
             safe
             data-src={image}
             alt={title || 'Card image'}
-            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-0"
+            class="w-full h-full object-cover transition-all duration-500 group-hover:scale-105 opacity-0"
           />
 
           {/* Play Button Overlay */}
@@ -228,4 +228,49 @@ export function initCardsElements(container: HTMLElement, playlists: Playlist[])
       });
     }
   });
+
+  // Lazy load cover images via IntersectionObserver
+  const coverCards = Array.from(cardElements).filter(
+    (c) => c.getAttribute("data-has-cover") === "1"
+  );
+
+  if (coverCards.length > 0) {
+    const observer = new IntersectionObserver(
+      (entries, obs) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+
+          const card = entry.target as HTMLElement;
+          const img = card.querySelector("img[data-src]") as HTMLImageElement | null;
+          if (!img) return;
+
+          const skeleton = card.querySelector("[data-skeleton]") as HTMLElement | null;
+
+          obs.unobserve(card);
+
+          img.addEventListener("load", () => {
+            if (skeleton) skeleton.style.display = "none";
+            img.classList.remove("opacity-0");
+            img.classList.add("opacity-100");
+          }, { once: true });
+
+          img.addEventListener("error", () => {
+            if (skeleton) skeleton.style.display = "none";
+            img.style.display = "none";
+            const fallback = document.createElement("div");
+            fallback.setAttribute("data-cover-fallback", "1");
+            fallback.className = "absolute inset-0 flex items-center justify-center text-neutral-500";
+            // Static SVG only — do not interpolate user data here
+            fallback.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>`;
+            img.parentElement?.appendChild(fallback);
+          }, { once: true });
+
+          img.src = img.dataset.src!;
+        });
+      },
+      { rootMargin: "50px" }
+    );
+
+    coverCards.forEach((card) => observer.observe(card));
+  }
 }
