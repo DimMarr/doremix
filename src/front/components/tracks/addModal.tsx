@@ -461,6 +461,7 @@ export function ShareModal({ playlistId, isOwnerOrAdmin, onClose, onUsersChanged
                 } else {
                   new AlertManager().success('Playlist shared successfully');
                 }
+                await new TrackRepository().shareGroup(playlistId, groupName);
               } else {
                 const email = emailInput.value;
                 const editor = container.querySelector('#editor').checked;

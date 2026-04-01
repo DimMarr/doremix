@@ -529,6 +529,7 @@ export async function PlaylistDetailPage(
           </div>
 
          {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
+         {await getSharedGroupsElement(repo, playlist, isPlaylistOwner) as 'safe'}
         </div>
       </div>
 
