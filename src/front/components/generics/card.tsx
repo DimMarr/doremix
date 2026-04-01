@@ -74,37 +74,45 @@ export function Card({
 
   const cardContent = (
     <>
-      {image != null ? <div class="relative w-full aspect-square overflow-hidden rounded-md shadow-lg mb-2">
-        {getVisibilityIcon(visibility) as 'safe'}
+      {image != null ? (
+        <div class="relative w-full aspect-square overflow-hidden rounded-md shadow-lg mb-2">
+          {getVisibilityIcon(visibility) as 'safe'}
 
-        {image as 'safe' ? (
+          {/* Skeleton shown while image loads */}
+          <div
+            data-skeleton
+            class="absolute inset-0 bg-neutral-700 animate-pulse rounded-md"
+          />
+
           <img
             safe
-            src={image}
+            data-src={image}
             alt={title || 'Card image'}
-            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
+            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-0"
           />
-        ) : (
-          <div class="w-full h-full bg-neutral-800 flex items-center justify-center text-neutral-500">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>
-          </div>
-        )}
 
-        {/* Play Button Overlay */}
-        {icon as 'safe' && (
-          <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-            <button
-              class="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 bg-primary text-black rounded-full p-3 shadow-xl hover:scale-105"
-              onclick={`(e) => { e.preventDefault(); e.stopPropagation(); ${onClickPlay?.toString() || ''} }`}
-            >
-              <img src={icon} alt="Play" class="w-6 h-6 ml-0.5" />
-            </button>
-          </div>
-        )}
-      </div> : ""
-      }
-
+          {/* Play Button Overlay */}
+          {icon as 'safe' && (
+            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+              <button
+                class="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 bg-primary text-black rounded-full p-3 shadow-xl hover:scale-105"
+                onclick={`(e) => { e.preventDefault(); e.stopPropagation(); ${onClickPlay?.toString() || ''} }`}
+              >
+                <img safe src={icon} alt="Play" class="w-6 h-6 ml-0.5" />
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div class="relative w-full aspect-square overflow-hidden rounded-md shadow-lg mb-2 bg-neutral-800 flex items-center justify-center text-neutral-500">
+          {getVisibilityIcon(visibility) as 'safe'}
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+            <circle cx="9" cy="9" r="2" />
+            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+          </svg>
+        </div>
+      )}
 
       <div class="flex flex-col gap-0.5 min-w-0">
         {title as 'safe' && (
@@ -165,6 +173,7 @@ export function buildCardsFromPlaylists(playlists: Playlist[]) {
       "data-playlist-card": "1",
       "data-playlist-id": String(p.idPlaylist),
       "data-genre-id": p.idGenre != null ? String(p.idGenre) : "",
+      "data-has-cover": p.image ? "1" : undefined,
       visibility: p.visibility,
       // Restore onClickPlay for potential inline handling or reference
       onClickPlay: () => {
@@ -189,9 +198,6 @@ export function initCardsElements(container: HTMLElement, playlists: Playlist[])
     const p = playlistsById.get(playlistId);
     if (!p) return;
 
-    // We now look for the button, I'll add a data attribute to the button in Card to make this robust
-    // See Card implementation above (need to ensure I update Card to include data-play-button)
-    // Actually, searching for the button inside the link is safer
     const playButton = link.querySelector('button');
 
     if (playButton) {
