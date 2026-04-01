@@ -29,27 +29,27 @@ function getIconForVisibility(visibility: Visibility) {
   switch (visibility.toLowerCase()) {
     case Visibility.private:
       return (
-        <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-          <path d="M7 11V7a5 5 0 0110 0v4" />
-        </svg>
+          <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0110 0v4" />
+          </svg>
       );
     case Visibility.public:
       return (
-        <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M2 12h20" />
-          <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
-        </svg>
+          <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M2 12h20" />
+            <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+          </svg>
       );
     default:
       return (
-        <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M23 21v-2a4 4 0 00-3-3.87" />
-          <path d="M16 3.13a4 4 0 010 7.75" />
-        </svg>
+          <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 00-3-3.87" />
+            <path d="M16 3.13a4 4 0 010 7.75" />
+          </svg>
       );
   }
 }
@@ -84,42 +84,84 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
   const menuOptionClass = "w-full text-left px-4 py-3 text-sm font-medium text-white hover:bg-white/10 flex items-center gap-2 transition-colors active:bg-white/20";
 
   return (
-    <div class="relative z-20 w-fit">
-      <div id="visibility-trigger" class={`${badgeBase} ${colorClass} ${canEditVisibility ? interactable : locked}`} data-visibility-trigger>
-        <div class="flex items-center gap-2 pointer-events-none">
-          {getIconForVisibility(visibility) as 'safe'}
-          <span>{visibility} {await isShared(repo, playlist) ? "(SHARED)" : ""}</span>
-          {canEditVisibility && <svg class="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>}
-        </div>
-      </div>
-      {canEditVisibility &&
-        <div id="visibility-menu" class="hidden absolute top-full left-0 mt-2 w-48 bg-neutral-900 border border-white/10 rounded-xl shadow-xl overflow-hidden backdrop-blur-md origin-top-left transition-all z-50 animate-in fade-in zoom-in-95 duration-200">
-          <div class="flex flex-col py-1">
-            {visibility !== Visibility.private && (
-              <button class={menuOptionClass} data-visibility-option={Visibility.private}>
-                {getIconForVisibility(Visibility.private) as 'safe'}
-                <span>Private</span>
-              </button>
-            )}
-            {visibility !== Visibility.public && (
-              <button class={menuOptionClass} data-visibility-option={Visibility.public}>
-                {getIconForVisibility(Visibility.public) as 'safe'}
-                <span>Public</span>
-              </button>
-            )}
-            {visibility !== Visibility.open && await isAdmin() &&
-              <button class={menuOptionClass} data-visibility-option={Visibility.open}>
-                {getIconForVisibility(Visibility.open) as 'safe'}
-                <span>OPEN</span>
-              </button>
-            }
+      <div class="relative z-20 w-fit">
+        <div id="visibility-trigger" class={`${badgeBase} ${colorClass} ${canEditVisibility ? interactable : locked}`} data-visibility-trigger>
+          <div class="flex items-center gap-2 pointer-events-none">
+            {getIconForVisibility(visibility) as 'safe'}
+            <span>{visibility} {await isShared(repo, playlist) ? "(SHARED)" : ""}</span>
+            {canEditVisibility && <svg class="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>}
           </div>
         </div>
-      }
-    </div>
+        {canEditVisibility &&
+            <div id="visibility-menu" class="hidden absolute top-full left-0 mt-2 w-48 bg-neutral-900 border border-white/10 rounded-xl shadow-xl overflow-hidden backdrop-blur-md origin-top-left transition-all z-50 animate-in fade-in zoom-in-95 duration-200">
+              <div class="flex flex-col py-1">
+                {visibility !== Visibility.private && (
+                    <button class={menuOptionClass} data-visibility-option={Visibility.private}>
+                      {getIconForVisibility(Visibility.private) as 'safe'}
+                      <span>Private</span>
+                    </button>
+                )}
+                {visibility !== Visibility.public && (
+                    <button class={menuOptionClass} data-visibility-option={Visibility.public}>
+                      {getIconForVisibility(Visibility.public) as 'safe'}
+                      <span>Public</span>
+                    </button>
+                )}
+                {visibility !== Visibility.open && await isAdmin() &&
+                    <button class={menuOptionClass} data-visibility-option={Visibility.open}>
+                      {getIconForVisibility(Visibility.open) as 'safe'}
+                      <span>OPEN</span>
+                    </button>
+                }
+              </div>
+            </div>
+        }
+      </div>
   );
+}
+
+async function getSharedUsersElement(repo: PlaylistRepository, playlist: Playlist, isPlaylistOwner: boolean): Promise<string> {
+  const adminUser = await isAdmin();
+
+  if (!isPlaylistOwner && !adminUser) return '';
+
+  let users: any[] = [];
+  try {
+    users = await repo.sharedWith(playlist.idPlaylist);
+  } catch {
+    return '';
+  }
+
+  if (users.length === 0) return '';
+
+  const MAX_VISIBLE = 5;
+  const visible = users.slice(0, MAX_VISIBLE);
+  const overflow = users.length - MAX_VISIBLE;
+
+  const avatars = visible.map((u: any) => {
+    const initial = u.username.charAt(0).toUpperCase();
+    const roleTitle = u.editor ? `${u.username} (Editor)` : `${u.username} (Viewer)`;
+    return `<div
+      title="${roleTitle}"
+      class="shared-user-avatar flex items-center justify-center w-7 h-7 rounded-full bg-neutral-700 border-2 border-neutral-900 text-xs font-semibold text-white -ml-2 first:ml-0 cursor-default select-none hover:z-10 hover:scale-110 transition-transform"
+    >${initial}</div>`;
+  }).join('');
+
+  const overflowBadge = overflow > 0
+      ? `<div class="flex items-center justify-center w-7 h-7 rounded-full bg-neutral-600 border-2 border-neutral-900 text-xs font-semibold text-muted-foreground -ml-2 select-none">+${overflow}</div>`
+      : '';
+
+  return `
+    <div id="shared-users-section" class="flex items-center gap-2 mt-1">
+      <div class="flex items-center">
+        ${avatars}
+        ${overflowBadge}
+      </div>
+      <span class="text-xs text-muted-foreground">${users.length} ${users.length === 1 ? 'person' : 'people'} with access</span>
+    </div>
+  `;
 }
 
 async function renderTrackList(playlist: Playlist, canEditPlaylist: boolean): Promise<string> {
@@ -130,12 +172,12 @@ async function renderTrackList(playlist: Playlist, canEditPlaylist: boolean): Pr
   return (
     <div>
       <TrackListHeader />
-      {(await Promise.all(tracks.map(async (track, index) => ( await
+      {(await Promise.all(tracks.map(async (track, index) => (await
         <TrackRow
           track={track}
           index={index}
           playlistId={playlist.idPlaylist}
-          current_track={[YoutubePlayerState.UNSTARTED, YoutubePlayerState.CUED].includes(playerState) ? undefined : currentTrack}
+          current_track={([YoutubePlayerState.UNSTARTED, YoutubePlayerState.CUED] as YoutubePlayerState[]).indexOf(playerState) !== -1 ? undefined : currentTrack}
           canEditPlaylist={canEditPlaylist}
         />
       )))) as unknown as 'safe'}
@@ -144,9 +186,9 @@ async function renderTrackList(playlist: Playlist, canEditPlaylist: boolean): Pr
 }
 
 export async function PlaylistDetailPage(
-  container: HTMLElement | null,
-  onBack: () => void,
-  params: PageParams
+    container: HTMLElement | null,
+    onBack: () => void,
+    params: PageParams
 ) {
   if (!container) return;
 
@@ -211,6 +253,7 @@ export async function PlaylistDetailPage(
               </button>
             }
           </div>
+          {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
         </>
       );
       mountVoteControls();
@@ -265,15 +308,24 @@ export async function PlaylistDetailPage(
     render(modalContainer);
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     const modalContainer = container.querySelector('#modal-container');
     if (!modalContainer) return;
 
+    const isPlaylistOwner = await isOwner(playlist);
+    const adminUser = await isAdmin();
+
     const { render } = ShareModal({
       playlistId: playlist.idPlaylist,
-      onClose: () => {
+      isOwnerOrAdmin: isPlaylistOwner || adminUser,
+      repo: repo,
+      onClose: async () => {
         modalContainer.innerHTML = '';
-      }
+        await updateHeader();
+      },
+      onUsersChanged: async () => {
+        await updateHeader();
+      },
     });
     render(modalContainer);
   };
@@ -349,7 +401,7 @@ export async function PlaylistDetailPage(
     if (!playlist.genreLabel) return '';
 
     return (
-      <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">
+        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">
         {playlist.genreLabel}
       </span>
     );
@@ -360,12 +412,12 @@ export async function PlaylistDetailPage(
   const canEditPlaylist = await canEdit(repo, playlist);
 
   container.innerHTML = (
-    <div>
-      <div id="modal-container"></div>
+      <div>
+        <div id="modal-container"></div>
 
-      <div class="mb-8">
-        <Button id="back-button" variant="ghost" size="sm">← Back</Button>
-      </div>
+        <div class="mb-8">
+          <Button id="back-button" variant="ghost" size="sm">← Back</Button>
+        </div>
 
       <div class="flex items-start gap-8 my-8">
         <div class="flex flex-col items-center gap-4">
@@ -419,6 +471,22 @@ export async function PlaylistDetailPage(
               </button>
             }
           </div>
+         {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
+        </div>
+      </div>
+
+      <div class="mb-4 mt-2">
+        <div class="relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35" />
+          </svg>
+          <input
+            id="track-search-input"
+            type="text"
+            placeholder="Rechercher un titre ou un artiste..."
+            class="w-full pl-9 pr-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all"
+          />
         </div>
       </div>
 
@@ -485,12 +553,8 @@ export async function PlaylistDetailPage(
 
       const playBtn = target.closest('#play-all-button');
       const shuffleBtn = container.querySelector('#shuffle-button');
-      if (playBtn) {
-        playBtn.classList.add('text-blue-500');
-      }
-      if (shuffleBtn) {
-        shuffleBtn.classList.remove('text-blue-500');
-      }
+      if (playBtn) playBtn.classList.add('text-blue-500');
+      if (shuffleBtn) shuffleBtn.classList.remove('text-blue-500');
       return;
     }
 
@@ -503,12 +567,8 @@ export async function PlaylistDetailPage(
 
       const shuffleBtn = target.closest('#shuffle-button');
       const playBtn = container.querySelector('#play-all-button');
-      if (shuffleBtn) {
-        shuffleBtn.classList.add('text-blue-500');
-      }
-      if (playBtn) {
-        playBtn.classList.remove('text-blue-500');
-      }
+      if (shuffleBtn) shuffleBtn.classList.add('text-blue-500');
+      if (playBtn) playBtn.classList.remove('text-blue-500');
       return;
     }
 
@@ -540,4 +600,147 @@ export async function PlaylistDetailPage(
       }
     }
   };
+
+  // Drag & Drop Event Delegation
+  let draggedTrackIndex: number | null = null;
+  let draggedTrackId: number | null = null;
+  let draggedRow: HTMLElement | null = null;
+  let placeholder: HTMLElement | null = null;
+
+  container.addEventListener('dragstart', (e: DragEvent) => {
+    const target = e.target as HTMLElement;
+    const row = target.closest('[data-track-index]') as HTMLElement;
+    if (row && e.dataTransfer) {
+      draggedTrackIndex = Number(row.getAttribute('data-track-index'));
+      draggedTrackId = Number(row.getAttribute('data-track-id'));
+      draggedRow = row;
+
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', draggedTrackIndex.toString());
+
+      const dragImage = row.cloneNode(true) as HTMLElement;
+      dragImage.style.width = `${row.offsetWidth}px`;
+      dragImage.classList.add('bg-neutral-800', 'shadow-2xl', 'scale-105', 'opacity-90', 'rounded-md', 'z-50', 'pointer-events-none');
+      document.body.appendChild(dragImage);
+      dragImage.style.position = 'absolute';
+      dragImage.style.top = '-1000px';
+      e.dataTransfer.setDragImage(dragImage, e.offsetX || 20, e.offsetY || 20);
+
+      placeholder = document.createElement('div');
+      placeholder.id = 'dnd-placeholder';
+      placeholder.className = "bg-blue-500/10 border-2 border-dashed border-blue-500/50 rounded-md transition-all duration-300 pointer-events-none";
+      placeholder.style.height = `${row.offsetHeight}px`;
+
+      setTimeout(() => {
+        row.style.display = 'none';
+        row.parentNode?.insertBefore(placeholder!, row);
+      }, 0);
+
+      setTimeout(() => {
+        if (document.body.contains(dragImage)) {
+          document.body.removeChild(dragImage);
+        }
+      }, 100);
+    }
+  });
+
+  container.addEventListener('dragover', (e: DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+
+    if (!placeholder || !draggedRow) return;
+
+    const wrapper = container.querySelector('#track-list-container > div');
+    if (!wrapper) return;
+
+    const allItems = Array.from(wrapper.children) as HTMLElement[];
+    const visibleRows = allItems.filter(el => el !== draggedRow && el !== placeholder && el.hasAttribute('data-track-index'));
+
+    let insertBeforeNode: HTMLElement | null = null;
+
+    // Cleanup previous hovers
+    visibleRows.forEach(r => r.classList.remove('drop-target-hover'));
+
+    for (let i = 0; i < visibleRows.length; i++) {
+      const r = visibleRows[i];
+      const rect = r.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+
+      if (e.clientY < midY) {
+        insertBeforeNode = r;
+        r.classList.add('drop-target-hover'); // Add hover feedback
+        break;
+      }
+    }
+
+    if (insertBeforeNode) {
+      if (placeholder.nextElementSibling !== insertBeforeNode) {
+        wrapper.insertBefore(placeholder, insertBeforeNode);
+      }
+    } else {
+      wrapper.appendChild(placeholder);
+    }
+  });
+
+  container.addEventListener('dragend', (e: DragEvent) => {
+    if (draggedRow) {
+      draggedRow.style.display = '';
+    }
+    if (placeholder && placeholder.parentNode) {
+      placeholder.parentNode.removeChild(placeholder);
+    }
+
+    draggedTrackIndex = null;
+    draggedTrackId = null;
+    draggedRow = null;
+    placeholder = null;
+  });
+
+  container.addEventListener('drop', async (e: DragEvent) => {
+    e.preventDefault();
+
+    if (draggedRow && placeholder && draggedTrackIndex !== null && draggedTrackId !== null) {
+      const wrapper = container.querySelector('#track-list-container > div');
+      if (wrapper) {
+        const allItems = Array.from(wrapper.children) as HTMLElement[];
+        const filteredItems = allItems.filter(el => (el.hasAttribute('data-track-index') && el !== draggedRow) || el === placeholder);
+
+        let newIndex = filteredItems.indexOf(placeholder);
+
+        if (placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
+        draggedRow.style.display = '';
+
+        if (newIndex !== -1 && newIndex !== draggedTrackIndex) {
+          const newTracks = [...tracks];
+          const trackToMove = newTracks[draggedTrackIndex];
+          newTracks.splice(draggedTrackIndex, 1);
+          newTracks.splice(newIndex, 0, trackToMove);
+
+          tracks = newTracks;
+          playlist.tracks = [...tracks];
+          trackPlayerInstance.setPlaylist({ ...playlist });
+          updateTrackListDisplay();
+
+          const afterTrackId = newIndex > 0 ? tracks[newIndex - 1].idTrack : null;
+
+          try {
+            await new TrackRepository().move(
+              playlist.idPlaylist!,
+              draggedTrackId!,
+              afterTrackId
+            );
+            new AlertManager().success("Track reordered successfully");
+          } catch (err) {
+            console.error("Failed to reorder tracks", err);
+            new AlertManager().error("Failed to save reorder. Please refresh.");
+          }
+        }
+      }
+    }
+
+    draggedTrackIndex = null;
+    draggedTrackId = null;
+    draggedRow = null;
+    placeholder = null;
+  });
 }

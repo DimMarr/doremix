@@ -14,6 +14,11 @@ from src.services.track import (
 app = typer.Typer()
 console = Console()
 
+STATUS_STYLE = {
+    "ok": "[green]ok[/green]",
+    "unavailable": "[red]unavailable[/red]",
+}
+
 
 @app.command(help="List all tracks.")
 def list():
@@ -26,6 +31,7 @@ def list():
         table.add_column("artists", style="blue")
         table.add_column("duration", style="green")
         table.add_column("plays", style="yellow")
+        table.add_column("status")
 
         for track in tracks:
             artists = ", ".join([artist.name for artist in track.artists])
@@ -34,12 +40,14 @@ def list():
                 if track.durationSeconds
                 else "N/A"
             )
+            status_display = STATUS_STYLE.get(track.status, track.status)
             table.add_row(
                 str(track.idTrack),
                 track.title,
                 artists,
                 duration,
                 str(track.listeningCount),
+                status_display,
             )
 
         console.print(table)
@@ -63,6 +71,7 @@ def get(id: int = typer.Argument(..., help="Track ID")):
             if track.durationSeconds
             else "N/A"
         )
+        status_display = STATUS_STYLE.get(track.status, track.status)
 
         table.add_row("id", str(track.idTrack))
         table.add_row("title", track.title)
@@ -71,6 +80,7 @@ def get(id: int = typer.Argument(..., help="Track ID")):
         table.add_row("plays", str(track.listeningCount))
         table.add_row("youtube", track.youtubeLink or "N/A")
         table.add_row("createdAt", track.createdAt.strftime("%B %d %Y"))
+        table.add_row("status", status_display)
 
         console.print(table)
 
@@ -81,6 +91,17 @@ def get(id: int = typer.Argument(..., help="Track ID")):
 @app.command(help="Play a track.")
 def play(id: int):
     try:
+        track = get_track(id)
+
+        if not track.is_playable():
+            # Since the status can only be 'ok' or 'unavailable', if it's not playable,
+            # it must be 'unavailable'.
+            reason = "this track is unavailable"
+            console.print(
+                f"[yellow]⚠ Impossible to play '{track.title}' — {reason}.[/yellow]"
+            )
+            return
+
         play_track(id)
         console.print("[green]✓ Playback started.[/green]")
     except Exception as e:
@@ -115,6 +136,7 @@ def search(
         table.add_column("title", style="magenta")
         table.add_column("artists", style="blue")
         table.add_column("duration", style="green")
+        table.add_column("status")
 
         for track in tracks:
             artists = ", ".join([artist.name for artist in track.artists])
@@ -123,7 +145,10 @@ def search(
                 if track.durationSeconds
                 else "N/A"
             )
-            table.add_row(str(track.idTrack), track.title, artists, duration)
+            status_display = STATUS_STYLE.get(track.status, track.status)
+            table.add_row(
+                str(track.idTrack), track.title, artists, duration, status_display
+            )
 
         console.print(table)
         console.print(f"\n[green]{len(tracks)} track(s) found[/green]")

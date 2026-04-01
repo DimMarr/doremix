@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, Optional
 
-from src.models.playlist import PlaylistSchema
+from src.models.playlist import PlaylistSchema, SharedUserSchema
 from src.models.track import TrackSchema
 from src.services import auth_service
 from src.utils.http_client import make_authenticated_request
@@ -53,6 +53,15 @@ def _assert_can_read_playlist(playlist: PlaylistSchema, user_id: int) -> None:
 def _assert_owner(playlist: PlaylistSchema, user_id: int) -> None:
     if playlist.idOwner != user_id:
         raise Exception("You don't have permission to edit this playlist.")
+
+
+def _is_admin() -> bool:
+    try:
+        current_user = auth_service.whoami()
+        role = current_user.get("role", "")
+        return bool(isinstance(role, str) and role.upper() == "ADMIN")
+    except Exception:
+        return False
 
 
 def _get_playlist_from_api(id: str) -> PlaylistSchema:
@@ -308,3 +317,77 @@ def transfer_ownership(
 
     res_json: dict[str, Any] = res.json()
     return res_json
+
+
+def reorder_track(
+    playlist_id: str, track_id: int, prev_track_id: Optional[int]
+) -> dict[str, Any]:
+    user_id = _get_current_user_id()
+    playlist = _get_playlist_from_api(playlist_id)
+    _assert_owner(playlist, user_id)
+
+    payload: dict[str, Any] = {"prev_track_id": prev_track_id}
+
+    res = make_authenticated_request(
+        "PATCH",
+        f"/playlists/{playlist_id}/tracks/{track_id}/move",
+        json=payload,
+    )
+
+    if res.status_code == 404:
+        raise Exception("Playlist or track not found")
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
+    if res.status_code != 200:
+        raise Exception(f"Error while reordering track: {_detail(res)}")
+
+    data: dict[str, Any] = res.json()
+    return data
+
+
+def get_shared_users(playlist_id: str) -> list[SharedUserSchema]:
+    user_id = _get_current_user_id()
+    playlist = _get_playlist_from_api(playlist_id)
+
+    if playlist.idOwner != user_id and not _is_admin():
+        raise Exception(
+            "You don't have permission to see shared users for this playlist."
+        )
+
+    res = make_authenticated_request("GET", f"/playlists/{playlist_id}/shared-with")
+    if res.status_code == 403:
+        raise Exception(
+            "You don't have permission to see shared users for this playlist."
+        )
+    if res.status_code == 404:
+        raise Exception("Playlist not found.")
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
+    if res.status_code != 200:
+        raise Exception(f"Error while fetching shared users: {_detail(res)}")
+
+    data = res.json()
+    return [SharedUserSchema(**item) for item in data]
+
+
+def remove_shared_user(playlist_id: str, target_user_id: str) -> dict[str, Any]:
+    user_id = _get_current_user_id()
+    playlist = _get_playlist_from_api(playlist_id)
+
+    if playlist.idOwner != user_id and not _is_admin():
+        raise Exception("You don't have permission to remove users from this playlist.")
+
+    res = make_authenticated_request(
+        "DELETE", f"/playlists/{playlist_id}/share/user/{target_user_id}"
+    )
+    if res.status_code == 403:
+        raise Exception("You don't have permission to remove users from this playlist.")
+    if res.status_code == 404:
+        raise Exception(_detail(res))
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
+    if res.status_code != 200:
+        raise Exception(f"Error while removing user: {_detail(res)}")
+
+    data: dict[str, Any] = res.json()
+    return data

@@ -50,6 +50,9 @@ doremix
         |- play <track-id>
         |- stop
         |- search <query>
+    |- mod
+        |- add <user-id>
+        |- demote <user-id>
 ```
 
 Notes:

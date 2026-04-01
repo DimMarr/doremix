@@ -217,40 +217,40 @@ export class PlaylistRepository {
         const img1 = new URL("../assets/images/playlist1.jpg", import.meta.url).href;
         try {
             const response = await fetch(`${API_BASE_URL}/playlists/shared`, {
-            method: "GET",
-            credentials: "include",
+                method: "GET",
+                credentials: "include",
             });
 
             if (!response.ok) {
-            throw new Error("Failed to get shared playlists");
+                throw new Error("Failed to get shared playlists");
             }
 
             const rawDataPlaylists = await response.json();
             return Promise.all(
-            rawDataPlaylists.map(async (item: any) => {
-                const rawDatatracks = await this._fetchTracks(item.idPlaylist);
-                const tracks = rawDatatracks.map((data: any) => new Track(data));
+                rawDataPlaylists.map(async (item: any) => {
+                    const rawDatatracks = await this._fetchTracks(item.idPlaylist);
+                    const tracks = rawDatatracks.map((data: any) => new Track(data));
 
-                let visibility: Visibility = Visibility.public;
-                if (item.visibility) {
-                const vizLower = item.visibility.toLowerCase();
-                if (Object.values(Visibility).includes(vizLower as Visibility)) {
-                    visibility = vizLower as Visibility;
-                }
-                }
+                    let visibility: Visibility = Visibility.public;
+                    if (item.visibility) {
+                        const vizLower = item.visibility.toLowerCase();
+                        if (Object.values(Visibility).includes(vizLower as Visibility)) {
+                            visibility = vizLower as Visibility;
+                        }
+                    }
 
-                return new Playlist({
-                ...item,
-                image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
-                visibility,
-                userVote: item.userVote ?? null,
-                tracks,
-                });
-            })
+                    return new Playlist({
+                    ...item,
+                    image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
+                    visibility,
+                    userVote: item.userVote ?? null,
+                    tracks,
+                    });
+                })
             );
         } catch (error) {
             if (error instanceof TypeError) {
-            new AlertManager().error("Network error. Check your connection.");
+                new AlertManager().error("Network error. Check your connection.");
             }
             console.error("Error fetching shared playlists:", error);
             throw error;
@@ -312,6 +312,10 @@ export class PlaylistRepository {
 
     private sharedWithCache = new Map<number, Promise<any>>();
 
+    invalidateSharedWithCache(playlistId: number): void {
+        this.sharedWithCache.delete(playlistId);
+    }
+
     async sharedWith(playlist_id: Number) {
         const id = Number(playlist_id);
         if (this.sharedWithCache.has(id)) {
@@ -348,6 +352,30 @@ export class PlaylistRepository {
 
         this.sharedWithCache.set(id, promise);
         return promise;
+    }
+
+    async removeSharedUser(playlistId: number, targetUserId: number): Promise<void> {
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/playlists/${playlistId}/share/user/${targetUserId}`,
+                {
+                    method: "DELETE",
+                    credentials: 'include',
+                }
+            );
+
+            if (!response.ok) {
+                handleHttpError(response, "Remove shared user");
+                throw new Error("Failed to remove shared user");
+            }
+            this.invalidateSharedWithCache(playlistId);
+        } catch (error) {
+            if (error instanceof TypeError) {
+                new AlertManager().error("Network error. Check your connection.");
+            }
+            console.error("Error removing shared user from playlist:", error);
+            throw error;
+        }
     }
 
     async update(id: number, data: Partial<Playlist>) {
