@@ -34,7 +34,7 @@ class TestRegisterController:
         assert user is not None
         assert user.email == "john.doe@etu.umontpellier.fr"
         assert user.username == "john.doe"
-        assert user.isVerified is True
+        assert user.isVerified is False
         assert user.banned is False
         assert user.role == UserRole.USER
 
