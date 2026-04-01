@@ -62,6 +62,9 @@ doremix
             |- add --label <label>
             |- update <genre-id> --label <label>
             |- delete <genre-id> [--force]
+    |- mod
+        |- add <user-id>
+        |- demote <user-id>
 ```
 
 Notes:

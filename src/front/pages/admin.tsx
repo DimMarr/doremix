@@ -189,7 +189,7 @@ export async function AdminPage(container: HTMLElement | null) {
           </a>
         </div>
 
-        <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full max-w-2xl shadow-2xl mb-6">
+        <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full shadow-2xl mb-6">
           <h2 class="text-xl font-semibold text-white mb-4">Genres</h2>
           <div id="genre-list" class="space-y-2 mb-6 max-h-96 overflow-y-auto">
             <p class="text-muted-foreground text-sm">Loading...</p>
