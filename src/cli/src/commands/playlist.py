@@ -596,4 +596,3 @@ def reorder_track_cmd(
 
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")
-
