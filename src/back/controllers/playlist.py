@@ -1,10 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from repositories import PlaylistRepository, UserRepository
+from repositories import PlaylistRepository, VoteRepository, UserRepository
 from fastapi import HTTPException, UploadFile
 from models.enums import PlaylistVisibility
 from utils.image_processor import save_cover_image
 from models import Playlist
 from models import User
+from schemas.vote import VoteResponse
 
 
 class PlaylistController:
@@ -26,6 +27,19 @@ class PlaylistController:
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
         return playlist
+
+    @staticmethod
+    async def cast_vote(
+        db: AsyncSession, playlist_id: int, value: int, user: User
+    ) -> VoteResponse:
+        playlist = await PlaylistRepository.get_by_id(db, playlist_id, user)
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+
+        score, user_vote = await VoteRepository.upsert_vote(
+            db, user.idUser, playlist_id, value
+        )
+        return VoteResponse(score=score, userVote=user_vote)
 
     @staticmethod
     async def get_playlist_tracks(db: AsyncSession, playlist_id: int, user: User):
@@ -180,6 +194,32 @@ class PlaylistController:
         if msg == "group_not_found":
             raise HTTPException(404, "Group not found")
         return {"message": "Shared with group successfully"}
+
+    @staticmethod
+    async def unshare_user(
+        db: AsyncSession, playlist_id: int, target_user_id: int, current_user_id: int
+    ):
+        playlist = await PlaylistRepository.get_by_id_raw(db, playlist_id)
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+
+        current_user = await UserRepository.get_user_by_id(db, current_user_id)
+        is_admin = current_user is not None and current_user.idRole == 3
+        if playlist.idOwner != current_user_id and not is_admin:
+            raise HTTPException(
+                status_code=403,
+                detail="You're not allowed to remove users from this playlist",
+            )
+
+        removed = await PlaylistRepository.remove_shared_user(
+            db, playlist_id, target_user_id
+        )
+        if not removed:
+            raise HTTPException(
+                status_code=404,
+                detail="This user does not have access to this playlist",
+            )
+        return {"message": "User successfully removed from playlist"}
 
     @staticmethod
     async def transfer_playlist(

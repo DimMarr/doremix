@@ -17,6 +17,8 @@ from src.services.playlist import (
     add_track_to_playlist,
     search_playlists,
     search_tracks_in_playlist,
+    get_shared_users,
+    remove_shared_user,
     transfer_ownership,
 )
 
@@ -343,6 +345,67 @@ def search_tracks(
         console.print(table)
         console.print(f"\n[green]{len(tracks)} track(s) found[/green]")
 
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(help="List users who have access to a shared playlist.")
+def shared_users(
+    playlist_id: int = typer.Argument(..., help="Playlist ID"),
+):
+    try:
+        users = get_shared_users(str(playlist_id))
+
+        if not users:
+            console.print("[yellow]No users have access to this playlist.[/yellow]")
+            return
+
+        table = Table(title=f"Users with access to playlist #{playlist_id}")
+        table.add_column("id", style="cyan")
+        table.add_column("username", style="magenta")
+        table.add_column("email", style="blue")
+        table.add_column("role", style="yellow")
+
+        for user in users:
+            role = "[amber]Editor[/amber]" if user.editor else "[blue]Viewer[/blue]"
+            table.add_row(str(user.idUser), user.username, user.email, role)
+
+        console.print(table)
+        console.print(f"\n[green]{len(users)} user(s) with access[/green]")
+
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(help="Remove a user's access from a shared playlist.")
+def unshare(
+    playlist_id: int = typer.Argument(..., help="Playlist ID"),
+    user_id: int = typer.Argument(..., help="User ID to remove"),
+    force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
+):
+    try:
+        users = get_shared_users(str(playlist_id))
+        target = next((u for u in users if u.idUser == user_id), None)
+
+        if not target:
+            console.print(
+                f"[yellow]User #{user_id} does not have access to this playlist.[/yellow]"
+            )
+            return
+
+        if not force:
+            confirm = typer.confirm(
+                f"Remove access for '{target.username}' ({target.email}) from playlist #{playlist_id}?"
+            )
+            if not confirm:
+                console.print("[yellow]Cancelled.[/yellow]")
+                raise typer.Abort()
+
+        result = remove_shared_user(str(playlist_id), str(user_id))
+        console.print(f"[green]✓ {result['message']}[/green]")
+
+    except typer.Abort:
+        pass
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")
 

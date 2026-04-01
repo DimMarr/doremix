@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, ForeignKey, Boolean
+from sqlalchemy.orm import relationship
 from database import Base
 
 
@@ -18,3 +19,5 @@ class UserPlaylist(Base):
         primary_key=True,
     )
     editor = Column("editor", Boolean, default=False)
+
+    user = relationship("User", lazy="joined", overlaps="playlists,users")
