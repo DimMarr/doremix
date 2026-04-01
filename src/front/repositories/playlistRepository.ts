@@ -152,7 +152,6 @@ export class PlaylistRepository {
     }
 
     async getAll(): Promise<Playlist[]> {
-        const img1 = new URL("../assets/images/playlist1.jpg", import.meta.url).href;
         try {
             const rawDataPlaylists = await this._fetchAll();
             // Lazy loading: do NOT fetch tracks here
@@ -169,7 +168,7 @@ export class PlaylistRepository {
                 return new Playlist({
                     ...item,
                     genreLabel: item.genre?.label,
-                    image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
+                    image: item.coverImage ? this.getCoverUrl(item.coverImage) : undefined,
                     visibility: visibility,
                     userVote: item.userVote ?? null,
                     tracks: [], // Initialize with empty tracks
@@ -183,7 +182,6 @@ export class PlaylistRepository {
     }
 
     async getPublic(): Promise<Playlist[]> {
-        const img1 = new URL("../assets/images/playlist1.jpg", import.meta.url).href;
         try {
             const rawDataPlaylists = await this._fetchPublic();
             // Lazy loading: do NOT fetch tracks here
@@ -200,7 +198,7 @@ export class PlaylistRepository {
                 return new Playlist({
                     ...item,
                     genreLabel: item.genre?.label,
-                    image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
+                    image: item.coverImage ? this.getCoverUrl(item.coverImage) : undefined,
                     visibility: visibility,
                     userVote: item.userVote ?? null,
                     tracks: [], // Initialize with empty tracks
@@ -214,7 +212,6 @@ export class PlaylistRepository {
     }
 
     async getShared(): Promise<Playlist[]> {
-        const img1 = new URL("../assets/images/playlist1.jpg", import.meta.url).href;
         try {
             const response = await fetch(`${API_BASE_URL}/playlists/shared`, {
                 method: "GET",
@@ -241,7 +238,7 @@ export class PlaylistRepository {
 
                     return new Playlist({
                     ...item,
-                    image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
+                    image: item.coverImage ? this.getCoverUrl(item.coverImage) : undefined,
                     visibility,
                     userVote: item.userVote ?? null,
                     tracks,
@@ -297,12 +294,10 @@ export class PlaylistRepository {
         const tracks = rawDataTracks.map((data: any) => new Track(data));
         const artists = rawDataTracks.map((data: any) => new Artist(data.artist));
 
-        const img1 = new URL("../assets/images/playlist1.jpg", import.meta.url).href;
-
         return new Playlist({
             ...rawData,
             genreLabel: rawData.genre?.label,
-            image: rawData.coverImage ? this.getCoverUrl(rawData.coverImage) : img1,
+            image: rawData.coverImage ? this.getCoverUrl(rawData.coverImage) : undefined,
             visibility: rawData.visibility ? rawData.visibility.toLowerCase() as Visibility : Visibility.public,
             userVote: rawData.userVote ?? null,
             tracks: tracks,
@@ -424,7 +419,6 @@ export class PlaylistRepository {
     }
 
     async adminGetAll(): Promise<Playlist[]> {
-        const img1 = new URL("../assets/images/playlist1.jpg", import.meta.url).href;
         try {
             const response = await fetch(`${API_BASE_URL}/admin/playlists/`, {
                 credentials: 'include',
@@ -445,7 +439,7 @@ export class PlaylistRepository {
                 return new Playlist({
                     ...item,
                     genreLabel: item.genre?.label,
-                    image: item.coverImage ? this.getCoverUrl(item.coverImage) : img1,
+                    image: item.coverImage ? this.getCoverUrl(item.coverImage) : undefined,
                     visibility,
                     tracks: [],
                 });
