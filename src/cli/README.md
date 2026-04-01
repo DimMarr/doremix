@@ -43,6 +43,7 @@ doremix
         |- add-track <playlist-id> --url <youtube-link> --title <title>
         |- search-tracks <playlist-id> <query>
         |- search <query>
+        |- vote <playlist-id> --up|--down|--remove
     |- track
         |- list
         |- get <track-id>
@@ -55,3 +56,4 @@ Notes:
 - Visibility values are `PUBLIC`, `PRIVATE`, `OPEN`.
 - `playlist list` defaults to `--scope accessible` (your playlists + other users' `OPEN` and `PUBLIC` playlists).
 - Playlist mutations (`update`, `delete`, `add-track`, `remove`) are owner-only.
+- `playlist vote` accepts `--up` (+1), `--down` (-1), or `--remove` (0) — exactly one flag required.
