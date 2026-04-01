@@ -297,6 +297,32 @@ def transfer_ownership(
     return res_json
 
 
+def reorder_track(
+    playlist_id: str, track_id: int, prev_track_id: Optional[int]
+) -> dict[str, Any]:
+    user_id = _get_current_user_id()
+    playlist = _get_playlist_from_api(playlist_id)
+    _assert_owner(playlist, user_id)
+
+    payload: dict[str, Any] = {"prev_track_id": prev_track_id}
+
+    res = make_authenticated_request(
+        "PATCH",
+        f"/playlists/{playlist_id}/tracks/{track_id}/move",
+        json=payload,
+    )
+
+    if res.status_code == 404:
+        raise Exception("Playlist or track not found")
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
+    if res.status_code != 200:
+        raise Exception(f"Error while reordering track: {_detail(res)}")
+
+    data: dict[str, Any] = res.json()
+    return data
+
+
 def get_shared_users(playlist_id: str) -> list[SharedUserSchema]:
     user_id = _get_current_user_id()
     playlist = _get_playlist_from_api(playlist_id)
