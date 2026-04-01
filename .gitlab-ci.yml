@@ -137,7 +137,7 @@ package_cli:
     - chmod +x /usr/local/bin/nfpm
   script:
     - cd src/cli
-    - uv sync --frozen
+    - uv sync
     - uv run --with pyinstaller pyinstaller --clean --noconfirm --onefile --name doremix src/main.py
     - cd "$CI_PROJECT_DIR"
     - |
@@ -202,7 +202,7 @@ package_cli_beta:
     - chmod +x /usr/local/bin/nfpm
   script:
     - cd src/cli
-    - uv sync --frozen
+    - uv sync
     - uv run --with pyinstaller pyinstaller --clean --noconfirm --onefile --name doremix src/main.py
     - cd "$CI_PROJECT_DIR"
     - |
