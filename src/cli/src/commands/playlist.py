@@ -567,7 +567,9 @@ def vote(
             console.print(f"[yellow]Vote removed.[/yellow] Score: {score}")
 
         if user_vote is not None:
-            vote_label = "+1" if user_vote == 1 else ("-1" if user_vote == -1 else "none")
+            vote_label = (
+                "+1" if user_vote == 1 else ("-1" if user_vote == -1 else "none")
+            )
             console.print(f"Your vote: {vote_label}")
 
     except typer.Abort:
