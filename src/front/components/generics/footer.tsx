@@ -1,6 +1,6 @@
 export function Footer() {
   return (
-    <footer class="bg-background rounded-md p-6 mt-[400px] mb-3">
+    <footer class="bg-background rounded-md p-6 mt-24 mb-3">
       <div class="flex flex-col md:flex-row gap-10 justify-between mb-6">
         <div class="company-section max-w-[300px]">
           <div class="font-black text-2xl mb-1">Dorémix</div>
@@ -13,15 +13,8 @@ export function Footer() {
 
         <div class="flex flex-1 justify-between flex-col md:flex-row md:justify-end gap-5 md:gap-[120px]">
           <div class="link-section flex flex-col gap-2">
-            <p class="font-bold">Navigation</p>
-            <p>Landing page</p>
-            <p>Authentication</p>
-            <p>Terms of service</p>
-          </div>
-          <div class="link-section flex flex-col gap-2">
-            <p class="font-bold">Resources</p>
-            <p>Terms</p>
-            <p>Cookie preference</p>
+            <p class="font-bold">Legal</p>
+            <a href="/cgu" data-link class="text-neutral-400 hover:text-white transition-colors">Terms of use</a>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { Header } from "@components/generics/index";
+import { Footer, Header } from "@components/generics/index";
 import { initializePlayer, TrackPlayer } from "@components/playlists/trackPlayer";
 import YoutubePlayer from "@store/trackPlayer";
 import { waitForYouTubeAPI } from "@utils/youtubeApiLoader";
@@ -30,6 +30,8 @@ export async function createMainLayout() {
       </Header>
 
       <main class="" id="mainContent"></main>
+
+      <Footer />
 
       <div id="youtubePlayer"></div>
       <div id="trackPlayerContainer">{TrackPlayer()}</div>

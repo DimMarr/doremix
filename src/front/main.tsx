@@ -2,6 +2,7 @@ import "@styles/alert.css";
 import { HomePage, PlaylistDetailPage, LoginPage, SignupPage, AdminPage } from "@pages/index";
 import { createMainLayout, trackPlayerInstance } from "@layouts/mainLayout";
 import { Router } from "./router";
+import { CguPage } from "./pages/cgu";
 import { NoInternetPage } from "@pages/noInternet";
 
 export let routerInstance = null;
@@ -33,6 +34,10 @@ export default async function init() {
 
   router.register("/admin", async(container) => {
     AdminPage(container);
+  })
+
+  router.register("/cgu", async(container) => {
+    CguPage(container);
   })
 
   router.onRouteChange();
