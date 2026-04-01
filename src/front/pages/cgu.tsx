@@ -22,7 +22,7 @@ export function CguPage(container: HTMLElement) {
         <section>
           <h2 class="text-xl font-semibold text-white mb-3">2. Service Access and Account</h2>
           <p class="leading-relaxed">
-            To fully utilise Dorémix, a user account must be created. Since this is an academic project, any personal information gathered—like usernames or emails—is only used to show off the technical features of the application. It is your responsibility to keep your login information private. After the academic grading process is finished, all database records will be removed.
+            To fully utilise Dorémix, a user account must be created. Since this is an academic project, any personal information gathered—like usernames or emails—is only used to show off the technical features of the application. It is your responsibility to keep your login information private.
           </p>
         </section>
 
