@@ -34,7 +34,12 @@ class Playlist(Base):
     owner = relationship("User", foreign_keys=[idOwner], lazy="selectin")
     genre = relationship("Genre", foreign_keys=[idGenre], lazy="selectin")
     tracks = relationship(
-        "Track", secondary="track_playlist", back_populates="playlists", lazy="selectin"
+        "Track",
+        secondary="track_playlist",
+        primaryjoin="Playlist.idPlaylist == foreign(track_playlist.c.idplaylist)",
+        secondaryjoin="Track.idTrack == foreign(track_playlist.c.idtrack)",
+        back_populates="playlists",
+        lazy="selectin",
     )
     users = relationship(
         "User", secondary="user_playlist", back_populates="playlists", lazy="selectin"

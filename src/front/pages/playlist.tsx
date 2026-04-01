@@ -170,18 +170,18 @@ async function renderTrackList(playlist: Playlist, canEditPlaylist: boolean): Pr
   const playerState = trackPlayerInstance.getPlayerState();
 
   return (
-      <div>
-        <TrackListHeader />
-        {(await Promise.all(tracks.map(async (track, index) => ( await
-                <TrackRow
-                    track={track}
-                    index={index}
-                    playlistId={playlist.idPlaylist}
-                    current_track={[YoutubePlayerState.UNSTARTED, YoutubePlayerState.CUED].includes(playerState) ? undefined : currentTrack}
-                    canEditPlaylist={canEditPlaylist}
-                />
-        )))) as unknown as 'safe'}
-      </div>
+    <div>
+      <TrackListHeader />
+      {(await Promise.all(tracks.map(async (track, index) => (await
+        <TrackRow
+          track={track}
+          index={index}
+          playlistId={playlist.idPlaylist}
+          current_track={([YoutubePlayerState.UNSTARTED, YoutubePlayerState.CUED] as YoutubePlayerState[]).indexOf(playerState) !== -1 ? undefined : currentTrack}
+          canEditPlaylist={canEditPlaylist}
+        />
+      )))) as unknown as 'safe'}
+    </div>
   );
 }
 
@@ -227,10 +227,10 @@ export async function PlaylistDetailPage(
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
           <div>
-              <p class="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/45">Community score</p>
-              <div id="playlist-vote-controls"></div>
+            <p class="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/45">Community score</p>
+            <div id="playlist-vote-controls"></div>
           </div>
-            <div class="flex flex-wrap gap-2 mt-1">
+          <div class="flex flex-wrap gap-2 mt-1">
             {await canEdit(repo, playlist) &&
               <button id="add-track-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Add Track">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -445,10 +445,10 @@ export async function PlaylistDetailPage(
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
           <div>
-              <p class="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/45">Community score</p>
-              <div id="playlist-vote-controls"></div>
+            <p class="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/45">Community score</p>
+            <div id="playlist-vote-controls"></div>
           </div>
-            <div class="flex flex-wrap gap-2 mt-1">
+          <div class="flex flex-wrap gap-2 mt-1">
             {await canEdit(repo, playlist) &&
               <button id="add-track-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Add Track">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -499,28 +499,6 @@ export async function PlaylistDetailPage(
   // Initialize functionality
   updateTrackListDisplay();
   mountVoteControls();
-
-  // Search filter
-  const searchInput = container.querySelector('#track-search-input') as HTMLInputElement | null;
-  if (searchInput) {
-    searchInput.addEventListener('input', () => {
-      const query = searchInput.value.toLowerCase().trim();
-      const trackListContainer = container.querySelector('#track-list-container');
-      if (!trackListContainer) return;
-
-      // Select all track rows (they have a data-track-index attribute)
-      const rows = trackListContainer.querySelectorAll('[data-track-index]');
-      rows.forEach((row) => {
-        const htmlRow = row as HTMLElement;
-        const text = htmlRow.textContent?.toLowerCase() ?? '';
-        if (!query || text.includes(query)) {
-          htmlRow.style.display = '';
-        } else {
-          htmlRow.style.display = 'none';
-        }
-      });
-    });
-  }
 
   // Event delegation
   container.onclick = (e: MouseEvent) => {
@@ -622,4 +600,147 @@ export async function PlaylistDetailPage(
       }
     }
   };
+
+  // Drag & Drop Event Delegation
+  let draggedTrackIndex: number | null = null;
+  let draggedTrackId: number | null = null;
+  let draggedRow: HTMLElement | null = null;
+  let placeholder: HTMLElement | null = null;
+
+  container.addEventListener('dragstart', (e: DragEvent) => {
+    const target = e.target as HTMLElement;
+    const row = target.closest('[data-track-index]') as HTMLElement;
+    if (row && e.dataTransfer) {
+      draggedTrackIndex = Number(row.getAttribute('data-track-index'));
+      draggedTrackId = Number(row.getAttribute('data-track-id'));
+      draggedRow = row;
+
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', draggedTrackIndex.toString());
+
+      const dragImage = row.cloneNode(true) as HTMLElement;
+      dragImage.style.width = `${row.offsetWidth}px`;
+      dragImage.classList.add('bg-neutral-800', 'shadow-2xl', 'scale-105', 'opacity-90', 'rounded-md', 'z-50', 'pointer-events-none');
+      document.body.appendChild(dragImage);
+      dragImage.style.position = 'absolute';
+      dragImage.style.top = '-1000px';
+      e.dataTransfer.setDragImage(dragImage, e.offsetX || 20, e.offsetY || 20);
+
+      placeholder = document.createElement('div');
+      placeholder.id = 'dnd-placeholder';
+      placeholder.className = "bg-blue-500/10 border-2 border-dashed border-blue-500/50 rounded-md transition-all duration-300 pointer-events-none";
+      placeholder.style.height = `${row.offsetHeight}px`;
+
+      setTimeout(() => {
+        row.style.display = 'none';
+        row.parentNode?.insertBefore(placeholder!, row);
+      }, 0);
+
+      setTimeout(() => {
+        if (document.body.contains(dragImage)) {
+          document.body.removeChild(dragImage);
+        }
+      }, 100);
+    }
+  });
+
+  container.addEventListener('dragover', (e: DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+
+    if (!placeholder || !draggedRow) return;
+
+    const wrapper = container.querySelector('#track-list-container > div');
+    if (!wrapper) return;
+
+    const allItems = Array.from(wrapper.children) as HTMLElement[];
+    const visibleRows = allItems.filter(el => el !== draggedRow && el !== placeholder && el.hasAttribute('data-track-index'));
+
+    let insertBeforeNode: HTMLElement | null = null;
+
+    // Cleanup previous hovers
+    visibleRows.forEach(r => r.classList.remove('drop-target-hover'));
+
+    for (let i = 0; i < visibleRows.length; i++) {
+      const r = visibleRows[i];
+      const rect = r.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+
+      if (e.clientY < midY) {
+        insertBeforeNode = r;
+        r.classList.add('drop-target-hover'); // Add hover feedback
+        break;
+      }
+    }
+
+    if (insertBeforeNode) {
+      if (placeholder.nextElementSibling !== insertBeforeNode) {
+        wrapper.insertBefore(placeholder, insertBeforeNode);
+      }
+    } else {
+      wrapper.appendChild(placeholder);
+    }
+  });
+
+  container.addEventListener('dragend', (e: DragEvent) => {
+    if (draggedRow) {
+      draggedRow.style.display = '';
+    }
+    if (placeholder && placeholder.parentNode) {
+      placeholder.parentNode.removeChild(placeholder);
+    }
+
+    draggedTrackIndex = null;
+    draggedTrackId = null;
+    draggedRow = null;
+    placeholder = null;
+  });
+
+  container.addEventListener('drop', async (e: DragEvent) => {
+    e.preventDefault();
+
+    if (draggedRow && placeholder && draggedTrackIndex !== null && draggedTrackId !== null) {
+      const wrapper = container.querySelector('#track-list-container > div');
+      if (wrapper) {
+        const allItems = Array.from(wrapper.children) as HTMLElement[];
+        const filteredItems = allItems.filter(el => (el.hasAttribute('data-track-index') && el !== draggedRow) || el === placeholder);
+
+        let newIndex = filteredItems.indexOf(placeholder);
+
+        if (placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
+        draggedRow.style.display = '';
+
+        if (newIndex !== -1 && newIndex !== draggedTrackIndex) {
+          const newTracks = [...tracks];
+          const trackToMove = newTracks[draggedTrackIndex];
+          newTracks.splice(draggedTrackIndex, 1);
+          newTracks.splice(newIndex, 0, trackToMove);
+
+          tracks = newTracks;
+          playlist.tracks = [...tracks];
+          trackPlayerInstance.setPlaylist({ ...playlist });
+          updateTrackListDisplay();
+
+          const afterTrackId = newIndex > 0 ? tracks[newIndex - 1].idTrack : null;
+
+          try {
+            await new TrackRepository().move(
+              playlist.idPlaylist!,
+              draggedTrackId!,
+              afterTrackId
+            );
+            new AlertManager().success("Track reordered successfully");
+          } catch (err) {
+            console.error("Failed to reorder tracks", err);
+            new AlertManager().error("Failed to save reorder. Please refresh.");
+          }
+        }
+      }
+    }
+
+    draggedTrackIndex = null;
+    draggedTrackId = null;
+    draggedRow = null;
+    placeholder = null;
+  });
 }

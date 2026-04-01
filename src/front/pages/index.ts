@@ -3,6 +3,6 @@ export { NoInternetPage } from '@pages/noInternet';
 export { PlaylistDetailPage } from "@pages/playlist";
 export { LoginPage } from '@pages/login'
 export { SignupPage } from '@pages/signup'
-export { AdminPage } from '@pages/adminGenres'
+export { AdminPage } from '@pages/admin'
 export { ArtistsPage } from '@pages/artists'
 export { ArtistTracksPage } from '@pages/artistTracks'

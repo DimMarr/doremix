@@ -3,9 +3,33 @@ import playlist1 from '@assets/images/playlist1.jpg';
 import playIcon from '@assets/icons/play.svg';
 import pauseIcon from '@assets/icons/pause.svg';
 import { routerInstance } from '../../main';
+import { Track } from '@models/track';
 
 let currentTrackIndex = 0;
 let overlayTrackRows: HTMLElement[] = [];
+
+const isTrackPlayable = (track: Track): boolean =>
+  track.status === 'ok' || track.status === undefined;
+
+const findNextPlayableIndex = (tracks: Track[], fromIndex: number, direction: 1 | -1 = 1): number | null => {
+  const total = tracks.length;
+  let i = (fromIndex + direction + total) % total;
+  let attempts = 0;
+  while (attempts < total) {
+    if (isTrackPlayable(tracks[i])) return i;
+    i = (i + direction + total) % total;
+    attempts++;
+  }
+  return null;
+};
+
+const findRandomPlayableIndex = (tracks: Track[], currentIndex: number): number | null => {
+  const playable = tracks
+    .map((t, i) => ({ t, i }))
+    .filter(({ t, i }) => isTrackPlayable(t) && i !== currentIndex);
+  if (playable.length === 0) return null;
+  return playable[Math.floor(Math.random() * playable.length)].i;
+};
 
 const highlightOverlayTrack = (index: number) => {
   overlayTrackRows.forEach((row, idx) => {
@@ -55,6 +79,16 @@ const setupControlButtons = (container: HTMLElement, playerStore: YoutubePlayer)
     throw new Error('Some buttons were not found');
   }
 
+  // Intercept clicks on track rows — block non-playable tracks
+  container.addEventListener('click', (e: Event) => {
+    const row = (e.target as HTMLElement).closest('[data-track-index]') as HTMLElement | null;
+    if (!row) return;
+    if (row.dataset.playable === 'false') {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+    }
+  }, true);
+
   playBtn.addEventListener('click', () => {
     playerStore?.changeTrackState();
   });
@@ -65,13 +99,19 @@ const setupControlButtons = (container: HTMLElement, playerStore: YoutubePlayer)
 
   if (previousBtn) {
     previousBtn.addEventListener('click', () => {
-      playerStore?.previousTrack();
+      const tracks = playerStore?.playlist?.tracks;
+      if (!tracks) return playerStore?.previousTrack();
+      const idx = findNextPlayableIndex(tracks, currentTrackIndex, -1);
+      if (idx !== null) playerStore?.playTrack(idx);
     });
   }
 
   if (nextBtn) {
     nextBtn.addEventListener('click', () => {
-      playerStore?.nextTrack();
+      const tracks = playerStore?.playlist?.tracks;
+      if (!tracks) return playerStore?.nextTrack();
+      const idx = findNextPlayableIndex(tracks, currentTrackIndex, 1);
+      if (idx !== null) playerStore?.playTrack(idx);
     });
   }
 
@@ -137,22 +177,50 @@ const initializePlayer = (container: HTMLElement, playerStore: YoutubePlayer) =>
 
   const originalPlayTrack = playerStore.playTrack.bind(playerStore);
   playerStore.playTrack = (index: number = 0) => {
+    const tracks = playerStore.playlist?.tracks;
+    // If the asked track is unplayable, we pass at the next one
+    if (tracks && !isTrackPlayable(tracks[index])) {
+      const next = findNextPlayableIndex(tracks, index, 1);
+      if (next === null) return;
+      index = next;
+    }
     originalPlayTrack(index);
     currentTrackIndex = index;
     highlightOverlayTrack(index);
     updateNowPlayingMeta(container, playerStore);
   };
 
+  // Patch nextTrack to auto-skip on continous listening
+  const originalNextTrack = playerStore.nextTrack?.bind(playerStore);
+  if (originalNextTrack) {
+    playerStore.nextTrack = () => {
+      const tracks = playerStore.playlist?.tracks;
+      if (!tracks) return originalNextTrack();
+      const idx = findNextPlayableIndex(tracks, currentTrackIndex, 1);
+      if (idx !== null) playerStore.playTrack(idx);
+    };
+  }
+
+  // Patch shuffle/random is available
+  const originalRandomTrack = (playerStore as any).randomTrack?.bind(playerStore);
+  if (originalRandomTrack) {
+    (playerStore as any).randomTrack = () => {
+      const tracks = playerStore.playlist?.tracks;
+      if (!tracks) return originalRandomTrack();
+      const idx = findRandomPlayableIndex(tracks, currentTrackIndex);
+      if (idx !== null) playerStore.playTrack(idx);
+    };
+  }
+
   const originalSetPlaylist = playerStore.setPlaylist.bind(playerStore);
   playerStore.setPlaylist = (playlist) => {
     originalSetPlaylist(playlist);
-    currentTrackIndex = 0;
+    currentTrackIndex = playerStore.getCurrentTrackIndex();
     updateNowPlayingMeta(container, playerStore);
   };
 
   updateNowPlayingMeta(container, playerStore);
 
-  // Load YouTube API
   if (window.YT && window.YT.Player) {
     // API already loaded
   } else {
@@ -271,5 +339,4 @@ export function TrackPlayer() {
   );
 }
 
-// Export initialization function for use in script tags
 export { initializePlayer, setupControlButtons };
