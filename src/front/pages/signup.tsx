@@ -69,7 +69,7 @@ export async function SignupPage(container) {
                     <div class="relative lg:hidden z-20 flex block justify-center items-center text-lg font-medium animate-fade-right animation-delay-100">
                         <img src={logo} alt="Dorémix" class="mr-2 h-8" />
                     </div>
-                    <div class="flex flex-col space-y-2 text-center animate-fade-up animation-delay-300">
+                    <div id="signupHeader" class="flex flex-col space-y-2 text-center animate-fade-up animation-delay-300">
                         <h1 class="text-3xl font-bold tracking-tight">Sign up to your account</h1>
                         <p class="text-base text-muted-foreground">
                             Enter your email below to create an account
@@ -90,6 +90,23 @@ export async function SignupPage(container) {
                         </div>
                         <Button className="w-full mt-2 transition-transform duration-200 active:scale-95">Sign Up</Button>
                     </form>
+
+                    <div id="registerSuccess" class="hidden flex-col items-center space-y-6 text-center animate-fade-up">
+                        <div class="flex h-20 w-20 items-center justify-center rounded-full bg-green-500/10 border-2 border-green-500/30">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 6 9 17l-5-5" />
+                            </svg>
+                        </div>
+                        <div class="space-y-2">
+                            <h1 class="text-2xl font-bold tracking-tight">Account created!</h1>
+                            <p class="text-sm text-muted-foreground">We've sent a verification email to</p>
+                            <p id="registerSuccessEmail" class="text-sm font-semibold text-primary"></p>
+                            <p class="text-sm text-muted-foreground">Please check your inbox and click the link to activate your account before logging in.</p>
+                        </div>
+                        <a href={AppRoutes.LOGIN} class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 active:scale-95 duration-200">
+                            Go to Login
+                        </a>
+                    </div>
 
                     <p class="px-8 text-center text-sm text-muted-foreground animate-fade-up animation-delay-600">
                         Already have an account?{" "}
@@ -157,10 +174,14 @@ export async function SignupPage(container) {
 
             try {
                 await authService.register(email, password);
-                await authService.login(email, password);
-                window.location.href = AppRoutes.HOME;
-            } catch (e) {
-                new AlertManager().error("Register failed.");
+                showSuccessMessage(email);
+            } catch (e: any) {
+                const message = e?.message || "";
+                if (message.includes("already exists")) {
+                    new AlertManager().error("An account with this email already exists.");
+                } else {
+                    new AlertManager().error("Register failed. Please try again.");
+                }
             }
             return
 
@@ -194,5 +215,14 @@ export async function SignupPage(container) {
 
             passwordInput.type == "password" ? passwordInput.type = "text" : passwordInput.type = "password"
         })
+    }
+
+    function showSuccessMessage(email: string) {
+        document.getElementById("registerForm").classList.add("hidden");
+        document.getElementById("signupHeader").classList.add("hidden");
+        const successEl = document.getElementById("registerSuccess");
+        document.getElementById("registerSuccessEmail").textContent = email;
+        successEl.classList.remove("hidden");
+        successEl.classList.add("flex");
     }
 }

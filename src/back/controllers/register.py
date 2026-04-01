@@ -4,8 +4,11 @@ import hashlib
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 from schemas import UserRegisterSchema
-from repositories import UserRepository
+from repositories import UserRepository, VerificationMailTokenRepository
 from passlib.context import CryptContext
+from utils.email_sender import EmailSender
+import secrets
+from datetime import datetime, timedelta
 
 # TODO: Décommenter ces imports quand la vérification email sera active
 # from repositories.verification_token_repository import VerificationTokenRepository
@@ -15,6 +18,7 @@ from passlib.context import CryptContext
 class RegisterController:
     pwd_context = CryptContext(schemes=["bcrypt"])
     pepper = os.getenv("PEPPER_KEY")
+    web_url = os.getenv("WEB_BASE_URL")
 
     @staticmethod
     async def register(db: AsyncSession, user_data: UserRegisterSchema):
@@ -37,22 +41,26 @@ class RegisterController:
             random_suffix = random.randint(1000, 9999)
             username = user_data.email.split("@")[0] + str(random_suffix)
 
-        # TODO: Passer is_verified=False une fois le système d'email en place
-        # Pour l'instant, on met True pour pouvoir tester le Login direct.
-        await UserRepository.create_user(
+        new_user = await UserRepository.create_user(
             db=db,
             email=user_data.email,
             username=username,
             password_hash=hashed_pw,
-            is_verified=True,
+            is_verified=False,
         )
 
-        # TODO: Email verification
-        # verif_token = await VerificationTokenRepository.create_token(db, new_user.idUser)
-        # EmailVerification.send_activation_email(
-        #     email=new_user.email,
-        #     username=new_user.username,
-        #     token_brut=verif_token.token
-        # )
+        token = await VerificationMailTokenRepository.create_mail_verif_token(
+            db=db, user_id=new_user.idUser
+        )
+
+        activation_link = (
+            f"{RegisterController.web_url}/verify-email?token={token.token}"
+        )
+
+        EmailSender.send_email(
+            to_email=new_user.email,
+            username=new_user.username,
+            activation_link=activation_link,
+        )
 
         return {"message": "Account successfully created"}

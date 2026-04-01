@@ -52,7 +52,13 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS}
       RATE_LIMIT: ${RATE_LIMIT:-100/minute}
       TOKEN_SECRET_KEY: ${TOKEN_SECRET_KEY:-dev-token-secret-change-me}
+      TOKEN_MAIL_SECRET_KEY: ${TOKEN_MAIL_SECRET_KEY}
       PEPPER_KEY: ${PEPPER_KEY:-dev-pepper-key-change-me}
+      MAIL_SERVER: ${MAIL_SERVER}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      WEB_BASE_URL: ${WEB_BASE_URL}
     volumes:
       - ./src/back:/app
       - ./uploads/covers:/app/uploads/covers

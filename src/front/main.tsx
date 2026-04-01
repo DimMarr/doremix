@@ -4,6 +4,7 @@ import { createMainLayout, trackPlayerInstance } from "@layouts/mainLayout";
 import { Router } from "./router";
 import { CguPage } from "./pages/cgu";
 import { NoInternetPage } from "@pages/noInternet";
+import { VerifyEmailPage } from "@pages/verifyEmail";
 
 export let routerInstance = null;
 
@@ -47,6 +48,9 @@ export default async function init() {
   router.register("/artists/:id", async (container, params) => {
     ArtistTracksPage(container, () => router.navigate("/artists"), params);
   });
+  router.register("/verify-email", async(container) => {
+    VerifyEmailPage(container);
+  })
 
   router.onRouteChange();
   routerInstance = router;
