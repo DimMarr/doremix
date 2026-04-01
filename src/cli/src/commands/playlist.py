@@ -25,6 +25,7 @@ from src.services.playlist import (
     share_group,
     get_shared_groups,
     remove_shared_group,
+    vote_playlist,
 )
 from src.services.group import get_user_groups
 
