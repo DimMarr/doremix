@@ -40,3 +40,11 @@ class GenreExistsError(GenreError):
 
 class GenreNotFoundError(GenreError):
     """Raised when a specific genre is not found in the database."""
+
+
+class PlaylistError(Exception):
+    """Base exception for playlist-related errors."""
+
+
+class PlaylistNotFoundError(PlaylistError):
+    """Raised when a specific playlist is not found."""
