@@ -1,7 +1,9 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Literal
 from datetime import datetime
 from .artist import ArtistSchema
+
+TrackStatus = Literal["ok", "unavailable"]
 
 
 class TrackSchema(BaseModel):
@@ -12,3 +14,7 @@ class TrackSchema(BaseModel):
     durationSeconds: int | None = None
     createdAt: datetime
     artists: List[ArtistSchema]
+    status: TrackStatus = "ok"
+
+    def is_playable(self) -> bool:
+        return self.status == "ok"

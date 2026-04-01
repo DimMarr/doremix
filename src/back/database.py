@@ -2,12 +2,28 @@ from dotenv import load_dotenv
 import os
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.pool import StaticPool
 
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=True,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+else:
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=True,
+        pool_size=25,
+        max_overflow=75,
+        pool_timeout=30,
+        pool_pre_ping=True,
+    )
 
 AsyncSessionLocal = sessionmaker(
     bind=engine,

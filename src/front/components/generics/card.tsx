@@ -153,13 +153,18 @@ export function buildCardsFromPlaylists(playlists: Playlist[]) {
       title: p.name || "Untitled Playlist",
       image: p.image,
       content: p.description || "",
-      children: genreBadge,
+      children: genreBadge ? (
+        <div class="flex flex-wrap gap-2">
+          {genreBadge}
+        </div>
+      ) : undefined,
       icon: svg1,
       className: "w-full",
       href: `/playlist/${p.idPlaylist}`,
       "data-link": "",
       "data-playlist-card": "1",
       "data-playlist-id": String(p.idPlaylist),
+      "data-genre-id": p.idGenre != null ? String(p.idGenre) : "",
       visibility: p.visibility,
       // Restore onClickPlay for potential inline handling or reference
       onClickPlay: () => {

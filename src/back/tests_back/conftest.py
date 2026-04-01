@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.pool import StaticPool
 from fastapi import FastAPI
 from httpx import AsyncClient, ASGITransport
-from database import Base, get_db
+from database import Base, get_db, engine
 from routes.playlists import router as playlists_router
 from routes.users import router as users_router
 from routes.search_router import router as search_router
@@ -16,6 +16,7 @@ from models import User, Genre
 from models.enums import PlaylistVisibility
 from models.playlist import Playlist
 from middleware.auth_middleware import get_current_user_id, get_current_user
+
 
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
@@ -51,10 +52,40 @@ async def db():
 
 @pytest_asyncio.fixture(scope="function")
 async def sample_user(db: AsyncSession):
+    """Crée un utilisateur de test"""
     user = User(
         username="sarah",
         email="sarah@etu.umontpellier.fr",
         password="$2b$12$MfGljJQRrXEFoIXXniPzFueRzeO.wSwElO8U1uRqmq.f15VHw7kIK",
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+@pytest_asyncio.fixture(scope="function")
+async def other_user(db: AsyncSession):
+    """Crée un second utilisateur (ni owner ni admin)."""
+    user = User(
+        username="alice",
+        email="alice@etu.umontpellier.fr",
+        password="hashed",
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+@pytest_asyncio.fixture(scope="function")
+async def admin_user(db: AsyncSession):
+    """Crée un utilisateur admin."""
+    user = User(
+        username="admin",
+        email="admin@etu.umontpellier.fr",
+        password="hashed",
+        idRole=3,
     )
     db.add(user)
     await db.commit()
@@ -118,6 +149,48 @@ async def client(db: AsyncSession, sample_user):
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_current_user_id] = lambda: sample_user.idUser
     app.dependency_overrides[get_current_user] = lambda: sample_user
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+        follow_redirects=True,
+    ) as ac:
+        yield ac
+
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def client_as_other_user(db: AsyncSession, other_user):
+    """Client authentifié en tant qu'utilisateur non owner non admin."""
+
+    async def override_get_db():
+        yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user_id] = lambda: other_user.idUser
+    app.dependency_overrides[get_current_user] = lambda: other_user
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+        follow_redirects=True,
+    ) as ac:
+        yield ac
+
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def client_as_admin(db: AsyncSession, admin_user):
+    """Client authentifié en tant qu'admin."""
+
+    async def override_get_db():
+        yield db
+
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user_id] = lambda: admin_user.idUser
+    app.dependency_overrides[get_current_user] = lambda: admin_user
 
     async with AsyncClient(
         transport=ASGITransport(app=app),
