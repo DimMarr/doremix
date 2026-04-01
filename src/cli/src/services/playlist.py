@@ -268,6 +268,23 @@ def search_tracks_in_playlist(playlist_id: str, query: str) -> list[TrackSchema]
     return [track for track in all_tracks if query_lower in track.title.lower()]
 
 
+def vote_playlist(playlist_id: str, value: int) -> dict:
+    if value not in {-1, 0, 1}:
+        raise Exception("Vote value must be -1 (downvote), 0 (remove vote), or 1 (upvote).")
+
+    payload = {"value": value}
+    res = make_authenticated_request("PUT", f"/playlists/{playlist_id}/vote", json=payload)
+
+    if res.status_code == 404:
+        raise Exception("Playlist not found")
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
+    if res.status_code != 200:
+        raise Exception(f"Error while voting: {_detail(res)}")
+
+    return res.json()
+
+
 def transfer_ownership(
     playlist_id: str,
     email: str,
