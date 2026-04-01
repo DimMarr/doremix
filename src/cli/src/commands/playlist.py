@@ -1212,3 +1212,31 @@ def reorder_track_cmd(
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")
         console.print(f"[red] Error: {e}[/red]")
+    try:
+        if sum([upvote, downvote, remove]) != 1:
+            console.print(
+                "[yellow]Specify exactly one of --up, --down, or --remove.[/yellow]"
+            )
+            raise typer.Abort()
+
+        value = 1 if upvote else (-1 if downvote else 0)
+        result = vote_playlist(str(playlist_id), value)
+
+        score = result.get("score", "?")
+        user_vote = result.get("userVote")
+
+        if value == 1:
+            console.print(f"[green]Upvoted![/green] Score: {score}")
+        elif value == -1:
+            console.print(f"[red]Downvoted![/red] Score: {score}")
+        else:
+            console.print(f"[yellow]Vote removed.[/yellow] Score: {score}")
+
+        if user_vote is not None:
+            vote_label = "+1" if user_vote == 1 else ("-1" if user_vote == -1 else "none")
+            console.print(f"Your vote: {vote_label}")
+
+    except typer.Abort:
+        pass
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
