@@ -30,6 +30,10 @@ class AddTrackBody(BaseModel):
     title: str
 
 
+class MoveTrackBody(BaseModel):
+    prev_track_id: int | None
+
+
 @router.post(
     "/",
     response_model=PlaylistSchema,
@@ -137,6 +141,22 @@ async def add_playlist_track_by_url(
 ):
     return await PlaylistController.add_playlist_track_secure(
         db, body.title, body.url, playlist_id, user_id
+    )
+
+
+@router.patch(
+    "/{playlist_id}/tracks/{track_id}/move",
+    summary="Move a track within a playlist",
+)
+async def move_playlist_track(
+    playlist_id: int,
+    track_id: int,
+    body: MoveTrackBody,
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    return await PlaylistController.move_track(
+        db, playlist_id, track_id, body.prev_track_id, user_id
     )
 
 

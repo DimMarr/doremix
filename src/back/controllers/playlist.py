@@ -159,6 +159,28 @@ class PlaylistController:
         return track
 
     @staticmethod
+    async def move_track(
+        db: AsyncSession,
+        playlist_id: int,
+        track_id: int,
+        prev_track_id: int | None,
+        user_id: int,
+    ):
+        if not await PlaylistRepository.can_edit_playlist(db, playlist_id, user_id):
+            raise HTTPException(
+                status_code=403,
+                detail="Permission denied : You don't have permission to edit this playlist",
+            )
+
+        success = await PlaylistRepository.move_track(
+            db, playlist_id, track_id, prev_track_id
+        )
+        if not success:
+            raise HTTPException(404, "Track or Playlist not found")
+
+        return {"message": "Track moved successfully"}
+
+    @staticmethod
     async def shared_with(db: AsyncSession, playlist_id: int, current_user_id: int):
         users, err = await PlaylistRepository.list_shared_user(
             db, playlist_id, current_user_id

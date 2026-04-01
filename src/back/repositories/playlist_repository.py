@@ -231,9 +231,18 @@ class PlaylistRepository:
                 TrackPlaylist.idTrack == track_id,
             )
         )
-        track = result.scalars().first()
-        if track:
-            await db.delete(track)
+        track_to_remove = result.scalars().first()
+        if track_to_remove:
+            prev_result = await db.execute(
+                select(TrackPlaylist).filter(
+                    TrackPlaylist.idPlaylist == playlist_id,
+                    TrackPlaylist.next_track_id == track_id,
+                )
+            )
+            prev_track = prev_result.scalars().first()
+            if prev_track:
+                prev_track.next_track_id = track_to_remove.next_track_id
+            await db.delete(track_to_remove)
             await db.commit()
             return True
         return False
@@ -241,12 +250,52 @@ class PlaylistRepository:
     @staticmethod
     async def get_playlist_tracks(db: AsyncSession, playlist_id: int) -> list[Track]:
         result = await db.execute(
-            select(Track)
-            .join(TrackPlaylist)
+            select(Track, TrackPlaylist)
+            .join(TrackPlaylist, TrackPlaylist.idTrack == Track.idTrack)
             .filter(TrackPlaylist.idPlaylist == playlist_id)
-            .order_by(TrackPlaylist.idTrack)
         )
-        return list(result.scalars().all())
+        rows = result.all()
+        if not rows:
+            return []
+
+        node_map = {
+            row.Track.idTrack: (row.Track, row.TrackPlaylist.next_track_id)
+            for row in rows
+        }
+        next_ids = {
+            row.TrackPlaylist.next_track_id
+            for row in rows
+            if row.TrackPlaylist.next_track_id is not None
+        }
+
+        head_id = None
+        for track_id in node_map:
+            if track_id not in next_ids:
+                head_id = track_id
+                break
+
+        if head_id is None:
+            head_id = rows[0].Track.idTrack
+
+        ordered_tracks = []
+        current_id = head_id
+        visited = set()
+
+        while (
+            current_id is not None
+            and current_id in node_map
+            and current_id not in visited
+        ):
+            visited.add(current_id)
+            track, next_id = node_map[current_id]
+            ordered_tracks.append(track)
+            current_id = next_id
+
+        for track_id, (track, _) in node_map.items():
+            if track_id not in visited:
+                ordered_tracks.append(track)
+
+        return ordered_tracks
 
     @staticmethod
     async def add_track(
@@ -295,11 +344,85 @@ class PlaylistRepository:
         if result.scalars().first():
             return track, "already_exists"
 
-        track_playlist = TrackPlaylist(idPlaylist=playlist_id, idTrack=track.idTrack)
+        track_playlist = TrackPlaylist(
+            idPlaylist=playlist_id, idTrack=track.idTrack, next_track_id=None
+        )
         db.add(track_playlist)
+        await db.flush()
+
+        last_track_result = await db.execute(
+            select(TrackPlaylist).filter(
+                TrackPlaylist.idPlaylist == playlist_id,
+                TrackPlaylist.next_track_id.is_(None),
+                TrackPlaylist.idTrack != track.idTrack,
+            )
+        )
+        last_track = last_track_result.scalars().first()
+        if last_track:
+            last_track.next_track_id = track.idTrack
+
         await db.commit()
         await db.refresh(track_playlist)
         return track, "added"
+
+    @staticmethod
+    async def move_track(
+        db: AsyncSession, playlist_id: int, track_id: int, prev_track_id: int | None
+    ) -> bool:
+        result = await db.execute(
+            select(TrackPlaylist).filter(
+                TrackPlaylist.idPlaylist == playlist_id,
+                TrackPlaylist.idTrack == track_id,
+            )
+        )
+        track_to_move = result.scalars().first()
+        if not track_to_move:
+            return False
+
+        current_prev_result = await db.execute(
+            select(TrackPlaylist).filter(
+                TrackPlaylist.idPlaylist == playlist_id,
+                TrackPlaylist.next_track_id == track_id,
+            )
+        )
+        current_prev = current_prev_result.scalars().first()
+
+        if current_prev:
+            current_prev.next_track_id = track_to_move.next_track_id
+
+        if prev_track_id is None:
+            all_links_result = await db.execute(
+                select(TrackPlaylist.idTrack, TrackPlaylist.next_track_id).filter(
+                    TrackPlaylist.idPlaylist == playlist_id
+                )
+            )
+            all_links = all_links_result.all()
+            pointed_to = {
+                link.next_track_id
+                for link in all_links
+                if link.next_track_id is not None and link.idTrack != track_id
+            }
+            current_head_id = None
+            for link in all_links:
+                if link.idTrack != track_id and link.idTrack not in pointed_to:
+                    current_head_id = link.idTrack
+                    break
+            track_to_move.next_track_id = current_head_id
+        else:
+            target_prev_result = await db.execute(
+                select(TrackPlaylist).filter(
+                    TrackPlaylist.idPlaylist == playlist_id,
+                    TrackPlaylist.idTrack == prev_track_id,
+                )
+            )
+            target_prev = target_prev_result.scalars().first()
+            if not target_prev:
+                return False
+            track_to_move.next_track_id = target_prev.next_track_id
+            target_prev.next_track_id = track_to_move.idTrack
+
+        await db.commit()
+        return True
 
     @staticmethod
     async def get_by_name(db: AsyncSession, name: str) -> list[Playlist]:
