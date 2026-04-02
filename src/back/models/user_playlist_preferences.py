@@ -1,4 +1,6 @@
 from sqlalchemy import Column, Integer, String
+# Using sqlalchemy.types.JSON (not JSONB) to remain compatible with the
+# SQLite in-memory test database; SQLAlchemy maps JSON -> JSONB on PostgreSQL.
 from sqlalchemy.types import JSON
 from database import Base
 
