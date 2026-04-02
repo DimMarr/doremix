@@ -2,6 +2,7 @@ import "@styles/alert.css";
 import { HomePage, PlaylistDetailPage, LoginPage, SignupPage, AdminPage, ArtistsPage, ArtistTracksPage } from "@pages/index";
 import { createMainLayout, trackPlayerInstance } from "@layouts/mainLayout";
 import { Router } from "./router";
+import { CguPage } from "./pages/cgu";
 import { NoInternetPage } from "@pages/noInternet";
 
 export let routerInstance = null;
@@ -42,6 +43,10 @@ export default async function init() {
   router.register("/artists/:id", async (container, params) => {
     ArtistTracksPage(container, () => router.navigate("/artists"), params);
   });
+
+  router.register("/cgu", async(container) => {
+    CguPage(container);
+  })
 
   router.onRouteChange();
   routerInstance = router;

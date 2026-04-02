@@ -21,6 +21,7 @@ from src.services.playlist import (
     get_shared_users,
     remove_shared_user,
     transfer_ownership,
+    vote_playlist,
 )
 
 app = typer.Typer()
@@ -49,6 +50,7 @@ def list(
     table.add_column("title", style="magenta")
     table.add_column("visibility", style="green")
     table.add_column("owner", style="yellow")
+    table.add_column("votes", style="yellow")
 
     for playlist in playlists:
         id = str(playlist.idPlaylist)
@@ -56,7 +58,7 @@ def list(
         visibility = playlist.visibility.value
         owner = str(playlist.idOwner)
 
-        table.add_row(id, title, visibility, owner)
+        table.add_row(id, title, visibility, owner, str(playlist.vote))
 
     console.print(table)
 
@@ -441,6 +443,45 @@ def transfer(
         table.add_row("message", result.get("message", "Success"))
 
         console.print(table)
+
+    except typer.Abort:
+        pass
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+
+
+@app.command(help="Vote on a playlist (upvote, downvote, or remove vote).")
+def vote(
+    playlist_id: int = typer.Argument(..., help="Playlist ID"),
+    upvote: bool = typer.Option(False, "--up", "-u", help="Upvote the playlist"),
+    downvote: bool = typer.Option(False, "--down", "-d", help="Downvote the playlist"),
+    remove: bool = typer.Option(False, "--remove", "-r", help="Remove your vote"),
+):
+    try:
+        if sum([upvote, downvote, remove]) != 1:
+            console.print(
+                "[yellow]Specify exactly one of --up, --down, or --remove.[/yellow]"
+            )
+            raise typer.Abort()
+
+        value = 1 if upvote else (-1 if downvote else 0)
+        result = vote_playlist(str(playlist_id), value)
+
+        score = result.get("score", "?")
+        user_vote = result.get("userVote")
+
+        if value == 1:
+            console.print(f"[green]Upvoted![/green] Score: {score}")
+        elif value == -1:
+            console.print(f"[red]Downvoted![/red] Score: {score}")
+        else:
+            console.print(f"[yellow]Vote removed.[/yellow] Score: {score}")
+
+        if user_vote is not None:
+            vote_label = (
+                "+1" if user_vote == 1 else ("-1" if user_vote == -1 else "none")
+            )
+            console.print(f"Your vote: {vote_label}")
 
     except typer.Abort:
         pass
