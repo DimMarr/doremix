@@ -12,7 +12,7 @@ class UserPlaylistPreferencesRepository:
                 UserPlaylistPreferences.idUser == user_id
             )
         )
-        return result.scalars().first()
+        return result.scalars().first() or None
 
     @staticmethod
     async def upsert(
@@ -26,7 +26,7 @@ class UserPlaylistPreferencesRepository:
                 UserPlaylistPreferences.idUser == user_id
             )
         )
-        prefs = result.scalars().first()
+        prefs: UserPlaylistPreferences | None = result.scalars().first()
         if prefs is None:
             prefs = UserPlaylistPreferences(idUser=user_id)
             db.add(prefs)
