@@ -18,3 +18,7 @@ from .user import (
 )
 from .genre import GenreSchema, GenreCreate, GenreUpdate
 from .artist import ArtistSchema
+from .user_playlist_preferences import (
+    PlaylistPreferencesSchema,
+    PlaylistPreferencesUpdate,
+)
