@@ -4,6 +4,8 @@ import { createMainLayout, trackPlayerInstance } from "@layouts/mainLayout";
 import { Router } from "./router";
 import { CguPage } from "./pages/cgu";
 import { NoInternetPage } from "@pages/noInternet";
+import { RequestPasswordResetPage } from "./pages/requestPasswordReset";
+import { ResetPasswordPage } from "./pages/resetPassword";
 
 export let routerInstance = null;
 
@@ -46,6 +48,14 @@ export default async function init() {
 
   router.register("/verify-email", async(container) => {
     VerifyEmailPage(container);
+  })
+
+  router.register("/reset-password", async(container, params) => {
+    ResetPasswordPage(container, params);
+  })
+
+  router.register("/request-password-reset", async(container) => {
+    RequestPasswordResetPage(container);
   })
 
   router.register("/cgu", async(container) => {

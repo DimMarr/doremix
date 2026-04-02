@@ -22,6 +22,8 @@ class AuthMiddleware:
             "/auth/refresh",
             "/auth/verify-email",
             "/auth/resend-verification-email",
+            "/auth/request-password-reset",
+            "/auth/reset-password",
             "/health",
             "/docs",
             "/redoc",

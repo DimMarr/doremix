@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
 from controllers.login import LoginController
+from controllers.password_reset import PasswordResetController
 from schemas.auth import (
     LoginSchema,
     AccessTokenValidity,
@@ -21,6 +22,21 @@ class VerifyEmailSchema(BaseModel):
 
 class ResendVerificationSchema(BaseModel):
     email: str
+
+
+class RequestPasswordResetSchema(BaseModel):
+    email: str
+
+
+class VerifyResetCodeSchema(BaseModel):
+    email: str
+    code: str
+
+
+class ResetPasswordSchema(BaseModel):
+    email: str
+    code: str
+    new_password: str
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -171,3 +187,24 @@ async def resend_verification_email(
     data: ResendVerificationSchema, db: AsyncSession = Depends(get_db)
 ):
     return await LoginController.resend_verification_email(db, data.email)
+
+
+@router.post("/request-password-reset")
+async def request_password_reset(
+    data: RequestPasswordResetSchema, db: AsyncSession = Depends(get_db)
+):
+    return await PasswordResetController.request_password_reset(db, data.email)
+
+
+@router.post("/verify-reset-code")
+async def verify_reset_code(
+    data: VerifyResetCodeSchema, db: AsyncSession = Depends(get_db)
+):
+    return await PasswordResetController.verify_reset_code(db, data.email, data.code)
+
+
+@router.post("/reset-password")
+async def reset_password(data: ResetPasswordSchema, db: AsyncSession = Depends(get_db)):
+    return await PasswordResetController.reset_password(
+        db, data.email, data.code, data.new_password
+    )

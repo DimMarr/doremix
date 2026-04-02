@@ -6,7 +6,11 @@ from .playlist import Playlist, PlaylistVisibility
 from .track_artist import TrackArtist
 from .track_playlist import TrackPlaylist
 from .user_playlists import UserPlaylist
-from .verification_token import VerificationToken, VerificationMailToken
+from .verification_token import (
+    VerificationToken,
+    VerificationMailToken,
+    PasswordResetToken,
+)
 from .playlist_vote import PlaylistVote
 from .track_like import TrackLike
 from .user_playlist_preferences import UserPlaylistPreferences
