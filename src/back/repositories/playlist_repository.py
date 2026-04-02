@@ -528,6 +528,44 @@ class PlaylistRepository:
         return users, None
 
     @staticmethod
+    async def list_shared_group(
+        db: AsyncSession, playlist_id: int, current_user_id: int
+    ):
+        owner_result = await db.execute(
+            select(Playlist.idOwner).filter(Playlist.idPlaylist == playlist_id)
+        )
+        owner_id = owner_result.scalar()
+
+        if owner_id is None:
+            return [], "You're not allowed to see shared groups for this playlist"
+
+        current_user_result = await db.execute(
+            select(User).filter(User.idUser == current_user_id)
+        )
+        current_user = current_user_result.scalars().first()
+        is_admin = current_user is not None and current_user.idRole == 3
+
+        users_result = await db.execute(
+            select(UserPlaylist.idUser).filter(UserPlaylist.idPlaylist == playlist_id)
+        )
+        shared_user_ids = users_result.scalars().all()
+
+        if (
+            not is_admin
+            and current_user_id != owner_id
+            and current_user_id not in shared_user_ids
+        ):
+            return [], "You're not allowed to see shared groups for this playlist"
+
+        groups_result = await db.execute(
+            select(UserGroup)
+            .join(GroupPlaylist, GroupPlaylist.idGroup == UserGroup.idGroup)
+            .filter(GroupPlaylist.idPlaylist == playlist_id)
+        )
+        groups = groups_result.scalars().all()
+        return groups, None
+
+    @staticmethod
     async def share_with_user(
         db: AsyncSession,
         playlist_id: int,
@@ -558,7 +596,7 @@ class PlaylistRepository:
 
     @staticmethod
     async def share_with_group(
-        db: AsyncSession, playlist_id: int, owner_id: int, group_name: str
+        db: AsyncSession, playlist_id: int, owner_id: int, group_id: int
     ):
         playlist_result = await db.execute(
             select(Playlist).filter(Playlist.idPlaylist == playlist_id)
@@ -568,7 +606,7 @@ class PlaylistRepository:
             return False, "forbidden"
 
         group_result = await db.execute(
-            select(UserGroup).filter(UserGroup.groupName == group_name)
+            select(UserGroup).filter(UserGroup.idGroup == group_id)
         )
         group = cast(UserGroup | None, group_result.scalars().first())
         if not group:
@@ -580,10 +618,12 @@ class PlaylistRepository:
                 GroupPlaylist.idPlaylist == playlist_id,
             )
         )
-        if not existing_result.scalars().first():
-            link = GroupPlaylist(idGroup=group.idGroup, idPlaylist=playlist_id)
-            db.add(link)
-            await db.commit()
+        if existing_result.scalars().first():
+            return False, "already_shared"
+
+        link = GroupPlaylist(idGroup=group.idGroup, idPlaylist=playlist_id)
+        db.add(link)
+        await db.commit()
 
         return True, "success"
 
@@ -595,6 +635,23 @@ class PlaylistRepository:
             select(UserPlaylist).filter(
                 UserPlaylist.idPlaylist == playlist_id,
                 UserPlaylist.idUser == target_user_id,
+            )
+        )
+        link = link_result.scalars().first()
+        if not link:
+            return False
+        await db.delete(link)
+        await db.commit()
+        return True
+
+    @staticmethod
+    async def remove_shared_group(
+        db: AsyncSession, playlist_id: int, target_group_id: int
+    ) -> bool:
+        link_result = await db.execute(
+            select(GroupPlaylist).filter(
+                GroupPlaylist.idPlaylist == playlist_id,
+                GroupPlaylist.idGroup == target_group_id,
             )
         )
         link = link_result.scalars().first()

@@ -237,3 +237,47 @@ def whoami() -> dict[str, Any]:
     payload: dict[str, Any] = response.json()
     save_user(payload)
     return payload
+
+
+def verify_email_code(email: str, code: str) -> dict[str, Any]:
+    """Verify email with the 6-digit code sent by email."""
+    try:
+        response = requests.post(
+            _build_url("/auth/verify-email"),
+            json={"email": email, "code": code},
+            timeout=10,
+        )
+    except requests.RequestException as exc:
+        raise ApiRequestError(f"Email verification failed: {exc}") from exc
+
+    if response.status_code != 200:
+        _map_auth_error(response, "Email verification failed")
+
+    payload = response.json()
+    if not isinstance(payload, dict):
+        raise ApiRequestError(
+            "Email verification failed: invalid backend response payload."
+        )
+    return payload
+
+
+def resend_verification_code(email: str) -> dict[str, Any]:
+    """Resend verification code to email."""
+    try:
+        response = requests.post(
+            _build_url("/auth/resend-verification-email"),
+            json={"email": email},
+            timeout=10,
+        )
+    except requests.RequestException as exc:
+        raise ApiRequestError(f"Resend verification code failed: {exc}") from exc
+
+    if response.status_code != 200:
+        _map_auth_error(response, "Resend verification code failed")
+
+    payload = response.json()
+    if not isinstance(payload, dict):
+        raise ApiRequestError(
+            "Resend verification code failed: invalid backend response payload."
+        )
+    return payload

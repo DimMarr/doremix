@@ -99,13 +99,13 @@ export async function SignupPage(container) {
                         </div>
                         <div class="space-y-2">
                             <h1 class="text-2xl font-bold tracking-tight">Account created!</h1>
-                            <p class="text-sm text-muted-foreground">We've sent a verification email to</p>
+                            <p class="text-sm text-muted-foreground">We've sent a verification code to</p>
                             <p id="registerSuccessEmail" class="text-sm font-semibold text-primary"></p>
-                            <p class="text-sm text-muted-foreground">Please check your inbox and click the link to activate your account before logging in.</p>
+                            <p class="text-sm text-muted-foreground">Check your inbox and enter the 6-digit code to activate your account.</p>
                         </div>
-                        <a href={AppRoutes.LOGIN} class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 active:scale-95 duration-200">
-                            Go to Login
-                        </a>
+                        <button id="proceedToVerifyBtn" class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 active:scale-95 duration-200">
+                            Enter Verification Code
+                        </button>
                     </div>
 
                     <p id="registerFooter" class="px-8 text-center text-sm text-muted-foreground animate-fade-up animation-delay-600">
@@ -126,6 +126,7 @@ export async function SignupPage(container) {
     document.querySelector("header").innerHTML = "";
     handleRegister();
     togglePasswordVisibility();
+    handleProceedToVerify();
 
     function handleRegister() {
         const registerForm = document.getElementById('registerForm');
@@ -186,6 +187,18 @@ export async function SignupPage(container) {
             return
 
         })
+    }
+
+    function handleProceedToVerify() {
+        const btn = document.getElementById('proceedToVerifyBtn');
+        if (!btn) return;
+
+        btn.addEventListener('click', () => {
+            const email = document.getElementById('registerSuccessEmail')?.textContent || '';
+            if (email) {
+                window.location.href = `${AppRoutes.VERIFY_EMAIL}?email=${encodeURIComponent(email)}`;
+            }
+        });
     }
 
     function togglePasswordVisibility(){

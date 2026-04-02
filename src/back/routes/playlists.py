@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from pydantic import BaseModel
 from controllers import PlaylistController
+from repositories import UserPlaylistPreferencesRepository
 from schemas import (
     PlaylistSchema,
     TrackSchema,
@@ -13,9 +14,12 @@ from schemas import (
     SharePlaylistRequest,
     ShareGroupRequest,
     SharedUserSchema,
+    SharedGroupSchema,
     TransferPlaylistRequest,
     VoteRequest,
     VoteResponse,
+    PlaylistPreferencesSchema,
+    PlaylistPreferencesUpdate,
 )
 from database import get_db
 import os
@@ -83,6 +87,41 @@ async def get_shared_playlists(
     user_id: int = Depends(get_current_user_id),
 ):
     return await PlaylistController.get_shared_playlists(db, user_id)
+
+
+@router.get(
+    "/preferences",
+    response_model=PlaylistPreferencesSchema,
+    summary="Get playlist sort preferences for the current user",
+)
+async def get_playlist_preferences(
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    prefs = await UserPlaylistPreferencesRepository.get(db, user_id)
+    if prefs is None:
+        return PlaylistPreferencesSchema(sort_mode="date_desc", custom_order=None)
+    return PlaylistPreferencesSchema(
+        sort_mode=prefs.sort_mode, custom_order=prefs.custom_order
+    )
+
+
+@router.put(
+    "/preferences",
+    response_model=PlaylistPreferencesSchema,
+    summary="Save playlist sort preferences for the current user",
+)
+async def update_playlist_preferences(
+    body: PlaylistPreferencesUpdate,
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    prefs = await UserPlaylistPreferencesRepository.upsert(
+        db, user_id, body.sort_mode, body.custom_order
+    )
+    return PlaylistPreferencesSchema(
+        sort_mode=prefs.sort_mode, custom_order=prefs.custom_order
+    )
 
 
 @router.get(
@@ -243,6 +282,20 @@ async def shared_with(
     return [SharedUserSchema.from_user_playlist(u) for u in users]
 
 
+@router.get(
+    "/{playlist_id}/shared-groups",
+    response_model=List[SharedGroupSchema],
+    summary="List groups the playlist is shared with",
+)
+async def shared_groups(
+    playlist_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    groups = await PlaylistController.shared_groups(db, playlist_id, current_user_id)
+    return groups
+
+
 @router.post(
     "/{playlist_id}/share/user",
     summary="Share a playlist with a user",
@@ -268,9 +321,7 @@ async def share_playlist_group(
     db: AsyncSession = Depends(get_db),
     user_id: int = Depends(get_current_user_id),
 ):
-    return await PlaylistController.share_group(
-        db, playlist_id, user_id, req.group_name
-    )
+    return await PlaylistController.share_group(db, playlist_id, user_id, req.group_id)
 
 
 @router.delete(
@@ -286,6 +337,22 @@ async def unshare_playlist_user(
 ):
     return await PlaylistController.unshare_user(
         db, playlist_id, target_user_id, current_user_id
+    )
+
+
+@router.delete(
+    "/{playlist_id}/share/group/{target_group_id}",
+    response_model=dict,
+    summary="Retirer un groupe du partage d'une playlist",
+)
+async def unshare_playlist_group(
+    playlist_id: int,
+    target_group_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    return await PlaylistController.unshare_group(
+        db, playlist_id, target_group_id, current_user_id
     )
 
 

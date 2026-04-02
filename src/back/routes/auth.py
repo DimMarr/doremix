@@ -11,6 +11,17 @@ from schemas.auth import (
     UserInfoResponse,
 )
 from middleware.auth_middleware import get_current_user, get_current_user_id
+from pydantic import BaseModel
+
+
+class VerifyEmailSchema(BaseModel):
+    email: str
+    code: str
+
+
+class ResendVerificationSchema(BaseModel):
+    email: str
+
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -150,11 +161,13 @@ async def get_current_user_info(user=Depends(get_current_user)):
     }
 
 
-@router.get("/verify-email")
-async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
-    return await LoginController.confirm_email(db, token)
+@router.post("/verify-email")
+async def verify_email(data: VerifyEmailSchema, db: AsyncSession = Depends(get_db)):
+    return await LoginController.confirm_email(db, data.email, data.code)
 
 
 @router.post("/resend-verification-email")
-async def resend_verification_email(token: str, db: AsyncSession = Depends(get_db)):
-    return await LoginController.resend_verification_email(db, token)
+async def resend_verification_email(
+    data: ResendVerificationSchema, db: AsyncSession = Depends(get_db)
+):
+    return await LoginController.resend_verification_email(db, data.email)

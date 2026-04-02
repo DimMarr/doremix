@@ -311,9 +311,41 @@ export class PlaylistRepository {
     }
 
     private sharedWithCache = new Map<number, Promise<any>>();
+    private sharedGroupsCache = new Map<number, Promise<any>>();
 
     invalidateSharedWithCache(playlistId: number): void {
         this.sharedWithCache.delete(playlistId);
+        this.sharedGroupsCache.delete(playlistId);
+    }
+
+    async shareWithGroup(playlistId: number, groupId: number): Promise<void> {
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/playlists/${playlistId}/share/group`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ group_id: groupId }),
+                    credentials: "include",
+                }
+            );
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error("Group not found");
+                }
+                if (response.status === 409) {
+                    throw new Error("Group already has access");
+                }
+                throw new Error("Failed to share playlist with group");
+            }
+            this.invalidateSharedWithCache(playlistId);
+        } catch (error) {
+            console.error("Error sharing playlist with group:", error);
+            throw error;
+        }
     }
 
     async sharedWith(playlist_id: Number) {
@@ -354,6 +386,44 @@ export class PlaylistRepository {
         return promise;
     }
 
+    async sharedGroups(playlist_id: Number) {
+        const id = Number(playlist_id);
+        if (this.sharedGroupsCache.has(id)) {
+            return this.sharedGroupsCache.get(id);
+        }
+
+        const promise = (async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/playlists/${id}/shared-groups`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    credentials: 'include',
+                });
+
+                if (response.status == 403){
+                    return []
+                }
+
+                if (!response.ok) {
+                    throw new Error("Failed to get shared groups");
+                }
+                return response.json();
+            } catch (error) {
+                this.sharedGroupsCache.delete(id);
+                if (error instanceof TypeError) {
+                    new AlertManager().error("Network error. Check your connection.");
+                }
+                console.error("Error getting shared groups for a playlist:", error);
+                throw error;
+            }
+        })();
+
+        this.sharedGroupsCache.set(id, promise);
+        return promise;
+    }
+
     async removeSharedUser(playlistId: number, targetUserId: number): Promise<void> {
         try {
             const response = await fetch(
@@ -374,6 +444,33 @@ export class PlaylistRepository {
                 new AlertManager().error("Network error. Check your connection.");
             }
             console.error("Error removing shared user from playlist:", error);
+            throw error;
+        }
+    }
+
+    async removeSharedGroup(playlistId: number, targetGroupId: number): Promise<void> {
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/playlists/${playlistId}/share/group/${targetGroupId}`,
+                {
+                    method: "DELETE",
+                    credentials: 'include',
+                }
+            );
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error("Group is not associated with this playlist");
+                }
+                handleHttpError(response, "Remove shared group");
+                throw new Error("Failed to remove shared group");
+            }
+            this.invalidateSharedWithCache(playlistId);
+        } catch (error) {
+            if (error instanceof TypeError) {
+                new AlertManager().error("Network error. Check your connection.");
+            }
+            console.error("Error removing shared group from playlist:", error);
             throw error;
         }
     }

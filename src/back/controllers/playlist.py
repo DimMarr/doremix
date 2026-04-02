@@ -202,6 +202,15 @@ class PlaylistController:
         return users
 
     @staticmethod
+    async def shared_groups(db: AsyncSession, playlist_id: int, current_user_id: int):
+        groups, err = await PlaylistRepository.list_shared_group(
+            db, playlist_id, current_user_id
+        )
+        if err:
+            raise HTTPException(403, err)
+        return groups
+
+    @staticmethod
     async def share_user(
         db: AsyncSession, playlist_id: int, owner_id: int, email: str, is_editor: bool
     ):
@@ -218,15 +227,17 @@ class PlaylistController:
 
     @staticmethod
     async def share_group(
-        db: AsyncSession, playlist_id: int, owner_id: int, group_name: str
+        db: AsyncSession, playlist_id: int, owner_id: int, group_id: int
     ):
         success, msg = await PlaylistRepository.share_with_group(
-            db, playlist_id, owner_id, group_name
+            db, playlist_id, owner_id, group_id
         )
         if msg == "forbidden":
             raise HTTPException(403, "Forbidden")
         if msg == "group_not_found":
             raise HTTPException(404, "Group not found")
+        if msg == "already_shared":
+            raise HTTPException(409, "Group already has access to this playlist")
         return {"message": "Shared with group successfully"}
 
     @staticmethod
@@ -254,6 +265,32 @@ class PlaylistController:
                 detail="This user does not have access to this playlist",
             )
         return {"message": "User successfully removed from playlist"}
+
+    @staticmethod
+    async def unshare_group(
+        db: AsyncSession, playlist_id: int, target_group_id: int, current_user_id: int
+    ):
+        playlist = await PlaylistRepository.get_by_id_raw(db, playlist_id)
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+
+        current_user = await UserRepository.get_user_by_id(db, current_user_id)
+        is_admin = current_user is not None and current_user.idRole == 3
+        if playlist.idOwner != current_user_id and not is_admin:
+            raise HTTPException(
+                status_code=403,
+                detail="You're not allowed to remove groups from this playlist",
+            )
+
+        removed = await PlaylistRepository.remove_shared_group(
+            db, playlist_id, target_group_id
+        )
+        if not removed:
+            raise HTTPException(
+                status_code=404,
+                detail="Group is not associated with this playlist",
+            )
+        return {"message": "Group successfully removed from playlist"}
 
     @staticmethod
     async def transfer_playlist(

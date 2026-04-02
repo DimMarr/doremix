@@ -44,7 +44,14 @@ class SharePlaylistRequest(BaseModel):
 
 
 class ShareGroupRequest(BaseModel):
-    group_name: str
+    group_id: int
+
+
+class SharedGroupSchema(BaseModel):
+    idGroup: int
+    groupName: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TransferPlaylistRequest(BaseModel):

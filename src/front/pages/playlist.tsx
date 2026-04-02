@@ -15,7 +15,7 @@ interface PageParams {
   id: string;
 }
 
-// True si playlist est partagée avec l'utilisateur courant
+// True if playlist is shared, else false
 async function isShared(repo: PlaylistRepository, playlist: Playlist) {
   const userInfos = await authService.infos();
   const currentUserId = userInfos.id;
@@ -55,6 +55,8 @@ function getIconForVisibility(visibility: Visibility) {
 
 async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist) {
   const visibility = playlist.visibility;
+  const isSharedPlaylist = await isShared(repo, playlist);
+  const adminUser = await isAdmin();
   const badgeBase = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border uppercase tracking-wider transition-all duration-200 shadow-sm whitespace-nowrap";
   const interactable = "cursor-pointer hover:shadow-md relative select-none";
   const locked = "cursor-not-allowed opacity-80";
@@ -77,64 +79,52 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
 
   const isLikedPl = (playlist as any).isLikedPlaylist === true;
   let canEditVisibility = false;
-  if (!isLikedPl && await canEdit(repo, playlist) && (playlist.visibility != Visibility.open || isAdmin())) {
+  if (!isLikedPl && await canEdit(repo, playlist) && (playlist.visibility != Visibility.open || adminUser)) {
     canEditVisibility = true;
   }
 
   const menuOptionClass = "w-full text-left px-4 py-3 text-sm font-medium text-white hover:bg-white/10 flex items-center gap-2 transition-colors active:bg-white/20";
 
   return (
-    <div class="relative z-20 w-fit">
-      <div id="visibility-trigger" class={`${badgeBase} ${colorClass} ${canEditVisibility ? interactable : locked}`} data-visibility-trigger>
-        <div class="flex items-center gap-2 pointer-events-none">
-          {getIconForVisibility(visibility) as 'safe'}
-          <span>{visibility} {await isShared(repo, playlist) ? "(SHARED)" : ""}</span>
-          {canEditVisibility && (
-            <svg class="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="relative z-20 w-fit">
+        <div id="visibility-trigger" class={`${badgeBase} ${colorClass} ${canEditVisibility ? interactable : locked}`} data-visibility-trigger>
+          <div class="flex items-center gap-2 pointer-events-none">
+            {getIconForVisibility(visibility) as 'safe'}
+            <span>{visibility} {isSharedPlaylist ? "(SHARED)" : ""}</span>
+            {canEditVisibility && <svg class="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          )}
-        </div>
-      </div>
-      {canEditVisibility && (
-        <div id="visibility-menu" class="hidden absolute top-full left-0 mt-2 w-48 bg-neutral-900 border border-white/10 rounded-xl shadow-xl overflow-hidden backdrop-blur-md origin-top-left transition-all z-50 animate-in fade-in zoom-in-95 duration-200">
-          <div class="flex flex-col py-1">
-            {visibility !== Visibility.private && (
-              <button class={menuOptionClass} data-visibility-option={Visibility.private}>
-                {getIconForVisibility(Visibility.private) as 'safe'}
-                <span>Private</span>
-              </button>
-            )}
-            {visibility !== Visibility.public && (
-              <button class={menuOptionClass} data-visibility-option={Visibility.public}>
-                {getIconForVisibility(Visibility.public) as 'safe'}
-                <span>Public</span>
-              </button>
-            )}
-            {visibility !== Visibility.open && await isAdmin() && (
-              <button class={menuOptionClass} data-visibility-option={Visibility.open}>
-                {getIconForVisibility(Visibility.open) as 'safe'}
-                <span>OPEN</span>
-              </button>
-            )}
+            </svg>}
           </div>
         </div>
-      )}
-    </div>
+        {canEditVisibility &&
+            <div id="visibility-menu" class="hidden absolute top-full left-0 mt-2 w-48 bg-neutral-900 border border-white/10 rounded-xl shadow-xl overflow-hidden backdrop-blur-md origin-top-left transition-all z-50 animate-in fade-in zoom-in-95 duration-200">
+              <div class="flex flex-col py-1">
+                {visibility !== Visibility.private && (
+                    <button class={menuOptionClass} data-visibility-option={Visibility.private}>
+                      {getIconForVisibility(Visibility.private) as 'safe'}
+                      <span>Private</span>
+                    </button>
+                )}
+                {visibility !== Visibility.public && (
+                    <button class={menuOptionClass} data-visibility-option={Visibility.public}>
+                      {getIconForVisibility(Visibility.public) as 'safe'}
+                      <span>Public</span>
+                    </button>
+                )}
+                {visibility !== Visibility.open && adminUser &&
+                    <button class={menuOptionClass} data-visibility-option={Visibility.open}>
+                      {getIconForVisibility(Visibility.open) as 'safe'}
+                      <span>OPEN</span>
+                    </button>
+                }
+              </div>
+            </div>
+        }
+      </div>
   );
 }
 
-async function getSharedUsersElement(repo: PlaylistRepository, playlist: Playlist, isPlaylistOwner: boolean): Promise<string> {
-  const adminUser = await isAdmin();
-  if (!isPlaylistOwner && !adminUser) return '';
-
-  let users: any[] = [];
-  try {
-    users = await repo.sharedWith(playlist.idPlaylist);
-  } catch {
-    return '';
-  }
-
+function getSharedUsersElement(users: any[]): string {
   if (users.length === 0) return '';
 
   const MAX_VISIBLE = 5;
@@ -155,12 +145,42 @@ async function getSharedUsersElement(repo: PlaylistRepository, playlist: Playlis
     : '';
 
   return `
-    <div id="shared-users-section" class="flex items-center gap-2 mt-1">
+    <div id="shared-users-section" class="flex items-center gap-2">
       <div class="flex items-center">
         ${avatars}
         ${overflowBadge}
       </div>
       <span class="text-xs text-muted-foreground">${users.length} ${users.length === 1 ? 'person' : 'people'} with access</span>
+    </div>
+  `;
+}
+
+function getSharedGroupsElement(groups: any[]): string {
+  if (groups.length === 0) return '';
+
+  const MAX_VISIBLE = 5;
+  const visible = groups.slice(0, MAX_VISIBLE);
+  const overflow = groups.length - MAX_VISIBLE;
+
+  const avatars = visible.map((g: any) => {
+    const firstLetter = (g.groupName || '?').charAt(0).toUpperCase();
+    return `<div
+      title="${g.groupName}"
+      class="shared-group-avatar flex items-center justify-center w-7 h-7 rounded-full bg-indigo-700 border-2 border-neutral-900 text-xs font-semibold text-white -ml-2 first:ml-0 cursor-default select-none hover:z-10 hover:scale-110 transition-transform"
+    >${firstLetter}</div>`;
+  }).join('');
+
+  const overflowBadge = overflow > 0
+    ? `<div class="flex items-center justify-center w-7 h-7 rounded-full bg-neutral-600 border-2 border-neutral-900 text-xs font-semibold text-muted-foreground -ml-2 select-none">+${overflow}</div>`
+    : '';
+
+  return `
+    <div id="shared-groups-count" class="flex items-center gap-2">
+      <div class="flex items-center">
+        ${avatars}
+        ${overflowBadge}
+      </div>
+      <span class="text-xs text-muted-foreground">${groups.length} ${groups.length === 1 ? 'group' : 'groups'} with access</span>
     </div>
   `;
 }
@@ -223,10 +243,31 @@ export async function PlaylistDetailPage(
       const canDeleteCurrentPlaylist = await canDeletePlaylist(playlist);
       const isPlaylistOwner = await isOwner(playlist);
       const isLikedPl = (playlist as any).isLikedPlaylist === true;
+      const adminUser = await isAdmin();
+
+      let users: any[] = [];
+      let groups: any[] = [];
+      if (isPlaylistOwner || adminUser) {
+        try {
+          users = await repo.sharedWith(playlist.idPlaylist);
+        } catch {
+          users = [];
+        }
+
+        try {
+          groups = await repo.sharedGroups(playlist.idPlaylist);
+        } catch {
+          groups = [];
+        }
+      }
+
+      const sharedUsersMarkup = getSharedUsersElement(users);
+      const sharedGroupsMarkup = getSharedGroupsElement(groups);
+      const visibilityElement = await getVisibilityElement(repo, playlist);
 
       headerContainer.innerHTML = (
         <>
-          {await getVisibilityElement(repo, playlist) as 'safe'}
+          {visibilityElement as 'safe'}
           {renderGenreSection() as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
@@ -234,18 +275,23 @@ export async function PlaylistDetailPage(
             <div id="playlist-vote-controls"></div>
           </div>
 
-          {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
+          <div class="flex items-center gap-4 flex-wrap mt-1">
+            {sharedUsersMarkup as 'safe'}
+            {sharedGroupsMarkup as 'safe'}
+          </div>
         </>
       );
       mountVoteControls();
     }
-  };
+  }
 
   const handleVisibilityChange = async (newVis: Visibility) => {
+    // Optimistic update
     const oldVis = playlist.visibility;
     playlist.visibility = newVis;
     updateHeader();
 
+    // Determine backend enum value (uppercase)
     const backendVis = newVis === Visibility.public ? "PUBLIC" : newVis === Visibility.private ? "PRIVATE" : "OPEN";
 
     try {
@@ -254,6 +300,7 @@ export async function PlaylistDetailPage(
     } catch (err) {
       console.error("Failed to update visibility", err);
       new AlertManager().error("Failed to update visibility");
+      // Revert
       playlist.visibility = oldVis;
       updateHeader();
     }
@@ -338,10 +385,12 @@ export async function PlaylistDetailPage(
 
     const wasPlaying = trackPlayerInstance.getCurrentTrack()?.idTrack === track.idTrack;
 
+    // On supprime la playlist du track store.
     tracks = tracks.filter((_, i) => i !== trackIndex);
     playlist.tracks = tracks;
     trackPlayerInstance.setPlaylist({ ...playlist });
 
+    // Si la track supprimée était en cours on la stoppe et on passe à la track suivante (s'il reste des tracks)
     if (wasPlaying) {
       trackPlayerInstance.stopVideo();
       if (tracks.length > 0) {
@@ -360,6 +409,8 @@ export async function PlaylistDetailPage(
     } catch (err) {
       console.error(err);
       new AlertManager().error("Failed to remove track");
+
+      // S'il y a une erreur lors de la suppression du track, on revient en arrière en affichant la track qui n'a pas pu être supprimé.
       tracks.splice(trackIndex, 0, track);
       playlist.tracks = tracks;
       trackPlayerInstance.setPlaylist({ ...playlist });
@@ -374,8 +425,10 @@ export async function PlaylistDetailPage(
     trackPlayerInstance.playTrack(index);
   };
 
+  // Render page
   function renderGenreSection() {
     if (!playlist.genreLabel) return '';
+
     return (
       <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider">
         {playlist.genreLabel}
@@ -387,6 +440,29 @@ export async function PlaylistDetailPage(
   const isPlaylistOwner = await isOwner(playlist);
   const canEditPlaylist = await canEdit(repo, playlist);
   const isLikedPlaylist = (playlist as any).isLikedPlaylist === true;
+  const canEditPlaylistRender = await canEdit(repo, playlist);
+  const adminUser = await isAdmin();
+
+  let users: any[] = [];
+  let groups: any[] = [];
+  if (isPlaylistOwner || adminUser) {
+    try {
+      users = await repo.sharedWith(playlist.idPlaylist);
+    } catch {
+      users = [];
+    }
+
+    try {
+      groups = await repo.sharedGroups(playlist.idPlaylist);
+    } catch {
+      groups = [];
+    }
+  }
+
+  const sharedUsersMarkup = getSharedUsersElement(users);
+  const sharedGroupsMarkup = getSharedGroupsElement(groups);
+  const visibilityElement = await getVisibilityElement(repo, playlist);
+  const trackListMarkup = await renderTrackList({ ...playlist, tracks }, canEditPlaylist);
 
   container.innerHTML = (
     <div>
@@ -422,7 +498,7 @@ export async function PlaylistDetailPage(
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
               </svg>
             </button>
-            {await canEdit(repo, playlist) && !isLikedPlaylist && (
+            {canEditPlaylistRender && !isLikedPlaylist && (
               <button id="add-track-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Add Track">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" />
@@ -446,7 +522,7 @@ export async function PlaylistDetailPage(
           </div>
         </div>
         <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
-          {await getVisibilityElement(repo, playlist) as 'safe'}
+          {visibilityElement as 'safe'}
           {renderGenreSection() as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
@@ -455,7 +531,10 @@ export async function PlaylistDetailPage(
                   <div id="playlist-vote-controls"></div>
               </div>
           )}
-          {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
+            <div class="flex items-center gap-4 flex-wrap mt-1">
+                {sharedUsersMarkup as 'safe'}
+                {sharedGroupsMarkup as 'safe'}
+            </div>
         </div>
       </div>
 
@@ -513,12 +592,15 @@ export async function PlaylistDetailPage(
     const menu = container.querySelector('#visibility-menu');
     const trigger = target.closest('[data-visibility-trigger]');
 
+    // Toggle Menu
     if (trigger) {
       e.stopPropagation();
       menu?.classList.toggle('hidden');
+      // Close other menus if any? (we assume only one here)
       return;
     }
 
+    // Handle Option Selection
     const option = target.closest('[data-visibility-option]') as HTMLElement | null;
     if (option) {
       e.stopPropagation();
@@ -530,6 +612,10 @@ export async function PlaylistDetailPage(
       return;
     }
 
+    // Close menu when clicking outside (since we used stopPropagation on trigger/option, any bubbling click here is "outside" for them)
+    // But wait, if we click somewhere else inside `container`, this handler fires.
+    // If we click inside the menu but not on an option (e.g. padding), we should probably not close?
+    // Let's refine:
     if (menu && !menu.classList.contains('hidden') && !menu.contains(target)) {
       menu.classList.add('hidden');
     }
@@ -707,6 +793,7 @@ export async function PlaylistDetailPage(
 
     let insertBeforeNode: HTMLElement | null = null;
 
+    // Cleanup previous hovers
     visibleRows.forEach(r => r.classList.remove('drop-target-hover'));
 
     for (let i = 0; i < visibleRows.length; i++) {
@@ -716,7 +803,7 @@ export async function PlaylistDetailPage(
 
       if (e.clientY < midY) {
         insertBeforeNode = r;
-        r.classList.add('drop-target-hover');
+        r.classList.add('drop-target-hover'); // Add hover feedback
         break;
       }
     }

@@ -14,7 +14,7 @@ export function AdminPanel({
   content
 }: AdminPanelProps) {
 
-    const baseClass = "bg-neutral-900 border border-border p-6 rounded-xl w-full shadow-2xl flex flex-col max-h-120"
+    const baseClass = "bg-neutral-900 border border-border p-6 rounded-xl shadow-2xl flex flex-col max-h-120 flex-1 min-w-80"
     const panelClass = cn(baseClass, className);
 
     const panelContent = (
