@@ -166,6 +166,8 @@ root_app.add_typer(admin_app, name="admin", help="Admin commands.")
 root_app.add_typer(user_app, name="user", help="User management commands.")
 root_app.add_typer(group_app, name="group", help="Groups management commands.")
 root_app.add_typer(mod_app, name="mod", help="Moderator commands.")
+root_app.add_typer(genre_app, name="genre", help="Genre commands.")
+root_app.add_typer(mod_app, name="mod", help="Moderator commands.")
 
 app = root_app
 

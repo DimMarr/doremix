@@ -109,24 +109,4 @@ export class TrackRepository {
       throw err;
     }
   }
-  
-  async move(playlistId: number, trackId: number, prev_track_id: number | null) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/tracks/${trackId}/move`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prev_track_id }),
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to move track");
-      }
-      return response.json();
-    } catch (err) {
-      throw err;
-    }
-  }
 }
