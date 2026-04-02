@@ -270,10 +270,14 @@ def search_tracks_in_playlist(playlist_id: str, query: str) -> list[TrackSchema]
 
 def vote_playlist(playlist_id: str, value: int) -> dict:
     if value not in {-1, 0, 1}:
-        raise Exception("Vote value must be -1 (downvote), 0 (remove vote), or 1 (upvote).")
+        raise Exception(
+            "Vote value must be -1 (downvote), 0 (remove vote), or 1 (upvote)."
+        )
 
     payload = {"value": value}
-    res = make_authenticated_request("PUT", f"/playlists/{playlist_id}/vote", json=payload)
+    res = make_authenticated_request(
+        "PUT", f"/playlists/{playlist_id}/vote", json=payload
+    )
 
     if res.status_code == 404:
         raise Exception("Playlist not found")
@@ -282,7 +286,7 @@ def vote_playlist(playlist_id: str, value: int) -> dict:
     if res.status_code != 200:
         raise Exception(f"Error while voting: {_detail(res)}")
 
-    return res.json()
+    return dict(res.json())
 
 
 def transfer_ownership(

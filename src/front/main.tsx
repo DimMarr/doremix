@@ -40,7 +40,7 @@ export default async function init() {
   router.register("/cgu", async(container) => {
     CguPage(container);
   })
-  
+
   router.register("/artists", (container, params) => {
     ArtistsPage(container, (path) => router.navigate(path));
   });

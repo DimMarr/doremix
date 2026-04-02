@@ -9,6 +9,7 @@ from src.commands.admin import admin_app
 from src.commands.track import app as track_app
 from src.commands.user import app as user_app
 from src.commands.group import app as group_app
+from src.commands.genre import app as genre_app
 
 from src.commands.mod import app as mod_app
 from src.services import auth_service

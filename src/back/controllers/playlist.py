@@ -1,3 +1,4 @@
+from repositories.user_repository import UserRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 from repositories import PlaylistRepository, VoteRepository
 from fastapi import HTTPException, UploadFile
