@@ -326,7 +326,6 @@ deploy_prod:
     - ssh $SSH_USER_PROD@$SSH_HOST_PROD "
       cd $DEPLOY_PATH &&
       docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
-      sed -i 's/server_name localhost;/server_name $HOST_FQDN;/' build/frontend/nginx.conf &&
       CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE IMAGE_TAG=$IMAGE_TAG docker compose -f docker-compose_prod.yml pull &&
       CI_REGISTRY_IMAGE=$CI_REGISTRY_IMAGE IMAGE_TAG=$IMAGE_TAG docker compose -f docker-compose_prod.yml up -d --remove-orphans
       "

@@ -37,7 +37,7 @@ export default async function init() {
   })
 
   router.register("/artists", async (container) => {
-    ArtistsPage(container, () => router.navigate("/"));
+    ArtistsPage(container, (path) => router.navigate(path));
   });
 
   router.register("/artists/:id", async (container, params) => {

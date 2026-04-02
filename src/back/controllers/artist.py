@@ -7,8 +7,6 @@ class ArtistController:
     @staticmethod
     async def get_all_artists(db: AsyncSession):
         artists = await ArtistRepository.get_all(db)
-        if not artists:
-            raise HTTPException(status_code=404, detail="No artists found")
         return artists
 
     @staticmethod
