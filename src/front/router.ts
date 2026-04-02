@@ -3,9 +3,11 @@ import { NoInternetPage } from "@pages/noInternet";
 import { authService } from '@utils/authentication';
 
 export enum AppRoutes {
+  VERIFY_EMAIL = '/verify-email',
   LOGIN = '/login',
   SIGNUP = '/signup',
-  HOME = '/'
+  HOME = '/',
+  ARTISTS = '/artists'
 }
 
 export class Router {
@@ -38,7 +40,7 @@ export class Router {
 
     // Gestion de l'authentification
     let path = window.location.pathname;
-    const publicRoutes = [AppRoutes.LOGIN, AppRoutes.SIGNUP];
+    const publicRoutes = [AppRoutes.LOGIN, AppRoutes.SIGNUP, AppRoutes.VERIFY_EMAIL];
     let isAuth = false;
     try {
       isAuth = await authService.isAuthenticated();
@@ -64,6 +66,18 @@ export class Router {
     }
 
     if (path === "") path = AppRoutes.HOME;
+
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.getAttribute('href') === path) {
+          link.classList.add('text-white');
+          link.classList.remove('text-white/60');
+        } else {
+          link.classList.remove('text-white');
+          link.classList.add('text-white/60');
+        }
+      });
+    });
 
     if (!(new Sanitize()).isValidPath(path)) {
       console.warn('Invalid path detected:', path);

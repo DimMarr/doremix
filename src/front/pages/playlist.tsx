@@ -75,7 +75,6 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
       break;
   }
 
-  // La playlist "Titres likés" est toujours PRIVATE et non modifiable
   const isLikedPl = (playlist as any).isLikedPlaylist === true;
   let canEditVisibility = false;
   if (!isLikedPl && await canEdit(repo, playlist) && (playlist.visibility != Visibility.open || isAdmin())) {
@@ -231,35 +230,10 @@ export async function PlaylistDetailPage(
           {renderGenreSection() as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
-          {!isLikedPl && (
-            <div>
-              <p class="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/45">Community score</p>
-              <div id="playlist-vote-controls"></div>
-            </div>
-          )}
-          <div class="flex flex-wrap gap-2 mt-1">
-            {await canEdit(repo, playlist) && !isLikedPl && (
-              <button id="add-track-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Add Track">
-                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" />
-                </svg>
-              </button>
-            )}
-            {isPlaylistOwner && !isLikedPl && (
-              <button id="share-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Share Playlist">
-                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
-                </svg>
-              </button>
-            )}
-            {canDeleteCurrentPlaylist && !isLikedPl && (
-              <button id="delete-playlist-button" class="p-2 rounded-md border border-red-500/20 text-red-500 hover:bg-red-500/10 transition-colors" title="Delete Playlist">
-                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            )}
+          <div>
+            <div id="playlist-vote-controls"></div>
           </div>
+
           {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
         </>
       );
@@ -437,7 +411,7 @@ export async function PlaylistDetailPage(
               alt={playlist.name}
             />
           )}
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap justify-center items-center gap-2">
             <button id="play-all-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Play">
               <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
@@ -448,22 +422,7 @@ export async function PlaylistDetailPage(
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
               </svg>
             </button>
-          </div>
-        </div>
-
-        <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
-          {await getVisibilityElement(repo, playlist) as 'safe'}
-          {renderGenreSection() as 'safe'}
-          <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
-          <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
-          {!isLikedPlaylist && (
-            <div>
-              <p class="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/45">Community score</p>
-              <div id="playlist-vote-controls"></div>
-            </div>
-          )}
-          <div class="flex flex-wrap gap-2 mt-1">
-            {await canEdit(repo, playlist) && !isLikedPlaylist && (
+            {await canEdit(repo, playlist) &&
               <button id="add-track-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Add Track">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" />
@@ -485,7 +444,17 @@ export async function PlaylistDetailPage(
               </button>
             )}
           </div>
-          {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
+         </div>
+        <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
+          {await getVisibilityElement(repo, playlist) as 'safe'}
+          {renderGenreSection() as 'safe'}
+          <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
+          <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
+          <div>
+            <div id="playlist-vote-controls"></div>
+          </div>
+
+         {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
         </div>
       </div>
 
@@ -620,9 +589,6 @@ export async function PlaylistDetailPage(
       return;
     }
 
-    // ----------------------------------------------------------------
-    // Handler bouton Like (cœur) — optimistic UI avec rollback
-    // ----------------------------------------------------------------
     const likeButton = target.closest('.like-track') as HTMLElement | null;
     if (likeButton) {
       e.stopPropagation();
@@ -633,7 +599,6 @@ export async function PlaylistDetailPage(
       const currentlyLiked = likeButton.getAttribute('data-liked') === 'true';
       const newLiked = !currentlyLiked;
 
-      // Optimistic UI
       likeButton.setAttribute('data-liked', newLiked ? 'true' : 'false');
       likeButton.title = newLiked ? 'Remove from Liked tracks' : 'Add to Liked tracks';
 
@@ -647,17 +612,14 @@ export async function PlaylistDetailPage(
         likeButton.classList.add('text-muted-foreground', 'opacity-0', 'group-hover:opacity-100');
       }
 
-      // Sync état local
       const trackIndex = Number(likeButton.getAttribute('data-track-index'));
       if (!Number.isNaN(trackIndex) && tracks[trackIndex]) {
         tracks[trackIndex].isLiked = newLiked;
       }
 
-      // Appel API avec rollback en cas d'erreur
       try {
         await trackRepo.toggleLike(trackId, currentlyLiked);
       } catch {
-        // Rollback
         likeButton.setAttribute('data-liked', currentlyLiked ? 'true' : 'false');
         likeButton.title = currentlyLiked ? 'Remove from Liked tracks' : 'Add to Liked tracks';
         if (currentlyLiked) {
