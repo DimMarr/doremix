@@ -519,11 +519,6 @@ export async function PlaylistDetailPage(
             {await getSharedGroupsElement(repo, playlist, isPlaylistOwner) as 'safe'}
           </div>
         </div>
-        <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
-        <div class="flex gap-2">
-         {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
-        </div>
-        </div>
       </div>
 
       <div class="mb-4 mt-2">
