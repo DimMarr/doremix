@@ -3,7 +3,7 @@ import { AlertManager } from "@utils/alertManager";
 
 export class UserRepository {
     async getAllUsers() {
-        const response = await fetch(`${API_BASE_URL}/users`, {
+        const response = await fetch(`${API_BASE_URL}/users/`, {
           credentials: 'include'
         });
 
