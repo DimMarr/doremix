@@ -43,7 +43,6 @@ export async function TrackRow({
       {/* Durée */}
       <span safe>{secondsToReadableTime(track.durationSeconds)}</span>
 
-      {/* Bouton Like (cœur) — masqué sur la playlist "Titres likés" */}
       {!hideLikeButton ? <button
         class={`like-track transition-all flex items-center justify-center cursor-pointer
           ${isLiked

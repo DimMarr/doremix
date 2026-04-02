@@ -35,9 +35,9 @@ async def second_track(db: AsyncSession):
 
 @pytest_asyncio.fixture
 async def liked_playlist(db: AsyncSession, sample_user):
-    """Crée une playlist 'Titres likés' existante pour l'utilisateur."""
+    """Crée une playlist 'Liked Tracks' existante pour l'utilisateur."""
     playlist = Playlist(
-        name="Titres likés",
+        name="Liked Tracks",
         idOwner=sample_user.idUser,
         isLikedPlaylist=True,
         idGenre=1,
@@ -101,7 +101,7 @@ class TestLikeTrack:
     async def test_like_creates_liked_playlist(
         self, client, db: AsyncSession, sample_user, sample_track
     ):
-        """Liker un track crée automatiquement la playlist 'Titres likés'."""
+        """Liker un track crée automatiquement la playlist 'Liked Tracks'."""
         await client.post(f"/tracks/{sample_track.idTrack}/like")
 
         from sqlalchemy.future import select
@@ -126,7 +126,7 @@ class TestLikeTrack:
         second_track,
         liked_playlist,
     ):
-        """Liker plusieurs tracks réutilise la même playlist 'Titres likés'."""
+        """Liker plusieurs tracks réutilise la même playlist 'Liked Tracks'."""
         await client.post(f"/tracks/{sample_track.idTrack}/like")
         await client.post(f"/tracks/{second_track.idTrack}/like")
 
@@ -196,7 +196,7 @@ class TestUnlikeTrack:
     async def test_unlike_last_track_deletes_playlist(
         self, client, db: AsyncSession, sample_user, sample_track, liked_playlist
     ):
-        """Unlike du dernier track supprime automatiquement la playlist 'Titres likés'."""
+        """Unlike du dernier track supprime automatiquement la playlist 'Liked Tracks'."""
         await client.post(f"/tracks/{sample_track.idTrack}/like")
         await client.delete(f"/tracks/{sample_track.idTrack}/like")
 
@@ -244,13 +244,13 @@ class TestUnlikeTrack:
 class TestLikedPlaylistGuards:
     @pytest.mark.asyncio
     async def test_cannot_delete_liked_playlist(self, client, liked_playlist):
-        """Impossible de supprimer la playlist 'Titres likés'."""
+        """Impossible de supprimer la playlist 'Liked Tracks'."""
         response = await client.delete(f"/playlists/{liked_playlist.idPlaylist}")
         assert response.status_code == 403
 
     @pytest.mark.asyncio
     async def test_cannot_update_liked_playlist(self, client, liked_playlist):
-        """Impossible de modifier la playlist 'Titres likés'."""
+        """Impossible de modifier la playlist 'Liked Tracks'."""
         response = await client.patch(
             f"/playlists/{liked_playlist.idPlaylist}",
             json={"name": "Nouveau nom"},

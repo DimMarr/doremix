@@ -67,7 +67,7 @@ class LikeRepository:
             return playlist
 
         new_playlist = Playlist(
-            name="Titres likés",
+            name="Liked Tracks",
             idOwner=user_id,
             isLikedPlaylist=True,
             idGenre=1,
