@@ -455,14 +455,19 @@ export function ShareModal({ playlistId, isOwnerOrAdmin, onClose, onUsersChanged
             try {
               if (shareType === 'group') {
                 const groupName = groupSelect.value;
-                await new TrackRepository().shareGroup(playlistId, groupName);
+                const response = await new TrackRepository().shareGroup(playlistId, groupName);
+                if (response.message === "Playlist is already shared with this group") {
+                  new AlertManager().warning('Playlist is already shared with this group');
+                } else {
+                  new AlertManager().success('Playlist shared successfully');
+                }
               } else {
                 const email = emailInput.value;
                 const editor = container.querySelector('#editor').checked;
                 await new TrackRepository().share(playlistId, email, editor);
+                new AlertManager().success('Playlist shared successfully');
               }
 
-            new AlertManager().success('Playlist shared successfully');
             emailInput.value = '';
             if (groupSelect) groupSelect.value = '';
             editorInput.checked = false;

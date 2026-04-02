@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, Optional
 
-from src.models.playlist import PlaylistSchema, SharedUserSchema
+from src.models.playlist import PlaylistSchema, SharedUserSchema, GroupSchema
 from src.models.track import TrackSchema
 from src.services import auth_service
 from src.utils.http_client import make_authenticated_request
@@ -340,6 +340,88 @@ def remove_shared_user(playlist_id: str, target_user_id: str) -> dict[str, Any]:
         raise Exception("Authentication required. Please login first.")
     if res.status_code != 200:
         raise Exception(f"Error while removing user: {_detail(res)}")
+
+    data: dict[str, Any] = res.json()
+    return data
+
+
+def share_group(playlist_id: str, group_name: str) -> dict[str, Any]:
+    user_id = _get_current_user_id()
+    playlist = _get_playlist_from_api(playlist_id)
+
+    if playlist.idOwner != user_id and not _is_admin():
+        raise Exception(
+            "You don't have permission to share this playlist with a group."
+        )
+
+    payload = {"group_name": group_name}
+    res = make_authenticated_request(
+        "POST", f"/playlists/{playlist_id}/share/group", json=payload
+    )
+
+    if res.status_code == 403:
+        raise Exception(
+            "You don't have permission to share this playlist with a group."
+        )
+    if res.status_code == 404:
+        raise Exception(_detail(res))
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
+    if res.status_code != 200:
+        raise Exception(f"Error while sharing with group: {_detail(res)}")
+
+    data: dict[str, Any] = res.json()
+    return data
+
+
+def get_shared_groups(playlist_id: str) -> list[GroupSchema]:
+    user_id = _get_current_user_id()
+    playlist = _get_playlist_from_api(playlist_id)
+
+    if playlist.idOwner != user_id and not _is_admin():
+        raise Exception(
+            "You don't have permission to see shared groups for this playlist."
+        )
+
+    res = make_authenticated_request("GET", f"/playlists/{playlist_id}/shared-groups")
+
+    if res.status_code == 403:
+        raise Exception(
+            "You don't have permission to see shared groups for this playlist."
+        )
+    if res.status_code == 404:
+        raise Exception("Playlist not found.")
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
+    if res.status_code != 200:
+        raise Exception(f"Error while fetching shared groups: {_detail(res)}")
+
+    data = res.json()
+    return [GroupSchema(**item) for item in data]
+
+
+def remove_shared_group(playlist_id: str, target_group_id: str) -> dict[str, Any]:
+    user_id = _get_current_user_id()
+    playlist = _get_playlist_from_api(playlist_id)
+
+    if playlist.idOwner != user_id and not _is_admin():
+        raise Exception(
+            "You don't have permission to remove groups from this playlist."
+        )
+
+    res = make_authenticated_request(
+        "DELETE", f"/playlists/{playlist_id}/share/group/{target_group_id}"
+    )
+    if res.status_code == 403:
+        raise Exception(
+            "You don't have permission to remove groups from this playlist."
+        )
+    if res.status_code == 404:
+        raise Exception(_detail(res))
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
+    if res.status_code != 200:
+        raise Exception(f"Error while removing group: {_detail(res)}")
 
     data: dict[str, Any] = res.json()
     return data

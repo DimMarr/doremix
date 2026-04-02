@@ -27,3 +27,8 @@ class SharedUserSchema(BaseModel):
     editor: bool
     username: str
     email: str
+
+
+class GroupSchema(BaseModel):
+    idGroup: int
+    groupName: str

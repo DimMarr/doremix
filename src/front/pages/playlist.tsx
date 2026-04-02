@@ -269,7 +269,6 @@ export async function PlaylistDetailPage(
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
           <div>
-              <p class="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/45">Community score</p>
               <div id="playlist-vote-controls"></div>
           </div>
             <div class="flex flex-wrap gap-2 mt-1">
@@ -488,7 +487,6 @@ export async function PlaylistDetailPage(
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
           <div>
-              <p class="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/45">Community score</p>
               <div id="playlist-vote-controls"></div>
           </div>
             <div class="flex flex-wrap gap-2 mt-1">

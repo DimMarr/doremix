@@ -78,6 +78,6 @@ export class TrackRepository {
     if (!response.ok) {
       throw new Error("Failed to share with group");
     }
-    return response.status;
+    return response.json();
   }
 }

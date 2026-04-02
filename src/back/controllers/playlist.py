@@ -202,6 +202,8 @@ class PlaylistController:
             raise HTTPException(403, "Forbidden")
         if msg == "group_not_found":
             raise HTTPException(404, "Group not found")
+        if msg == "already_shared":
+            return {"message": "Playlist is already shared with this group"}
         return {"message": "Shared with group successfully"}
 
     @staticmethod

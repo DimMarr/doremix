@@ -483,10 +483,12 @@ class PlaylistRepository:
                 GroupPlaylist.idPlaylist == playlist_id,
             )
         )
-        if not existing_result.scalars().first():
-            link = GroupPlaylist(idGroup=group.idGroup, idPlaylist=playlist_id)
-            db.add(link)
-            await db.commit()
+        if existing_result.scalars().first():
+            return True, "already_shared"
+
+        link = GroupPlaylist(idGroup=group.idGroup, idPlaylist=playlist_id)
+        db.add(link)
+        await db.commit()
 
         return True, "success"
 
