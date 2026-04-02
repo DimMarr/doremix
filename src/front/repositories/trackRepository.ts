@@ -110,19 +110,6 @@ export class TrackRepository {
     }
   }
   
-  async shareGroup(playlistId: number, groupName: string) {
-    const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/share/group`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ "group_name": groupName }),
-      credentials: 'include'
-    });
-    if (!response.ok) {
-      throw new Error("Failed to share with group");
-    }
-    return response.json();
-  }
-  
   async move(playlistId: number, trackId: number, prev_track_id: number | null) {
     try {
       const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/tracks/${trackId}/move`, {
