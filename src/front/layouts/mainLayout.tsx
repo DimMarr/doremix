@@ -1,4 +1,4 @@
-import { Header } from "@components/generics/index";
+import { Footer, Header } from "@components/generics/index";
 import { initializePlayer, TrackPlayer } from "@components/playlists/trackPlayer";
 import YoutubePlayer from "@store/trackPlayer";
 import { waitForYouTubeAPI } from "@utils/youtubeApiLoader";
@@ -15,7 +15,7 @@ export async function createMainLayout() {
   let isAuth = await authService.isAuthenticated();
 
   const appHtml = (
-    <div class="min-h-screen bg-background text-foreground px-6 pb-20">
+    <div id="app-layout" class="min-h-screen flex flex-col bg-background text-foreground px-6 pb-20 opacity-0 transition-opacity duration-20">
       <Header className="">
         <a href="/" style={window.location.pathname === AppRoutes.LOGIN || window.location.pathname === AppRoutes.SIGNUP ? 'display: none;' : ''}>
           <img src={logo} alt="Dorémix" class="h-8" />
@@ -29,7 +29,9 @@ export async function createMainLayout() {
           </div>}
       </Header>
 
-      <main class="" id="mainContent"></main>
+      <main class="flex-1 w-full" id="mainContent"></main>
+
+      <Footer />
 
       <div id="youtubePlayer"></div>
       <div id="trackPlayerContainer">{TrackPlayer()}</div>
@@ -38,6 +40,21 @@ export async function createMainLayout() {
 
   root.innerHTML = appHtml;
   const mainContent = document.getElementById("mainContent");
+  const appLayout = document.getElementById("app-layout");
+
+  // Révéler le layout dès que le routeur injecte le contenu de la page
+  if (mainContent && appLayout) {
+    const observer = new MutationObserver(() => {
+      if (mainContent.innerHTML.trim() !== "") {
+        appLayout.classList.remove("opacity-0");
+        observer.disconnect(); // On arrête d'écouter une fois affiché
+      }
+    });
+    observer.observe(mainContent, { childList: true, subtree: true });
+
+    // Fallback de sécurité (affichage forcé après 1 seconde en cas de page vide)
+    setTimeout(() => appLayout.classList.remove("opacity-0"), 1000);
+  }
 
   // Gestion de la deconnexion
   const logout = async () => {
