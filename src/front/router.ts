@@ -8,7 +8,9 @@ export enum AppRoutes {
   SIGNUP = '/signup',
   HOME = '/',
   ARTISTS = '/artists',
-  CGU = '/cgu'
+  CGU = '/cgu',
+  RESET_PASSWORD = '/reset-password',
+  REQUEST_PASSWORD_RESET = '/request-password-reset'
 }
 
 export class Router {
@@ -41,7 +43,7 @@ export class Router {
 
     // Gestion de l'authentification
     let path = window.location.pathname;
-    const guestOnlyRoutes = [AppRoutes.LOGIN, AppRoutes.SIGNUP, AppRoutes.VERIFY_EMAIL];
+    const guestOnlyRoutes = [AppRoutes.LOGIN, AppRoutes.SIGNUP, AppRoutes.VERIFY_EMAIL, AppRoutes.RESET_PASSWORD, AppRoutes.REQUEST_PASSWORD_RESET];
     const publicRoutes = [...guestOnlyRoutes, AppRoutes.CGU];
     let isAuth = false;
     try {

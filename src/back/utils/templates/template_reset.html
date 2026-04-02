@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Active ton compte Doremix 🎵</title>
+    <title>Réinitialise ton mot de passe Doremix</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -54,6 +54,15 @@
         font-size: 14px;
         margin-top: 8px;
       }
+      .warning {
+        background-color: #3f2626;
+        border-left: 4px solid #ff6b6b;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 4px;
+        color: #fafafa;
+        font-size: 14px;
+      }
       .footer {
         margin-top: 30px;
         font-size: 12px;
@@ -64,14 +73,18 @@
   </head>
   <body>
     <div class="container">
-      <h1>Bienvenue sur Doremix</h1>
+      <h1>Réinitialise ton mot de passe</h1>
       <p>Bonjour <span class="username">{{ username }}</span> !</p>
       <p>
-        Ton compte sur <strong>Doremix</strong> a bien été créé. Voici ton code
-        de vérification :
+        Tu as demandé une réinitialisation de mot de passe pour ton compte
+        <strong>Doremix</strong>. Voici ton code de vérification :
       </p>
       <span class="code-box">{{ code }}</span>
       <p class="expiry">Ce code expire dans 15 minutes.</p>
+      <div class="warning">
+        Si tu n'es pas à l'origine de cette demande de réinitialisation, ignore
+        cet email. Ton mot de passe restera inchangé.
+      </div>
       <div class="footer">
         Ce mail est envoyé automatiquement, merci de ne pas répondre.
       </div>

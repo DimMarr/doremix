@@ -290,6 +290,48 @@ def vote_playlist(playlist_id: str, value: int) -> dict[str, Any]:
     return data
 
 
+def share_with_group(playlist_id: str, group_id: int) -> dict[str, Any]:
+    res = make_authenticated_request(
+        "POST",
+        f"/playlists/{playlist_id}/share/group",
+        json={"group_id": group_id},
+    )
+
+    if res.status_code == 404:
+        raise Exception("Group not found")
+    elif res.status_code == 403:
+        raise Exception("You don't have permission to share this playlist.")
+    elif res.status_code == 409:
+        raise Exception("This group already has access to the playlist.")
+    elif res.status_code not in (200, 201):
+        raise Exception(f"Failed to share playlist with group: {_detail(res)}")
+
+    data: dict[str, Any] = res.json()
+    return data
+
+
+def share_with_user(
+    playlist_id: str, email: str, is_editor: bool = False
+) -> dict[str, Any]:
+    res = make_authenticated_request(
+        "POST",
+        f"/playlists/{playlist_id}/share/user",
+        json={"target_email": email, "is_editor": is_editor},
+    )
+
+    if res.status_code == 404:
+        raise Exception("User not found")
+    elif res.status_code == 403:
+        raise Exception("You don't have permission to share this playlist.")
+    elif res.status_code == 400:
+        raise Exception(_detail(res))
+    elif res.status_code not in (200, 201):
+        raise Exception(f"Failed to share playlist with user: {_detail(res)}")
+
+    data: dict[str, Any] = res.json()
+    return data
+
+
 def transfer_ownership(
     playlist_id: str,
     email: str,
@@ -388,6 +430,33 @@ def remove_shared_user(playlist_id: str, target_user_id: str) -> dict[str, Any]:
         raise Exception("Authentication required. Please login first.")
     if res.status_code != 200:
         raise Exception(f"Error while removing user: {_detail(res)}")
+
+    data: dict[str, Any] = res.json()
+    return data
+
+
+def remove_shared_group(playlist_id: str, target_group_id: str) -> dict[str, Any]:
+    user_id = _get_current_user_id()
+    playlist = _get_playlist_from_api(playlist_id)
+
+    if playlist.idOwner != user_id and not _is_admin():
+        raise Exception(
+            "You don't have permission to remove groups from this playlist."
+        )
+
+    res = make_authenticated_request(
+        "DELETE", f"/playlists/{playlist_id}/share/group/{target_group_id}"
+    )
+    if res.status_code == 403:
+        raise Exception(
+            "You don't have permission to remove groups from this playlist."
+        )
+    if res.status_code == 404:
+        raise Exception("Group is not associated with this playlist.")
+    if res.status_code == 401:
+        raise Exception("Authentication required. Please login first.")
+    if res.status_code != 200:
+        raise Exception(f"Error while removing group: {_detail(res)}")
 
     data: dict[str, Any] = res.json()
     return data

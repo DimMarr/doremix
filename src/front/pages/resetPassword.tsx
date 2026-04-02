@@ -1,10 +1,10 @@
 import { Button } from "@components/generics";
-import { authService } from "@utils/authentication";
+import { authService, isValidPassword } from "@utils/authentication";
 import { AppRoutes } from "../router";
 import logo from "@assets/images/logo.png";
 import { AlertManager } from "@utils/alertManager";
 
-export async function VerifyEmailPage(container) {
+export async function ResetPasswordPage(container, params) {
 
     const pageHtml = (
         <div class="relative h-[calc(100vh-64px)] flex-col items-center justify-center grid lg:max-w-none lg:grid-cols-2 lg:px-0 rounded-lg">
@@ -17,10 +17,10 @@ export async function VerifyEmailPage(container) {
                 <div class="relative z-20 flex-1 flex flex-col justify-center mt-12 mb-8 space-y-12">
                     <div class="space-y-4">
                         <h2 class="text-3xl md:text-4xl font-bold tracking-tight leading-tight animate-fade-up animation-delay-200">
-                            One last step<br/>before the music
+                            Regain access<br/>to your account
                         </h2>
                         <p class="text-lg text-white/80 max-w-md animate-fade-up animation-delay-300">
-                            Verify your email address to unlock full access to your DoReMiX account.
+                            Enter the 6-digit code we sent to your email and set a new password.
                         </p>
                     </div>
                 </div>
@@ -33,25 +33,28 @@ export async function VerifyEmailPage(container) {
                         <img src={logo} alt="Dorémix" class="mr-2 h-8" />
                     </div>
 
-                    <div id="verifyStatusCard" class="flex flex-col items-center space-y-6 text-center animate-fade-up animation-delay-300">
+                    <div id="resetStatusCard" class="flex flex-col items-center space-y-6 text-center animate-fade-up animation-delay-300">
 
-                        {/* Enter Code */}
+                        {/* Enter Code & New Password */}
                         <div id="statusEnterCode" class="flex flex-col items-center space-y-4 w-full">
                             <div class="space-y-2">
-                                <h1 class="text-2xl font-bold tracking-tight">Verify your email</h1>
-                                <p id="verifyEmailDisplay" class="text-sm text-muted-foreground"></p>
+                                <h1 class="text-2xl font-bold tracking-tight">Reset your password</h1>
+                                <p id="resetEmailDisplay" class="text-sm text-muted-foreground"></p>
                             </div>
                             <div class="w-full space-y-3">
-                                <input id="verificationCode" type="text" inputmode="numeric" placeholder="000000" maxlength="6" class="w-full px-4 py-2 rounded-md border border-input text-center text-2xl tracking-widest font-mono bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
-                                <button id="verifyCodeBtn" class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 active:scale-95 duration-200">
-                                    Verify Code
+                                <input id="resetCode" type="text" inputmode="numeric" placeholder="000000" maxlength="6" class="w-full px-4 py-2 rounded-md border border-input text-center text-2xl tracking-widest font-mono bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
+                                <div class="space-y-1">
+                                    <input id="newPassword" type="password" placeholder="New password" class="w-full px-4 py-2 rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
+                                    <span id="toggleNewPasswordVisibility" class="cursor-pointer text-xs text-muted-foreground text-right w-fit ml-auto hover:text-primary transition-colors duration-200">Show password</span>
+                                </div>
+                                <button id="resetPasswordBtn" class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 active:scale-95 duration-200">
+                                    Reset Password
                                 </button>
                             </div>
-                            <div class="space-y-2">
-                                <p class="text-xs text-muted-foreground">Didn't receive the code?</p>
-                                <button id="resendCodeBtn" class="text-xs text-primary hover:underline">
-                                    Resend code
-                                </button>
+                            <div class="flex flex-col w-full gap-2">
+                                <a href={AppRoutes.LOGIN} data-link class="inline-flex h-10 w-full items-center justify-center rounded-md bg-muted px-4 py-2 text-sm font-medium text-muted-foreground shadow transition-colors hover:bg-muted/80 active:scale-95 duration-200">
+                                    Back to Login
+                                </a>
                             </div>
                         </div>
 
@@ -63,15 +66,14 @@ export async function VerifyEmailPage(container) {
                                 </svg>
                             </div>
                             <div class="space-y-1">
-                                <h1 class="text-2xl font-bold tracking-tight">Email verified!</h1>
-                                <p class="text-sm text-muted-foreground">Your account is now active. You can log in.</p>
+                                <h1 class="text-2xl font-bold tracking-tight">Password reset!</h1>
+                                <p class="text-sm text-muted-foreground">Your password has been reset successfully. You can now log in.</p>
                             </div>
                             <a href={AppRoutes.LOGIN} class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 active:scale-95 duration-200">
                                 Go to Login
                             </a>
                             <p id="countdownSuccess" class="text-sm text-muted-foreground"></p>
                         </div>
-
 
                         {/* Expired */}
                         <div id="statusExpired" class="hidden flex flex-col items-center space-y-4">
@@ -84,7 +86,7 @@ export async function VerifyEmailPage(container) {
                             </div>
                             <div class="space-y-1">
                                 <h1 class="text-2xl font-bold tracking-tight">Code expired</h1>
-                                <p class="text-sm text-muted-foreground">Your verification code has expired. Request a new one.</p>
+                                <p class="text-sm text-muted-foreground">Your reset code has expired. Request a new one.</p>
                             </div>
                             <div class="flex flex-col w-full gap-2">
                                 <button id="resendExpiredCodeBtn" class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 active:scale-95 duration-200">
@@ -105,8 +107,8 @@ export async function VerifyEmailPage(container) {
                                 </svg>
                             </div>
                             <div class="space-y-1">
-                                <h1 class="text-2xl font-bold tracking-tight">Invalid link</h1>
-                                <p class="text-sm text-muted-foreground">This verification link is invalid or has already been used.</p>
+                                <h1 class="text-2xl font-bold tracking-tight">Invalid code</h1>
+                                <p class="text-sm text-muted-foreground">This reset code is invalid or has already been used.</p>
                             </div>
                             <a href={AppRoutes.LOGIN} class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 active:scale-95 duration-200">
                                 Go to Login
@@ -123,8 +125,8 @@ export async function VerifyEmailPage(container) {
     container.innerHTML = pageHtml;
     document.querySelector("header").innerHTML = "";
 
-    const params = new URLSearchParams(window.location.search);
-    const email = params.get("email");
+    const urlParams = new URLSearchParams(window.location.search);
+    const email = urlParams.get("email");
 
     if (!email) {
         showStatus("invalid");
@@ -133,17 +135,16 @@ export async function VerifyEmailPage(container) {
     }
 
     // Display the email
-    const emailDisplay = document.getElementById("verifyEmailDisplay");
+    const emailDisplay = document.getElementById("resetEmailDisplay");
     if (emailDisplay) {
         emailDisplay.textContent = email;
     }
 
-    handleVerifyCode(email);
-    handleResendCode(email);
-    handleResendExpiredCode(email);
+    handleResetPassword(email);
+    toggleNewPasswordVisibility();
 
     function showStatus(status: "success" | "expired" | "invalid" | "enter-code") {
-        const statuses = ["statusEnterCode", "statusLoading", "statusSuccess", "statusExpired", "statusInvalid"];
+        const statuses = ["statusEnterCode", "statusSuccess", "statusExpired", "statusInvalid"];
         statuses.forEach(s => {
             const el = document.getElementById(s);
             if (el) el.classList.add("hidden");
@@ -154,118 +155,88 @@ export async function VerifyEmailPage(container) {
         if (el) el.classList.remove("hidden");
     }
 
-    function handleVerifyCode(email: string) {
-        const codeInput = document.getElementById("verificationCode") as HTMLInputElement;
-        const verifyBtn = document.getElementById("verifyCodeBtn");
+    function handleResetPassword(email: string) {
+        const codeInput = document.getElementById("resetCode") as HTMLInputElement;
+        const passwordInput = document.getElementById("newPassword") as HTMLInputElement;
+        const resetBtn = document.getElementById("resetPasswordBtn");
 
-        if (!codeInput || !verifyBtn) return;
+        if (!codeInput || !passwordInput || !resetBtn) return;
 
-        verifyBtn.addEventListener("click", async () => {
+        resetBtn.addEventListener("click", async () => {
             const code = codeInput.value.trim();
+            const newPassword = passwordInput.value;
 
             if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
                 new AlertManager().error("Please enter a valid 6-digit code.");
                 return;
             }
 
-            verifyBtn.textContent = "Verifying…";
-            (verifyBtn as HTMLButtonElement).disabled = true;
+            if (!newPassword) {
+                new AlertManager().error("Please enter a new password.");
+                return;
+            }
+
+            if (!isValidPassword(newPassword)) {
+                new AlertManager().error("Your password must be at least 8 characters and contains one uppercase, one lowercase, one digit and one special character.");
+                return;
+            }
+
+            resetBtn.textContent = "Resetting…";
+            (resetBtn as HTMLButtonElement).disabled = true;
 
             try {
-                const result = await authService.verifyCode(email, code);
+                const result = await authService.resetPassword(email, code, newPassword);
 
-                // Check result from backend
-                if (typeof result === 'object') {
-                    if (result.status === "verified" || result.status === "already_verified") {
-                        // Success
-                        await new Promise(resolve => setTimeout(resolve, 1200));
-                        showStatus("success");
-                        startRedirectCountdown("countdownSuccess");
-                    } else {
-                        new AlertManager().error("Verification failed. Please try again.");
-                        codeInput.value = "";
-                    }
-                } else if (result === "verified" || result === "already_verified") {
-                    // Success (fallback for old format)
+                if (result.status === "reset") {
                     await new Promise(resolve => setTimeout(resolve, 1200));
                     showStatus("success");
                     startRedirectCountdown("countdownSuccess");
                 } else {
-                    new AlertManager().error("Invalid verification code.");
+                    new AlertManager().error("Password reset failed. Please try again.");
                     codeInput.value = "";
                 }
             } catch (e: any) {
                 const message = e?.message || "";
                 if (message.includes("expired")) {
                     showStatus("expired");
-                    new AlertManager().warning("Your verification code has expired. Please request a new one.");
+                    new AlertManager().warning("Your reset code has expired. Please request a new one.");
                 } else if (message.includes("invalid")) {
-                    new AlertManager().error("Invalid verification code.");
+                    new AlertManager().error("Invalid reset code.");
                     codeInput.value = "";
                 } else {
-                    new AlertManager().error("Verification failed. Please try again.");
+                    new AlertManager().error("Password reset failed. Please try again.");
                     codeInput.value = "";
                 }
             } finally {
-                (verifyBtn as HTMLButtonElement).disabled = false;
-                verifyBtn.textContent = "Verify Code";
+                (resetBtn as HTMLButtonElement).disabled = false;
+                resetBtn.textContent = "Reset Password";
             }
         });
 
         // Allow Enter key to submit
-        codeInput.addEventListener("keypress", (e) => {
+        passwordInput.addEventListener("keypress", (e) => {
             if (e.key === "Enter") {
-                verifyBtn.click();
+                resetBtn.click();
             }
         });
     }
 
-    function handleResendCode(email: string) {
-        const resendBtn = document.getElementById("resendCodeBtn");
-        if (!resendBtn) return;
+    function toggleNewPasswordVisibility() {
+        const btn = document.getElementById("toggleNewPasswordVisibility")
 
-        resendBtn.addEventListener("click", async () => {
-            resendBtn.textContent = "Sending…";
-            (resendBtn as HTMLButtonElement).disabled = true;
+        if (!btn) {
+            return;
+        }
 
-            try {
-                await authService.resendVerificationCode(email);
-                new AlertManager().success("Verification code resent to your email.");
-                (document.getElementById("verificationCode") as HTMLInputElement).value = "";
-            } catch (e) {
-                new AlertManager().error("Failed to resend code. Please try again.");
-            } finally {
-                (resendBtn as HTMLButtonElement).disabled = false;
-                resendBtn.textContent = "Resend code";
+        btn.addEventListener('click', () => {
+            const passwordInput = document.getElementById("newPassword") as HTMLInputElement;
+
+            if (!passwordInput) {
+                return;
             }
-        });
-    }
 
-    function handleResendExpiredCode(email: string) {
-        const resendBtn = document.getElementById("resendExpiredCodeBtn");
-        if (!resendBtn) return;
-
-        resendBtn.addEventListener("click", async () => {
-            resendBtn.textContent = "Sending…";
-            (resendBtn as HTMLButtonElement).disabled = true;
-
-            try {
-                await authService.resendVerificationCode(email);
-                new AlertManager().success("Verification code resent to your email.");
-                // Reset to enter code state
-                showStatus("enter-code");
-                (document.getElementById("verificationCode") as HTMLInputElement).value = "";
-            } catch (e) {
-                new AlertManager().error("Failed to resend code. Please try again.");
-            } finally {
-                (resendBtn as HTMLButtonElement).disabled = false;
-                resendBtn.textContent = "Resend code";
-            }
-        });
-    }
-
-    async function handleVerification() {
-        // Moved to handleVerifyCode above
+            passwordInput.type == "password" ? passwordInput.type = "text" : passwordInput.type = "password"
+        })
     }
 
     function startRedirectCountdown(countdownId: string) {

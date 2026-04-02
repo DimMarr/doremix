@@ -9,3 +9,4 @@ from .genres import router as genresRouter
 from .genres import admin_router as adminGenresRouter
 from .moderation import router as moderationRouter
 from .admin_playlists import router as adminPlaylistsRouter
+from .groups import router as groupsRouter

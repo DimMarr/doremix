@@ -39,6 +39,161 @@ def _has_local_session() -> bool:
         return False
 
 
+def _verify_email_interactive(email: str) -> None:
+    """Helper function to verify email interactively."""
+    max_attempts = 3
+    attempt = 0
+
+    while attempt < max_attempts:
+        attempt += 1
+        code = typer.prompt(
+            "Enter the 6-digit verification code from your email", hide_input=False
+        )
+
+        # Validate code format
+        if not code or len(code) != 6 or not code.isdigit():
+            console.print(
+                "[red]✗ Invalid code format. Please enter exactly 6 digits.[/red]"
+            )
+            if attempt < max_attempts:
+                console.print(f"[yellow]Attempt {attempt}/{max_attempts}[/yellow]")
+            continue
+
+        try:
+            auth_service.verify_email_code(email=email, code=code)
+            console.print("[green]✓ Email verified successfully![/green]")
+            console.print("[dim]You can now log in with your account.[/dim]")
+            return
+        except InvalidRequestError as exc:
+            detail = _extract_error_detail(exc)
+            if "expired" in detail.lower():
+                console.print("[red]✗ Verification code has expired.[/red]")
+                resend = typer.confirm(
+                    "Would you like to resend the code?", default=True
+                )
+                if resend:
+                    try:
+                        auth_service.resend_verification_code(email)
+                        console.print(
+                            "[green]✓ New verification code sent to your email.[/green]"
+                        )
+                        attempt = 0  # Reset attempts
+                        continue
+                    except Exception as exc2:
+                        console.print(
+                            f"[red]✗ Failed to resend code: {_extract_error_detail(exc2)}[/red]"
+                        )
+                        return
+                else:
+                    return
+            else:
+                console.print(f"[red]✗ Verification failed: {detail}[/red]")
+                if attempt < max_attempts:
+                    console.print(f"[yellow]Attempt {attempt}/{max_attempts}[/yellow]")
+        except InvalidCredentialsError as exc:
+            console.print(f"[red]✗ Invalid code: {_extract_error_detail(exc)}[/red]")
+            if attempt < max_attempts:
+                console.print(f"[yellow]Attempt {attempt}/{max_attempts}[/yellow]")
+        except ApiRequestError as exc:
+            console.print(
+                f"[red]✗ Verification error: {_extract_error_detail(exc)}[/red]"
+            )
+            return
+
+    console.print(
+        f"[red]✗ Maximum attempts ({max_attempts}) exceeded. Try registering again.[/red]"
+    )
+
+
+def _password_reset_interactive(email: str) -> None:
+    """Helper function to reset password interactively."""
+    max_attempts = 3
+    attempt = 0
+
+    while attempt < max_attempts:
+        attempt += 1
+        code = typer.prompt(
+            "Enter the 6-digit reset code from your email", hide_input=False
+        )
+
+        if not code or len(code) != 6 or not code.isdigit():
+            console.print(
+                "[red]✗ Invalid code format. Please enter exactly 6 digits.[/red]"
+            )
+            if attempt < max_attempts:
+                console.print(f"[yellow]Attempt {attempt}/{max_attempts}[/yellow]")
+            continue
+
+        try:
+            auth_service.verify_email_code(email=email, code=code)
+
+            new_password = typer.prompt(
+                "New password",
+                hide_input=True,
+                confirmation_prompt=True,
+            )
+
+            try:
+                auth_service.reset_password(
+                    email=email, code=code, new_password=new_password
+                )
+                console.print("[green]✓ Password reset successfully![/green]")
+                console.print("[dim]You can now log in with your new password.[/dim]")
+                return
+            except InvalidRequestError as exc:
+                detail = _extract_error_detail(exc)
+                if "password" in detail.lower():
+                    console.print(f"[red]✗ Password not valid: {detail}[/red]")
+                    console.print(
+                        "[yellow]Use at least 8 chars with uppercase, lowercase, digit, and special char.[/yellow]"
+                    )
+                    return
+                console.print(f"[red]✗ Password reset failed: {detail}[/red]")
+                return
+            except ApiRequestError as exc:
+                console.print(
+                    f"[red]✗ Password reset failed: {_extract_error_detail(exc)}[/red]"
+                )
+                return
+        except InvalidRequestError as exc:
+            detail = _extract_error_detail(exc)
+            if "expired" in detail.lower():
+                console.print("[red]✗ Reset code has expired.[/red]")
+                retry = typer.confirm(
+                    "Would you like to request a new code?", default=True
+                )
+                if retry:
+                    try:
+                        auth_service.request_password_reset(email)
+                        console.print(
+                            "[green]✓ New reset code sent to your email.[/green]"
+                        )
+                        attempt = 0  # Reset attempts
+                        continue
+                    except Exception as exc2:
+                        console.print(
+                            f"[red]✗ Failed to resend code: {_extract_error_detail(exc2)}[/red]"
+                        )
+                        return
+                else:
+                    return
+            else:
+                console.print(f"[red]✗ Reset failed: {detail}[/red]")
+                if attempt < max_attempts:
+                    console.print(f"[yellow]Attempt {attempt}/{max_attempts}[/yellow]")
+        except InvalidCredentialsError as exc:
+            console.print(f"[red]✗ Invalid code: {_extract_error_detail(exc)}[/red]")
+            if attempt < max_attempts:
+                console.print(f"[yellow]Attempt {attempt}/{max_attempts}[/yellow]")
+        except ApiRequestError as exc:
+            console.print(f"[red]✗ Reset error: {_extract_error_detail(exc)}[/red]")
+            return
+
+    console.print(
+        f"[red]✗ Maximum attempts ({max_attempts}) exceeded. Please try again later.[/red]"
+    )
+
+
 @root_app.command("register", help="Create a new account.")
 def register_command(
     email: str | None = typer.Option(None, "--email", help="University email."),
@@ -63,6 +218,13 @@ def register_command(
             + "[/bold]"
         )
         console.print("[dim]Please verify your email before logging in.[/dim]")
+
+        # Prompt for email verification
+        console.print()
+        verify = typer.confirm("Do you want to verify your email now?", default=True)
+        if verify:
+            _verify_email_interactive(email)
+
     except UserExistsError:
         console.print(
             "[yellow]An account already exists for this email. Use `doremix login`.[/yellow]"
@@ -110,6 +272,9 @@ def login_command(
         detail = _extract_error_detail(exc).lower()
         if "invalid credentials" in detail:
             console.print("[red]✗ Login failed: invalid email or password.[/red]")
+            console.print(
+                "[yellow]Forgot your password? Run: doremix reset-password[/yellow]"
+            )
             return
         if "banned" in detail:
             console.print("[red]✗ Login failed: this account is banned.[/red]")
@@ -137,6 +302,42 @@ def logout_command() -> None:
         )
     except ApiRequestError as exc:
         console.print(f"[red]✗ Logout failed: {_extract_error_detail(exc)}[/red]")
+
+
+@root_app.command("verify-email", help="Verify email with the code sent by email.")
+def verify_email_command(
+    email: str | None = typer.Option(None, "--email", help="Email address to verify."),
+) -> None:
+    if email is None:
+        email = typer.prompt("Email address")
+
+    _verify_email_interactive(email)
+
+
+@root_app.command(
+    "reset-password", help="Reset your password with a verification code."
+)
+def reset_password_command(
+    email: str | None = typer.Option(
+        None, "--email", help="Email address for password reset."
+    ),
+) -> None:
+    if email is None:
+        email = typer.prompt("Email address")
+
+    try:
+        auth_service.request_password_reset(email=email)
+        console.print("[green]✓ Reset code sent to[/green] [bold]" + email + "[/bold]")
+        console.print("[dim]Please check your email for the reset code.[/dim]")
+        console.print()
+        _password_reset_interactive(email)
+    except InvalidRequestError as exc:
+        detail = _extract_error_detail(exc)
+        console.print(f"[red]✗ Password reset request failed: {detail}[/red]")
+    except ApiRequestError as exc:
+        console.print(
+            f"[red]✗ Password reset request failed: {_extract_error_detail(exc)}[/red]"
+        )
 
 
 @root_app.command("whoami", help="Show the authenticated user.")

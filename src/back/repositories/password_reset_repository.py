@@ -5,10 +5,10 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import delete
-from models import VerificationMailToken, User
+from models import PasswordResetToken, User
 
 
-class VerificationMailTokenRepository:
+class PasswordResetRepository:
     @staticmethod
     def hash_code(code: str) -> str:
         secret_key = os.getenv("TOKEN_MAIL_SECRET_KEY")
@@ -17,32 +17,31 @@ class VerificationMailTokenRepository:
         return hashlib.sha256((code + secret_key).encode("utf-8")).hexdigest()
 
     @staticmethod
-    async def create_mail_verif_token(db: AsyncSession, user_id: int) -> str:
-        # Supprime les anciens codes de cet utilisateur
+    async def create_reset_code(db: AsyncSession, user_id: int) -> str:
         await db.execute(
-            delete(VerificationMailToken).where(VerificationMailToken.idUser == user_id)
+            delete(PasswordResetToken).where(PasswordResetToken.idUser == user_id)
         )
 
         raw_code = str(random.randint(100000, 999999))
-        hashed_code = VerificationMailTokenRepository.hash_code(raw_code)
+        hashed_code = PasswordResetRepository.hash_code(raw_code)
         expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
 
-        db_token = VerificationMailToken(
+        db_token = PasswordResetToken(
             token=hashed_code, idUser=user_id, expiresAt=expires_at
         )
         db.add(db_token)
         await db.commit()
 
-        return raw_code  # on retourne le code en clair pour l'envoyer par mail
+        return raw_code
 
     @staticmethod
     async def verify_code(db: AsyncSession, user_id: int, raw_code: str):
-        hashed_code = VerificationMailTokenRepository.hash_code(raw_code)
+        hashed_code = PasswordResetRepository.hash_code(raw_code)
 
         result = await db.execute(
-            select(VerificationMailToken).where(
-                VerificationMailToken.idUser == user_id,
-                VerificationMailToken.token == hashed_code,
+            select(PasswordResetToken).where(
+                PasswordResetToken.idUser == user_id,
+                PasswordResetToken.token == hashed_code,
             )
         )
         token_obj = result.scalars().first()
@@ -60,50 +59,57 @@ class VerificationMailTokenRepository:
         return token_obj
 
     @staticmethod
-    async def confirm_email(db: AsyncSession, email: str, raw_code: str):
+    async def confirm_reset(
+        db: AsyncSession, email: str, raw_code: str, new_password: str
+    ):
         user = await db.execute(select(User).where(User.email == email))
         user = user.scalars().first()
 
         if not user:
             return "invalid"
 
-        if user.isVerified:
-            return "already_verified"
-
-        result = await VerificationMailTokenRepository.verify_code(
-            db, user.idUser, raw_code
-        )
+        result = await PasswordResetRepository.verify_code(db, user.idUser, raw_code)
 
         if result == "invalid":
             return "invalid"
         if result == "expired":
             return "expired"
 
-        user.isVerified = True
+        import os
+        from passlib.context import CryptContext
+
+        pwd_context = CryptContext(schemes=["bcrypt"])
+        pepper = os.getenv("PEPPER_KEY")
+        if not pepper:
+            return "error"
+
+        import hashlib
+
+        peppered_pw = new_password + pepper
+        pre_hashed_password = hashlib.sha256(peppered_pw.encode("utf-8")).hexdigest()
+        hashed_pw = pwd_context.hash(pre_hashed_password)
+
+        user.password = hashed_pw
         await db.execute(
-            delete(VerificationMailToken).where(
-                VerificationMailToken.idUser == user.idUser
-            )
+            delete(PasswordResetToken).where(PasswordResetToken.idUser == user.idUser)
         )
         await db.commit()
-        return "verified"
+        return "reset"
 
     @staticmethod
-    async def resend_code(db: AsyncSession, email: str) -> str | None:
+    async def request_reset(db: AsyncSession, email: str) -> str | None:
         user_result = await db.execute(select(User).where(User.email == email))
         user = user_result.scalars().first()
 
-        if not user or user.isVerified:
+        if not user:
             return None
 
-        raw_code = await VerificationMailTokenRepository.create_mail_verif_token(
-            db, user.idUser
-        )
+        raw_code = await PasswordResetRepository.create_reset_code(db, user.idUser)
         return raw_code
 
     @staticmethod
     async def revoke_all_user_tokens(db: AsyncSession, user_id: int):
         await db.execute(
-            delete(VerificationMailToken).where(VerificationMailToken.idUser == user_id)
+            delete(PasswordResetToken).where(PasswordResetToken.idUser == user_id)
         )
         await db.commit()
