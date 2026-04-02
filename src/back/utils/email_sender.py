@@ -8,7 +8,7 @@ import re
 class EmailSender:
     web_url = os.getenv("WEB_BASE_URL")
     MAIL_SERVER = os.getenv("MAIL_SERVER")
-    MAIL_PORT = int(os.getenv("MAIL_PORT", 587))
+    MAIL_PORT = 587
     MAIL_USERNAME = os.getenv("MAIL_USERNAME")
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
     MAIL_FROM = "noreply@doremix.fr"
