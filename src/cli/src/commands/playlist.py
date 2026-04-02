@@ -17,6 +17,11 @@ from src.services.playlist import (
     add_track_to_playlist,
     search_playlists,
     search_tracks_in_playlist,
+    reorder_track,
+    get_shared_users,
+    remove_shared_user,
+    transfer_ownership,
+    vote_playlist,
 )
 
 app = typer.Typer()
@@ -45,6 +50,7 @@ def list(
     table.add_column("title", style="magenta")
     table.add_column("visibility", style="green")
     table.add_column("owner", style="yellow")
+    table.add_column("votes", style="yellow")
 
     for playlist in playlists:
         id = str(playlist.idPlaylist)
@@ -52,7 +58,7 @@ def list(
         visibility = playlist.visibility.value
         owner = str(playlist.idOwner)
 
-        table.add_row(id, title, visibility, owner)
+        table.add_row(id, title, visibility, owner, str(playlist.vote))
 
     console.print(table)
 
@@ -88,13 +94,14 @@ def tracks(id: str):
 
     table = Table(title="All tracks")
 
-    table.add_column("id", style="cyan")
+    table.add_column("#", justify="right", style="dim")
+    table.add_column("Track ID", style="cyan", justify="right")
     table.add_column("title", style="magenta")
 
-    for track in tracks:
+    for i, track in enumerate(tracks, 1):
         id = str(track.idTrack)
         title = track.title
-        table.add_row(id, title)
+        table.add_row(str(i), id, title)
 
     console.print(table)
 
@@ -261,13 +268,14 @@ def add_track(
         tracks = get_playlist_tracks(str(playlist_id))
 
         tracks_table = Table(title=f"All tracks in '{playlist.name}'")
-        tracks_table.add_column("id", style="cyan")
+        tracks_table.add_column("#", justify="right", style="dim")
+        tracks_table.add_column("Track ID", style="cyan", justify="right")
         tracks_table.add_column("title", style="magenta")
         tracks_table.add_column("artists", style="blue")
 
-        for t in tracks:
+        for i, t in enumerate(tracks, 1):
             t_artists = ", ".join([artist.name for artist in t.artists])
-            tracks_table.add_row(str(t.idTrack), t.title, t_artists)
+            tracks_table.add_row(str(i), str(t.idTrack), t.title, t_artists)
 
         console.print(tracks_table)
 
@@ -341,6 +349,250 @@ def search_tracks(
 
         console.print(table)
         console.print(f"\n[green]{len(tracks)} track(s) found[/green]")
+
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(help="List users who have access to a shared playlist.")
+def shared_users(
+    playlist_id: int = typer.Argument(..., help="Playlist ID"),
+):
+    try:
+        users = get_shared_users(str(playlist_id))
+
+        if not users:
+            console.print("[yellow]No users have access to this playlist.[/yellow]")
+            return
+
+        table = Table(title=f"Users with access to playlist #{playlist_id}")
+        table.add_column("id", style="cyan")
+        table.add_column("username", style="magenta")
+        table.add_column("email", style="blue")
+        table.add_column("role", style="yellow")
+
+        for user in users:
+            role = "[amber]Editor[/amber]" if user.editor else "[blue]Viewer[/blue]"
+            table.add_row(str(user.idUser), user.username, user.email, role)
+
+        console.print(table)
+        console.print(f"\n[green]{len(users)} user(s) with access[/green]")
+
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(help="Remove a user's access from a shared playlist.")
+def unshare(
+    playlist_id: int = typer.Argument(..., help="Playlist ID"),
+    user_id: int = typer.Argument(..., help="User ID to remove"),
+    force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
+):
+    try:
+        users = get_shared_users(str(playlist_id))
+        target = next((u for u in users if u.idUser == user_id), None)
+
+        if not target:
+            console.print(
+                f"[yellow]User #{user_id} does not have access to this playlist.[/yellow]"
+            )
+            return
+
+        if not force:
+            confirm = typer.confirm(
+                f"Remove access for '{target.username}' ({target.email}) from playlist #{playlist_id}?"
+            )
+            if not confirm:
+                console.print("[yellow]Cancelled.[/yellow]")
+                raise typer.Abort()
+
+        result = remove_shared_user(str(playlist_id), str(user_id))
+        console.print(f"[green]✓ {result['message']}[/green]")
+
+    except typer.Abort:
+        pass
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(help="Transfer ownership of a playlist to another user (by email).")
+def transfer(
+    playlist_id: int = typer.Argument(..., help="Playlist ID"),
+    email: str = typer.Option(..., "--email", "-e", help="New owner email"),
+):
+    try:
+        playlist = get_playlist(str(playlist_id))
+
+        confirm = typer.confirm(
+            f"Do you really want to transfer ownership of '{playlist.name}' to {email}? This action is irreversible."
+        )
+        if not confirm:
+            console.print("[yellow]Transfer cancelled.[/yellow]")
+            raise typer.Abort()
+
+        result = transfer_ownership(str(playlist_id), email)
+
+        console.print("[green]Ownership transferred successfully![/green]")
+
+        table = Table(show_header=False)
+        table.add_column("Field", style="cyan")
+        table.add_column("Value", style="magenta")
+
+        table.add_row("playlist_id", str(playlist_id))
+        table.add_row("new_owner", email)
+        table.add_row("message", result.get("message", "Success"))
+
+        console.print(table)
+
+    except typer.Abort:
+        pass
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+
+
+@app.command(help="Vote on a playlist (upvote, downvote, or remove vote).")
+def vote(
+    playlist_id: int = typer.Argument(..., help="Playlist ID"),
+    upvote: bool = typer.Option(False, "--up", "-u", help="Upvote the playlist"),
+    downvote: bool = typer.Option(False, "--down", "-d", help="Downvote the playlist"),
+    remove: bool = typer.Option(False, "--remove", "-r", help="Remove your vote"),
+):
+    try:
+        if sum([upvote, downvote, remove]) != 1:
+            console.print(
+                "[yellow]Specify exactly one of --up, --down, or --remove.[/yellow]"
+            )
+            raise typer.Abort()
+
+        value = 1 if upvote else (-1 if downvote else 0)
+        result = vote_playlist(str(playlist_id), value)
+
+        score = result.get("score", "?")
+        user_vote = result.get("userVote")
+
+        if value == 1:
+            console.print(f"[green]Upvoted![/green] Score: {score}")
+        elif value == -1:
+            console.print(f"[red]Downvoted![/red] Score: {score}")
+        else:
+            console.print(f"[yellow]Vote removed.[/yellow] Score: {score}")
+
+        if user_vote is not None:
+            vote_label = (
+                "+1" if user_vote == 1 else ("-1" if user_vote == -1 else "none")
+            )
+            console.print(f"Your vote: {vote_label}")
+
+    except typer.Abort:
+        pass
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+
+
+@app.command(name="reorder-track", help="Reorder a track in a playlist.")
+def reorder_track_cmd(
+    playlist_id: int = typer.Option(
+        ...,
+        "--playlist",
+        "-p",
+        help="ID of the playlist",
+    ),
+    track_id: int = typer.Option(
+        ...,
+        "--track",
+        "-t",
+        help="ID of the track to move",
+    ),
+    after_track_id: int = typer.Option(
+        None,
+        "--after",
+        "-a",
+        help="ID of the track after which to insert. (Default: moves to the top if neither provided)",
+    ),
+    before_track_id: int = typer.Option(
+        None,
+        "--before",
+        "-b",
+        help="ID of the track before which to insert.",
+    ),
+):
+    try:
+        if after_track_id is not None and before_track_id is not None:
+            console.print(
+                "[red]✗ Error: You cannot specify both --after and --before at the same time.[/red]"
+            )
+            return
+
+        tracks_current = get_playlist_tracks(str(playlist_id))
+
+        current_idx = next(
+            (i for i, t in enumerate(tracks_current) if t.idTrack == track_id), None
+        )
+        if current_idx is None:
+            console.print(
+                f"[red]✗ Error: Track '{track_id}' not found in playlist '{playlist_id}'.[/red]"
+            )
+            return
+
+        current_prev_id = (
+            None if current_idx == 0 else tracks_current[current_idx - 1].idTrack
+        )
+
+        final_prev_id = None
+
+        if after_track_id is not None:
+            if not any(t.idTrack == after_track_id for t in tracks_current):
+                console.print(
+                    f"[red]✗ Error: Reference track (after) '{after_track_id}' not found in playlist.[/red]"
+                )
+                return
+            final_prev_id = after_track_id
+
+        elif before_track_id is not None:
+            idx = next(
+                (
+                    i
+                    for i, t in enumerate(tracks_current)
+                    if t.idTrack == before_track_id
+                ),
+                None,
+            )
+            if idx is None:
+                console.print(
+                    f"[red]✗ Error: Reference track (before) '{before_track_id}' not found in playlist.[/red]"
+                )
+                return
+
+            if idx == 0:
+                final_prev_id = None
+            else:
+                final_prev_id = tracks_current[idx - 1].idTrack
+
+        if final_prev_id == current_prev_id:
+            console.print(
+                "[yellow]! Note: Track is already at this position. No changes made.[/yellow]"
+            )
+        else:
+            reorder_track(str(playlist_id), track_id, final_prev_id)
+            console.print(
+                f"[green]✓ Track '{track_id}' successfully moved in playlist '{playlist_id}'![/green]"
+            )
+
+        # Refresh and display
+        playlist = get_playlist(str(playlist_id))
+        tracks = get_playlist_tracks(str(playlist_id))
+
+        tracks_table = Table(title=f"All tracks in '{playlist.name}'")
+        tracks_table.add_column("#", justify="right", style="dim")
+        tracks_table.add_column("Track ID", style="cyan", justify="right")
+        tracks_table.add_column("title", style="magenta")
+        tracks_table.add_column("artists", style="blue")
+
+        for idx, t in enumerate(tracks, start=1):
+            t_artists = ", ".join([artist.name for artist in t.artists])
+            tracks_table.add_row(str(idx), str(t.idTrack), t.title, t_artists)
+
+        console.print(tracks_table)
 
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")

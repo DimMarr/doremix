@@ -31,9 +31,13 @@ export class GenreRepository {
                 credentials: "include",
                 body: JSON.stringify({ label }),
             });
+
             if (!response.ok) {
+                if (response.status === 409) {
+                    throw new Error("Conflict");
+                }
                 handleHttpError(response, "Create genre");
-                throw new Error("Failed to create genre");
+                throw new Error("This genre already exists");
             }
             return response.json();
         } catch (error) {
@@ -53,9 +57,13 @@ export class GenreRepository {
                 credentials: "include",
                 body: JSON.stringify({ label }),
             });
+
             if (!response.ok) {
+                if (response.status === 409) {
+                    throw new Error("Conflict");
+                }
                 handleHttpError(response, "Update genre");
-                throw new Error("Failed to update genre");
+                throw new Error("This genre already exists");
             }
             return response.json();
         } catch (error) {

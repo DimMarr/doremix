@@ -58,9 +58,14 @@ services:
     container_name: backend_python
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      DATABASE_URL: postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       TOKEN_SECRET_KEY: ${TOKEN_SECRET_KEY}
+      TOKEN_MAIL_SECRET_KEY: ${TOKEN_MAIL_SECRET_KEY}
       PEPPER_KEY: ${PEPPER_KEY}
+      MAIL_SERVER: ${MAIL_SERVER}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      WEB_BASE_URL: ${WEB_BASE_URL_BETA}
     volumes:
       - ./uploads/covers:/app/uploads/covers
     healthcheck:

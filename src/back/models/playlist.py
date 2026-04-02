@@ -2,7 +2,6 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Enum, TIMESTAMP
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from database import Base
-import enum
 from .enums import PlaylistVisibility
 
 
@@ -20,10 +19,11 @@ class Playlist(Base):
         ForeignKey("users.iduser", ondelete="CASCADE"),
         nullable=False,
     )
-    owner = relationship("User", foreign_keys=[idOwner])
     vote = Column("vote", Integer, default=0)
     visibility = Column(
-        "visibility", Enum(PlaylistVisibility), default=PlaylistVisibility.PRIVATE
+        "visibility",
+        Enum(PlaylistVisibility, native_enum=False),
+        default=PlaylistVisibility.PRIVATE,
     )
     coverImage = Column("coverimage", String(500), nullable=True)
     createdAt = Column("createdat", TIMESTAMP, server_default=func.now())
@@ -31,10 +31,16 @@ class Playlist(Base):
         "updatedat", TIMESTAMP, server_default=func.now(), onupdate=func.now()
     )
 
-    genre = relationship("Genre", foreign_keys=[idGenre])
-
+    owner = relationship("User", foreign_keys=[idOwner], lazy="selectin")
+    genre = relationship("Genre", foreign_keys=[idGenre], lazy="selectin")
     tracks = relationship(
-        "Track", secondary="track_playlist", back_populates="playlists"
+        "Track",
+        secondary="track_playlist",
+        primaryjoin="Playlist.idPlaylist == foreign(track_playlist.c.idplaylist)",
+        secondaryjoin="Track.idTrack == foreign(track_playlist.c.idtrack)",
+        back_populates="playlists",
+        lazy="selectin",
     )
-
-    users = relationship("User", secondary="user_playlist", back_populates="playlists")
+    users = relationship(
+        "User", secondary="user_playlist", back_populates="playlists", lazy="selectin"
+    )

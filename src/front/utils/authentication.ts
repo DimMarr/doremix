@@ -52,6 +52,7 @@ class AuthService {
             if (!response.ok) {
                 throw new Error(result.message || "Login failed");
             }
+            this.infosPromise = undefined;
         } catch (e) {
             console.log('Login failed', e);
             throw e;
@@ -76,6 +77,7 @@ class AuthService {
             if (!response.ok) {
                 throw new Error(result.message || "Register failed");
             }
+            this.infosPromise = undefined;
         } catch (e) {
             console.log('Register failed', e);
             throw e;
@@ -91,7 +93,11 @@ class AuthService {
                 credentials: 'include'
             })
 
-            return response.status == 200
+            if (response.status == 200) {
+                this.infosPromise = undefined;
+                return true;
+            }
+            return false;
         } catch (e) {
             console.error("Failed to refresh token:", e);
             return false;
@@ -104,17 +110,67 @@ class AuthService {
             method: 'POST',
             credentials: 'include'
         })
-
+        this.infosPromise = undefined;
     }
 
-    async infos() {
-        const response = await fetch(`${API_BASE_URL}/auth/me`, {
-            method: 'GET',
-            credentials: 'include'
-        })
+    private infosPromise?: Promise<any>;
 
-        const result = response.json()
-        return result
+    async infos() {
+        if (!this.infosPromise) {
+            this.infosPromise = (async () => {
+                const response = await fetch(`${API_BASE_URL}/auth/me`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                if (!response.ok) {
+                    this.infosPromise = undefined;
+                    throw new Error('Failed to fetch infos');
+                }
+                return response.json();
+            })();
+        }
+        return this.infosPromise;
+    }
+
+    async verify_email(token: string) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/verify-email?token=${encodeURIComponent(token)}`, {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.detail || "Email verification failed");
+            }
+
+            return result;
+
+        } catch (e) {
+            console.error("Email validation failed:", e);
+            throw e;
+        }
+    }
+
+    async resend_verification_email(token: string) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/resend-verification-email?token=${encodeURIComponent(token)}`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.detail || "Resend failed");
+            }
+
+            return result;
+        } catch (e) {
+            console.error('Resend verification email failed', e);
+            throw e;
+        }
     }
 }
 

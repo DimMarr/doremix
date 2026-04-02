@@ -1,27 +1,42 @@
 import { secondsToReadableTime } from "@components/utils";
 import { Track } from "@models/track";
-import { PlaylistRepository } from "@repositories/playlistRepository";
-import { canEdit } from "@utils/rights";
 
-export async function TrackRow({ track, index, current_track, playlistId }: { track: Track; index: number, current_track?: Track, playlistId: number }) {
+export async function TrackRow({ track, index, current_track, playlistId, canEditPlaylist }: { track: Track; index: number, current_track?: Track, playlistId: number, canEditPlaylist?: boolean }) {
   const artistText = track.artists?.map(a => a.name).join(', ') || 'Unknown';
-  const repo = new PlaylistRepository();
-  let playlist = await repo.getById(playlistId);
+  const isPlayable = track.status === 'ok' || track.status === undefined;
+
+  const unavailableLabel: Record<string, string> = {
+    unavailable: 'Unavailable source',
+  };
+  const statusLabel = !isPlayable && track.status ? unavailableLabel[track.status] : null;
 
   return (
     <div
       id={`track-${index}`}
-      class={`group grid grid-cols-[2rem_1fr_1fr_4rem_3rem] items-center gap-4 px-4 py-2 rounded-md transition-colors duration-200 hover:bg-neutral-800 cursor-pointer ${current_track?.idTrack === track.idTrack ? "playing" : ""}`}
-
+      class={`group grid grid-cols-[2rem_1fr_1fr_4rem_3rem] items-center gap-4 px-4 py-2 rounded-md transition-all duration-200 outline-none hover:bg-neutral-800 ${canEditPlaylist ? "cursor-grab" : "cursor-pointer"} ${current_track?.idTrack === track.idTrack ? "playing" : ""} drag-track-row ${
+        isPlayable
+          ? 'hover:bg-neutral-800 cursor-pointer'
+          : 'opacity-40 cursor-not-allowed'
+      } ${current_track?.idTrack === track.idTrack ? "playing" : ""}`}
+      draggable={canEditPlaylist ? "true" : "false"}
       data-track-index={index}
+      data-track-id={track.idTrack}
+      data-playable={isPlayable ? "true" : "false"}
     >
       <div class="relative">
         <span class="track-number">{index + 1}</span>
       </div>
-      <span safe class="font-medium track-title">{track.title}</span>
+      <div class="flex flex-col min-w-0">
+        <span safe class={`font-medium track-title truncate ${!isPlayable ? 'line-through' : ''}`}>
+          {track.title}
+        </span>
+        {statusLabel && (
+          <span class="text-xs text-red-400 mt-0.5">{statusLabel}</span>
+        )}
+      </div>
       <span safe>{artistText}</span>
       <span safe>{secondsToReadableTime(track.durationSeconds)}</span>
-      { await canEdit(repo, playlist) &&
+      { canEditPlaylist &&
       <button
         class="opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive flex items-center justify-center cursor-pointer delete-track"
         data-track-id={track.idTrack}

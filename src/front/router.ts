@@ -2,6 +2,14 @@ import { Sanitize } from '@utils/sanitize';
 import { NoInternetPage } from "@pages/noInternet";
 import { authService } from '@utils/authentication';
 
+export enum AppRoutes {
+  VERIFY_EMAIL = '/verify-email',
+  LOGIN = '/login',
+  SIGNUP = '/signup',
+  HOME = '/',
+  ARTISTS = '/artists'
+}
+
 export class Router {
   constructor(container, trackPlayer) {
     this.container = container;
@@ -32,7 +40,7 @@ export class Router {
 
     // Gestion de l'authentification
     let path = window.location.pathname;
-    const publicRoutes = ['/login', '/signup'];
+    const publicRoutes = [AppRoutes.LOGIN, AppRoutes.SIGNUP, AppRoutes.VERIFY_EMAIL];
     let isAuth = false;
     try {
       isAuth = await authService.isAuthenticated();
@@ -41,28 +49,40 @@ export class Router {
       isAuth = false;
     }
 
-    if (!publicRoutes.includes(path) && !isAuth) {
-      window.history.pushState({}, "", "/login");
-      if (this.routes["/login"]) {
-        this.routes["/login"](this.container, {}, {});
+    if (!publicRoutes.includes(path as AppRoutes) && !isAuth) {
+      window.history.pushState({}, "", AppRoutes.LOGIN);
+      if (this.routes[AppRoutes.LOGIN]) {
+        this.routes[AppRoutes.LOGIN](this.container, {}, {});
       }
       return;
     }
 
-    if (publicRoutes.includes(path) && isAuth) {
-      window.history.pushState({}, "", "/");
-      if (this.routes["/"]) {
-        this.routes["/"](this.container, {}, {});
+    if (publicRoutes.includes(path as AppRoutes) && isAuth) {
+      window.history.pushState({}, "", AppRoutes.HOME);
+      if (this.routes[AppRoutes.HOME]) {
+        this.routes[AppRoutes.HOME](this.container, {}, {});
       }
       return;
     }
 
-    if (path === "") path = "/";
+    if (path === "") path = AppRoutes.HOME;
+
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.getAttribute('href') === path) {
+          link.classList.add('text-white');
+          link.classList.remove('text-white/60');
+        } else {
+          link.classList.remove('text-white');
+          link.classList.add('text-white/60');
+        }
+      });
+    });
 
     if (!(new Sanitize()).isValidPath(path)) {
       console.warn('Invalid path detected:', path);
-      if (this.routes["/"]) {
-        this.routes["/"](this.container, {}, this.trackPlayer);
+      if (this.routes[AppRoutes.HOME]) {
+        this.routes[AppRoutes.HOME](this.container, {}, this.trackPlayer);
       }
       return;
     }
@@ -76,8 +96,8 @@ export class Router {
     }
     // If no route is matched, you might want to render a 404 page
     // or redirect to a default page.
-    if (this.routes["/"]) {
-      this.routes["/"](this.container, {}, this.trackPlayer);
+    if (this.routes[AppRoutes.HOME]) {
+      this.routes[AppRoutes.HOME](this.container, {}, this.trackPlayer);
     }
   }
 

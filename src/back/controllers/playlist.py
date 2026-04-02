@@ -1,142 +1,153 @@
-from sqlalchemy.orm import Session
-from repositories import PlaylistRepository
-from fastapi import HTTPException, UploadFile, Response
+from sqlalchemy.ext.asyncio import AsyncSession
+from repositories import PlaylistRepository, VoteRepository, UserRepository
+from fastapi import HTTPException, UploadFile
 from models.enums import PlaylistVisibility
 from utils.image_processor import save_cover_image
-from models.playlist import Playlist
+from models import Playlist
 from models import User
+from schemas.vote import VoteResponse
 
 
 class PlaylistController:
     @staticmethod
-    def get_accessible_playlists(db: Session, user_id: int):
-        return PlaylistRepository.get_accessible_playlists(db, user_id)
+    async def get_accessible_playlists(db: AsyncSession, user_id: int):
+        return await PlaylistRepository.get_accessible_playlists(db, user_id)
 
     @staticmethod
-    def get_public_playlists(db: Session, user: User):
-        return PlaylistRepository.get_public_playlists(db, user)
+    async def get_public_playlists(db: AsyncSession, user: User):
+        return await PlaylistRepository.get_public_playlists(db, user)
 
     @staticmethod
-    def get_shared_playlists(db: Session, user_id: int):
-        return PlaylistRepository.get_shared_playlist(db, user_id)
+    async def get_shared_playlists(db: AsyncSession, user_id: int):
+        return await PlaylistRepository.get_shared_playlist(db, user_id)
 
     @staticmethod
-    def get_playlist(db: Session, playlist_id: int, user: User):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id, user)
+    async def get_playlist(db: AsyncSession, playlist_id: int, user: User):
+        playlist = await PlaylistRepository.get_by_id(db, playlist_id, user)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
         return playlist
 
     @staticmethod
-    def get_playlist_tracks(db: Session, playlist_id: int, user: User):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id, user)
+    async def cast_vote(
+        db: AsyncSession, playlist_id: int, value: int, user: User
+    ) -> VoteResponse:
+        playlist = await PlaylistRepository.get_by_id(db, playlist_id, user)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
-        return PlaylistRepository.get_playlist_tracks(db, playlist_id)
+
+        score, user_vote = await VoteRepository.upsert_vote(
+            db, user.idUser, playlist_id, value
+        )
+        return VoteResponse(score=score, userVote=user_vote)
 
     @staticmethod
-    def upload_cover(db: Session, playlist_id: int, file: UploadFile, user: User):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id, user)
+    async def get_playlist_tracks(db: AsyncSession, playlist_id: int, user: User):
+        playlist = await PlaylistRepository.get_by_id(db, playlist_id, user)
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+        return await PlaylistRepository.get_playlist_tracks(db, playlist_id)
+
+    @staticmethod
+    async def upload_cover(
+        db: AsyncSession, playlist_id: int, file: UploadFile, user: User
+    ):
+        playlist = await PlaylistRepository.get_by_id(db, playlist_id, user)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
 
         cover_path = save_cover_image(file, playlist_id)
-
-        updated_playlist = PlaylistRepository.update_cover_image(
+        updated_playlist = await PlaylistRepository.update_cover_image(
             db, playlist_id, cover_path
         )
-
         return updated_playlist
 
     @staticmethod
-    def remove_track(db: Session, playlist_id: int, track_id: int, user: User):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id, user)
+    async def remove_track(
+        db: AsyncSession, playlist_id: int, track_id: int, user: User
+    ):
+        playlist = await PlaylistRepository.get_by_id_raw(db, playlist_id)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
-        if not PlaylistRepository.remove_track(db, playlist_id, track_id):
+
+        removed = await PlaylistRepository.remove_track(db, playlist_id, track_id)
+        if not removed:
             raise HTTPException(
                 status_code=404, detail="This track is not in the current playlist"
             )
-
-        db.refresh(playlist)
-
+        await db.refresh(playlist)
         return playlist
 
     @staticmethod
-    def search(db: Session, query: str, idUser: int):
+    async def search(db: AsyncSession, query: str, user_id: int):
         if not query or len(query) < 2:
             raise HTTPException(
                 status_code=400, detail="Query must be at least 2 characters"
             )
-
-        playlists = PlaylistRepository.search_playlists(db, query, idUser)
-        return playlists
+        return await PlaylistRepository.search_playlists(db, query, user_id)
 
     @staticmethod
-    def create_playlist(db: Session, playlist_data: dict, user_id: int):
+    async def create_playlist(db: AsyncSession, playlist_data: dict, user_id: int):
         new_playlist = Playlist(
             name=playlist_data["name"],
             idGenre=playlist_data["idGenre"],
             visibility=playlist_data["visibility"],
             idOwner=user_id,
         )
-
-        return PlaylistRepository.create(db, new_playlist)
+        return await PlaylistRepository.create(db, new_playlist)
 
     @staticmethod
-    def delete_playlist(db: Session, playlist_id: int, user: User):
-        playlist = PlaylistRepository.get_by_id_raw(db, playlist_id)
-
+    async def delete_playlist(db: AsyncSession, playlist_id: int, user: User):
+        playlist = await PlaylistRepository.get_by_id_raw(db, playlist_id)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
 
-        # Only playlist owner and admin can delete playlist
         if not (playlist.idOwner == user.idUser or user.idRole == 3):
             raise HTTPException(
                 status_code=403, detail="You're not allowed to delete this playlist."
             )
 
-        PlaylistRepository.delete(db, playlist)
-
+        await PlaylistRepository.delete(db, playlist)
         return {"message": f"Playlist '{playlist.name}' successfully deleted"}
 
     @staticmethod
-    def update_playlist(db: Session, playlist_id: int, update_data: dict, user: User):
-        playlist = PlaylistRepository.get_by_id(db, playlist_id, user)
-        users, _ = PlaylistRepository.list_shared_user(db, playlist_id, user.idUser)
-        editors = [user.idUser for user in users if user.editor]
-
+    async def update_playlist(
+        db: AsyncSession, playlist_id: int, update_data: dict, user: User
+    ):
+        playlist = await PlaylistRepository.get_by_id(db, playlist_id, user)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
 
-        # Only playlist owner, playlist editors and admin can update playlist
+        users, _ = await PlaylistRepository.list_shared_user(
+            db, playlist_id, user.idUser
+        )
+        editors = [u.idUser for u in users if u.editor]
+
         if not (
             playlist.idOwner == user.idUser
             or user.idRole == 3
             or user.idUser in editors
         ):
             raise HTTPException(
-                status_code=404, detail="You're not allowed to update this playlist."
+                status_code=403, detail="You're not allowed to update this playlist."
             )
 
-        if update_data["visibility"] == PlaylistVisibility.OPEN:
+        if update_data.get("visibility") == PlaylistVisibility.OPEN:
             update_data["idOwner"] = 1
 
-        return PlaylistRepository.update_playlist(db, playlist, update_data)
+        return await PlaylistRepository.update_playlist(db, playlist, update_data)
 
     @staticmethod
-    def add_playlist_track_secure(
-        db: Session, title: str, url: str, playlist_id: int, user_id: int
+    async def add_playlist_track_secure(
+        db: AsyncSession, title: str, url: str, playlist_id: int, user_id: int
     ):
-        # 1. Vérification de sécurité
-        if not PlaylistRepository.can_edit_playlist(db, playlist_id, user_id):
+        if not await PlaylistRepository.can_edit_playlist(db, playlist_id, user_id):
             raise HTTPException(
                 status_code=403,
                 detail="Permission denied : You don't have permission to edit this playlist",
             )
 
-        # 2. Appel de la logique métier
-        track, status = PlaylistRepository.add_track(db, title, url, playlist_id)
+        track, status = await PlaylistRepository.add_track(db, title, url, playlist_id)
 
         if status == "invalid url":
             raise HTTPException(400, "Invalid URL")
@@ -148,8 +159,30 @@ class PlaylistController:
         return track
 
     @staticmethod
-    def shared_with(db: Session, playlist_id: int, current_user_id: int):
-        users, err = PlaylistRepository.list_shared_user(
+    async def move_track(
+        db: AsyncSession,
+        playlist_id: int,
+        track_id: int,
+        prev_track_id: int | None,
+        user_id: int,
+    ):
+        if not await PlaylistRepository.can_edit_playlist(db, playlist_id, user_id):
+            raise HTTPException(
+                status_code=403,
+                detail="Permission denied : You don't have permission to edit this playlist",
+            )
+
+        success = await PlaylistRepository.move_track(
+            db, playlist_id, track_id, prev_track_id
+        )
+        if not success:
+            raise HTTPException(404, "Track or Playlist not found")
+
+        return {"message": "Track moved successfully"}
+
+    @staticmethod
+    async def shared_with(db: AsyncSession, playlist_id: int, current_user_id: int):
+        users, err = await PlaylistRepository.list_shared_user(
             db, playlist_id, current_user_id
         )
         if err:
@@ -157,10 +190,10 @@ class PlaylistController:
         return users
 
     @staticmethod
-    def share_user(
-        db: Session, playlist_id: int, owner_id: int, email: str, is_editor: bool
+    async def share_user(
+        db: AsyncSession, playlist_id: int, owner_id: int, email: str, is_editor: bool
     ):
-        success, msg = PlaylistRepository.share_with_user(
+        success, msg = await PlaylistRepository.share_with_user(
             db, playlist_id, owner_id, email, is_editor
         )
         if msg == "forbidden":
@@ -172,8 +205,10 @@ class PlaylistController:
         return {"message": "Shared successfully"}
 
     @staticmethod
-    def share_group(db: Session, playlist_id: int, owner_id: int, group_name: str):
-        success, msg = PlaylistRepository.share_with_group(
+    async def share_group(
+        db: AsyncSession, playlist_id: int, owner_id: int, group_name: str
+    ):
+        success, msg = await PlaylistRepository.share_with_group(
             db, playlist_id, owner_id, group_name
         )
         if msg == "forbidden":
@@ -181,3 +216,49 @@ class PlaylistController:
         if msg == "group_not_found":
             raise HTTPException(404, "Group not found")
         return {"message": "Shared with group successfully"}
+
+    @staticmethod
+    async def unshare_user(
+        db: AsyncSession, playlist_id: int, target_user_id: int, current_user_id: int
+    ):
+        playlist = await PlaylistRepository.get_by_id_raw(db, playlist_id)
+        if not playlist:
+            raise HTTPException(status_code=404, detail="Playlist not found")
+
+        current_user = await UserRepository.get_user_by_id(db, current_user_id)
+        is_admin = current_user is not None and current_user.idRole == 3
+        if playlist.idOwner != current_user_id and not is_admin:
+            raise HTTPException(
+                status_code=403,
+                detail="You're not allowed to remove users from this playlist",
+            )
+
+        removed = await PlaylistRepository.remove_shared_user(
+            db, playlist_id, target_user_id
+        )
+        if not removed:
+            raise HTTPException(
+                status_code=404,
+                detail="This user does not have access to this playlist",
+            )
+        return {"message": "User successfully removed from playlist"}
+
+    @staticmethod
+    async def transfer_playlist(
+        db: AsyncSession, playlist_id: int, current_owner: User, new_owner_email: str
+    ) -> Playlist:
+        if current_owner.email == new_owner_email:
+            raise HTTPException(
+                status_code=400,
+                detail="You cannot transfer ownership to yourself",
+            )
+
+        playlist = await PlaylistRepository.transfer_ownership(
+            db, playlist_id, current_owner.idUser, new_owner_email
+        )
+        if not playlist:
+            raise HTTPException(
+                status_code=404,
+                detail="Playlist not found, you are not the owner, or user not found",
+            )
+        return playlist
