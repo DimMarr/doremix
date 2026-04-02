@@ -294,8 +294,10 @@ export async function PlaylistDetailPage(
               </button>
             }
           </div>
-          {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
-          {await getSharedGroupsElement(repo, playlist, isPlaylistOwner) as 'safe'}
+          <div class="flex gap-2 ">
+            {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
+            {await getSharedGroupsElement(repo, playlist, isPlaylistOwner) as 'safe'}
+          </div>
         </>
       );
       mountVoteControls();
@@ -512,8 +514,10 @@ export async function PlaylistDetailPage(
               </button>
             }
           </div>
-         {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
-         {await getSharedGroupsElement(repo, playlist, isPlaylistOwner) as 'safe'}
+          <div class="flex gap-2">
+            {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
+            {await getSharedGroupsElement(repo, playlist, isPlaylistOwner) as 'safe'}
+          </div>
         </div>
       </div>
 
