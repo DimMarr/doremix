@@ -14,6 +14,7 @@ from models.user import User, UserRole
 from models.group import GroupUser, GroupPlaylist, UserGroup
 from repositories.track_repository import TrackRepository
 from repositories.artist_repository import ArtistRepository
+from repositories.like_repository import LikeRepository
 from utils.youtube_utils import get_youtube_video_info
 import asyncio
 
@@ -236,7 +237,9 @@ class PlaylistRepository:
         return False
 
     @staticmethod
-    async def get_playlist_tracks(db: AsyncSession, playlist_id: int) -> list[Track]:
+    async def get_playlist_tracks(
+        db: AsyncSession, playlist_id: int, user_id: int | None = None
+    ) -> list[Track]:
         result = await db.execute(
             select(Track, TrackPlaylist)
             .join(TrackPlaylist, TrackPlaylist.idTrack == Track.idTrack)
@@ -282,6 +285,14 @@ class PlaylistRepository:
         for track_id, (track, _) in node_map.items():
             if track_id not in visited:
                 ordered_tracks.append(track)
+
+        if user_id is not None:
+            liked_ids = await LikeRepository.get_liked_track_ids(db, user_id)
+            for track in ordered_tracks:
+                setattr(track, "isLiked", track.idTrack in liked_ids)
+        else:
+            for track in ordered_tracks:
+                setattr(track, "isLiked", False)
 
         return ordered_tracks
 

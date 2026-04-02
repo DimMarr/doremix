@@ -15,6 +15,7 @@ class PlaylistSchema(BaseModel):
     userVote: Optional[int] = None
     visibility: PlaylistVisibility
     coverImage: Optional[str] = None
+    isLikedPlaylist: bool = False
     createdAt: datetime
     updatedAt: datetime
     genre: Optional[GenreSchema] = None

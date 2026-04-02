@@ -12,6 +12,7 @@ from .verification_token import (
     PasswordResetToken,
 )
 from .playlist_vote import PlaylistVote
+from .track_like import TrackLike
 from .user_playlist_preferences import UserPlaylistPreferences
 
 __all__ = [

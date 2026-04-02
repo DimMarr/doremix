@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum, TIMESTAMP
+from sqlalchemy import Column, Integer, String, ForeignKey, Enum, TIMESTAMP, Boolean
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from database import Base
@@ -26,6 +26,7 @@ class Playlist(Base):
         default=PlaylistVisibility.PRIVATE,
     )
     coverImage = Column("coverimage", String(500), nullable=True)
+    isLikedPlaylist = Column("islikedplaylist", Boolean, nullable=False, default=False)
     createdAt = Column("createdat", TIMESTAMP, server_default=func.now())
     updatedAt = Column(
         "updatedat", TIMESTAMP, server_default=func.now(), onupdate=func.now()

@@ -28,6 +28,7 @@ from routes import (
     adminGenresRouter,
     moderationRouter,
     adminPlaylistsRouter,
+    likesRouter,
     groupsRouter,
 )
 
@@ -43,6 +44,7 @@ routers = [
     adminGenresRouter,
     moderationRouter,
     adminPlaylistsRouter,
+    likesRouter,
     groupsRouter,
 ]
 
