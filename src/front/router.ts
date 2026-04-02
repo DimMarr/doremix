@@ -7,6 +7,8 @@ export enum AppRoutes {
   LOGIN = '/login',
   SIGNUP = '/signup',
   HOME = '/',
+  ARTISTS = '/artists',
+  CGU = '/cgu'
 }
 
 export class Router {
@@ -39,7 +41,8 @@ export class Router {
 
     // Gestion de l'authentification
     let path = window.location.pathname;
-    const publicRoutes = [AppRoutes.LOGIN, AppRoutes.SIGNUP, AppRoutes.VERIFY_EMAIL];
+    const guestOnlyRoutes = [AppRoutes.LOGIN, AppRoutes.SIGNUP, AppRoutes.VERIFY_EMAIL];
+    const publicRoutes = [...guestOnlyRoutes, AppRoutes.CGU];
     let isAuth = false;
     try {
       isAuth = await authService.isAuthenticated();
@@ -56,7 +59,7 @@ export class Router {
       return;
     }
 
-    if (publicRoutes.includes(path as AppRoutes) && isAuth) {
+    if (guestOnlyRoutes.includes(path as AppRoutes) && isAuth) {
       window.history.pushState({}, "", AppRoutes.HOME);
       if (this.routes[AppRoutes.HOME]) {
         this.routes[AppRoutes.HOME](this.container, {}, {});
@@ -65,6 +68,18 @@ export class Router {
     }
 
     if (path === "") path = AppRoutes.HOME;
+
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.nav-link').forEach(link => {
+        if (link.getAttribute('href') === path) {
+          link.classList.add('text-white');
+          link.classList.remove('text-white/60');
+        } else {
+          link.classList.remove('text-white');
+          link.classList.add('text-white/60');
+        }
+      });
+    });
 
     if (!(new Sanitize()).isValidPath(path)) {
       console.warn('Invalid path detected:', path);

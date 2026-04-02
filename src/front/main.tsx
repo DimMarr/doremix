@@ -1,5 +1,5 @@
 import "@styles/alert.css";
-import { HomePage, PlaylistDetailPage, LoginPage, SignupPage, AdminPage, VerifyEmailPage } from "@pages/index";
+import { HomePage, PlaylistDetailPage, LoginPage, SignupPage, AdminPage, VerifyEmailPage, ArtistsPage, ArtistTracksPage } from "@pages/index";
 import { createMainLayout, trackPlayerInstance } from "@layouts/mainLayout";
 import { Router } from "./router";
 import { CguPage } from "./pages/cgu";
@@ -9,7 +9,7 @@ export let routerInstance = null;
 
 export default async function init() {
   if(!navigator.onLine){
-    document.getElementById("app").innerHTML = NoInternetPage();
+    document.getElementById("app").innerHTML = NoInternetPage() as unknown as string;
     return;
   }
 
@@ -35,6 +35,14 @@ export default async function init() {
   router.register("/admin", async(container) => {
     AdminPage(container);
   })
+
+  router.register("/artists", async (container) => {
+    ArtistsPage(container, (path) => router.navigate(path));
+  });
+
+  router.register("/artists/:id", async (container, params) => {
+    ArtistTracksPage(container, () => router.navigate("/artists"), params);
+  });
 
   router.register("/verify-email", async(container) => {
     VerifyEmailPage(container);

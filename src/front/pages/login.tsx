@@ -96,6 +96,17 @@ export async function LoginPage(container) {
                             Sign up
                         </a>
                     </p>
+                    <p class="px-1 text-center text-sm text-muted-foreground animate-fade-up animation-delay-700">
+                        By logging in, you agree to our{" "}
+                        <a
+                            href="/cgu"
+                            data-link
+                            class="underline underline-offset-4 hover:text-primary"
+                        >
+                            Terms of Use
+                        </a>
+                        .
+                    </p>
                 </div>
             </div>
         </div>
