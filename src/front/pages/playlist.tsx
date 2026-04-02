@@ -56,6 +56,8 @@ function getIconForVisibility(visibility: Visibility) {
 
 async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist) {
   const visibility = playlist.visibility;
+  const isSharedPlaylist = await isShared(repo, playlist);
+  const adminUser = await isAdmin();
   const badgeBase = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border uppercase tracking-wider transition-all duration-200 shadow-sm whitespace-nowrap";
   const interactable = "cursor-pointer hover:shadow-md relative select-none";
   const locked = "cursor-not-allowed opacity-80";
@@ -77,7 +79,7 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
   }
 
   let canEditVisibility = false;
-  if (await canEdit(repo, playlist) && (playlist.visibility != Visibility.open || isAdmin())) {
+  if (await canEdit(repo, playlist) && (playlist.visibility != Visibility.open || adminUser)) {
     canEditVisibility = true;
   }
 
@@ -88,7 +90,7 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
         <div id="visibility-trigger" class={`${badgeBase} ${colorClass} ${canEditVisibility ? interactable : locked}`} data-visibility-trigger>
           <div class="flex items-center gap-2 pointer-events-none">
             {getIconForVisibility(visibility) as 'safe'}
-            <span>{visibility} {await isShared(repo, playlist) ? "(SHARED)" : ""}</span>
+            <span>{visibility} {isSharedPlaylist ? "(SHARED)" : ""}</span>
             {canEditVisibility && <svg class="w-3 h-3 opacity-60 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>}
@@ -109,7 +111,7 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
                       <span>Public</span>
                     </button>
                 )}
-                {visibility !== Visibility.open && await isAdmin() &&
+                {visibility !== Visibility.open && adminUser &&
                     <button class={menuOptionClass} data-visibility-option={Visibility.open}>
                       {getIconForVisibility(Visibility.open) as 'safe'}
                       <span>OPEN</span>
@@ -122,18 +124,7 @@ async function getVisibilityElement(repo: PlaylistRepository, playlist: Playlist
   );
 }
 
-async function getSharedUsersElement(repo: PlaylistRepository, playlist: Playlist, isPlaylistOwner: boolean): Promise<string> {
-  const adminUser = await isAdmin();
-
-  if (!isPlaylistOwner && !adminUser) return '';
-
-  let users: any[] = [];
-  try {
-    users = await repo.sharedWith(playlist.idPlaylist);
-  } catch {
-    return '';
-  }
-
+function getSharedUsersElement(users: any[]): string {
   if (users.length === 0) return '';
 
   const MAX_VISIBLE = 5;
@@ -154,12 +145,42 @@ async function getSharedUsersElement(repo: PlaylistRepository, playlist: Playlis
       : '';
 
   return `
-    <div id="shared-users-section" class="flex items-center gap-2 mt-1">
+    <div id="shared-users-section" class="flex items-center gap-2">
       <div class="flex items-center">
         ${avatars}
         ${overflowBadge}
       </div>
       <span class="text-xs text-muted-foreground">${users.length} ${users.length === 1 ? 'person' : 'people'} with access</span>
+    </div>
+  `;
+}
+
+function getSharedGroupsElement(groups: any[]): string {
+  if (groups.length === 0) return '';
+
+  const MAX_VISIBLE = 5;
+  const visible = groups.slice(0, MAX_VISIBLE);
+  const overflow = groups.length - MAX_VISIBLE;
+
+  const avatars = visible.map((g: any) => {
+    const firstLetter = (g.groupName || '?').charAt(0).toUpperCase();
+    return `<div
+      title="${g.groupName}"
+      class="shared-group-avatar flex items-center justify-center w-7 h-7 rounded-full bg-indigo-700 border-2 border-neutral-900 text-xs font-semibold text-white -ml-2 first:ml-0 cursor-default select-none hover:z-10 hover:scale-110 transition-transform"
+    >${firstLetter}</div>`;
+  }).join('');
+
+  const overflowBadge = overflow > 0
+    ? `<div class="flex items-center justify-center w-7 h-7 rounded-full bg-neutral-600 border-2 border-neutral-900 text-xs font-semibold text-muted-foreground -ml-2 select-none">+${overflow}</div>`
+    : '';
+
+  return `
+    <div id="shared-groups-count" class="flex items-center gap-2">
+      <div class="flex items-center">
+        ${avatars}
+        ${overflowBadge}
+      </div>
+      <span class="text-xs text-muted-foreground">${groups.length} ${groups.length === 1 ? 'group' : 'groups'} with access</span>
     </div>
   `;
 }
@@ -219,10 +240,31 @@ export async function PlaylistDetailPage(
     if (headerContainer) {
       const canDeleteCurrentPlaylist = await canDeletePlaylist(playlist);
       const isPlaylistOwner = await isOwner(playlist);
+      const adminUser = await isAdmin();
+
+      let users: any[] = [];
+      let groups: any[] = [];
+      if (isPlaylistOwner || adminUser) {
+        try {
+          users = await repo.sharedWith(playlist.idPlaylist);
+        } catch {
+          users = [];
+        }
+
+        try {
+          groups = await repo.sharedGroups(playlist.idPlaylist);
+        } catch {
+          groups = [];
+        }
+      }
+
+      const sharedUsersMarkup = getSharedUsersElement(users);
+      const sharedGroupsMarkup = getSharedGroupsElement(groups);
+      const visibilityElement = await getVisibilityElement(repo, playlist);
 
       headerContainer.innerHTML = (
         <>
-          {await getVisibilityElement(repo, playlist) as 'safe'}
+          {visibilityElement as 'safe'}
           {renderGenreSection() as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
@@ -230,7 +272,10 @@ export async function PlaylistDetailPage(
             <div id="playlist-vote-controls"></div>
           </div>
 
-          {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
+          <div class="flex items-center gap-4 flex-wrap mt-1">
+            {sharedUsersMarkup as 'safe'}
+            {sharedGroupsMarkup as 'safe'}
+          </div>
         </>
       );
       mountVoteControls();
@@ -387,6 +432,29 @@ export async function PlaylistDetailPage(
   const canDeleteCurrentPlaylist = await canDeletePlaylist(playlist);
   const isPlaylistOwner = await isOwner(playlist);
   const canEditPlaylist = await canEdit(repo, playlist);
+  const canEditPlaylistRender = await canEdit(repo, playlist);
+  const adminUser = await isAdmin();
+
+  let users: any[] = [];
+  let groups: any[] = [];
+  if (isPlaylistOwner || adminUser) {
+    try {
+      users = await repo.sharedWith(playlist.idPlaylist);
+    } catch {
+      users = [];
+    }
+
+    try {
+      groups = await repo.sharedGroups(playlist.idPlaylist);
+    } catch {
+      groups = [];
+    }
+  }
+
+  const sharedUsersMarkup = getSharedUsersElement(users);
+  const sharedGroupsMarkup = getSharedGroupsElement(groups);
+  const visibilityElement = await getVisibilityElement(repo, playlist);
+  const trackListMarkup = await renderTrackList({ ...playlist, tracks }, canEditPlaylist);
 
   container.innerHTML = (
       <div>
@@ -414,7 +482,7 @@ export async function PlaylistDetailPage(
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
               </svg>
             </button>
-            {await canEdit(repo, playlist) &&
+            {canEditPlaylistRender &&
               <button id="add-track-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Add Track">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m-7-7h14" />
@@ -438,7 +506,7 @@ export async function PlaylistDetailPage(
           </div>
         </div>
         <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
-          {await getVisibilityElement(repo, playlist) as 'safe'}
+          {visibilityElement as 'safe'}
           {renderGenreSection() as 'safe'}
           <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
           <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
@@ -446,7 +514,10 @@ export async function PlaylistDetailPage(
             <div id="playlist-vote-controls"></div>
           </div>
 
-         {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
+         <div class="flex items-center gap-4 flex-wrap mt-1">
+           {sharedUsersMarkup as 'safe'}
+           {sharedGroupsMarkup as 'safe'}
+         </div>
         </div>
       </div>
 
@@ -466,7 +537,7 @@ export async function PlaylistDetailPage(
       </div>
 
       <div id="track-list-container" class="flex flex-col gap-4">
-        {await renderTrackList({ ...playlist, tracks }, canEditPlaylist) as 'safe'}
+        {trackListMarkup as 'safe'}
       </div>
     </div>
   );
