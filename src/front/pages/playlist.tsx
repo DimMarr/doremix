@@ -481,6 +481,17 @@ export async function PlaylistDetailPage(
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
               </svg>
             </button>
+          </div>
+        </div>
+        <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
+          {await getVisibilityElement(repo, playlist) as 'safe'}
+          {renderGenreSection() as 'safe'}
+          <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
+          <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
+          <div>
+              <div id="playlist-vote-controls"></div>
+          </div>
+            <div class="flex flex-wrap gap-2 mt-1">
             {await canEdit(repo, playlist) &&
               <button id="add-track-button" class="p-2 rounded-md border border-white/10 hover:bg-white/10 transition-colors" title="Add Track">
                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">

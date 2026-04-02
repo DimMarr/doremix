@@ -26,6 +26,7 @@ from src.services.playlist import (
     get_shared_groups,
     remove_shared_group,
 )
+from src.services.group import get_user_groups
 
 app = typer.Typer()
 console = Console()
