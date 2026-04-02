@@ -3,6 +3,7 @@ import { buildCardsFromPlaylists, initCardsElements } from "@components/generics
 import { setupPlaylistAndTrackModals } from "@components/playlists";
 import { PlaylistRepository } from "@repositories/index";
 import { GenreRepository } from "@repositories/index";
+import { PlaylistPreferencesRepository, type SortMode } from "@repositories/index";
 import Playlist, { Visibility } from "@models/playlist";
 import { Genre } from "@models/genre";
 import { authService } from "@utils/authentication";
@@ -21,9 +22,12 @@ export async function HomePage(container: HTMLElement | null) {
   const repo = new PlaylistRepository();
   const genreRepo = new GenreRepository();
 
-  const [allPlaylists, genres] = await Promise.all([
+  const prefsRepo = new PlaylistPreferencesRepository();
+
+  const [allPlaylists, genres, savedPrefs] = await Promise.all([
     repo.getAll(),
     genreRepo.getAll().catch(() => [] as Genre[]),
+    prefsRepo.get().catch(() => ({ sort_mode: "date_desc" as SortMode, custom_order: null })),
   ]);
 
   const userInfos = await authService.infos() as CurrentUserInfo;
@@ -69,6 +73,20 @@ export async function HomePage(container: HTMLElement | null) {
                 Manage
               </a>
             )}
+            <div class="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg p-1" id="sortControls">
+              <button
+                data-sort-btn="date_desc"
+                class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-white/60 hover:text-white hover:bg-white/10"
+              >Date</button>
+              <button
+                data-sort-btn="name_asc"
+                class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-white/60 hover:text-white hover:bg-white/10"
+              >Name</button>
+              <button
+                data-sort-btn="custom"
+                class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-white/60 hover:text-white hover:bg-white/10"
+              >Custom</button>
+            </div>
             <div id="addPlaylistSection"></div>
           </div>
         </div>
@@ -135,6 +153,137 @@ export async function HomePage(container: HTMLElement | null) {
 
   container.innerHTML = await pageHtml;
 
+  const personalGrid = container.querySelector('[data-cards-grid="personal"]') as HTMLElement | null;
+  if (personalGrid) {
+    personalGrid.querySelectorAll("[data-playlist-card]").forEach((card) => {
+      (card as HTMLElement).setAttribute("draggable", "true");
+    });
+  }
+
+  // --- Playlist sorting ---
+  let activeSortMode: SortMode = savedPrefs.sort_mode;
+  let customOrder: number[] = savedPrefs.custom_order ?? personalPlaylists.map((p) => p.idPlaylist!);
+
+  const getSortedPersonalPlaylists = (): number[] => {
+    const ids = personalPlaylists.map((p) => p.idPlaylist!);
+    if (activeSortMode === "name_asc") {
+      return [...personalPlaylists]
+        .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""))
+        .map((p) => p.idPlaylist!);
+    }
+    if (activeSortMode === "date_desc") {
+      return [...personalPlaylists]
+        .sort((a, b) => {
+          const da = new Date(b.createdAt ?? 0).getTime();
+          const db2 = new Date(a.createdAt ?? 0).getTime();
+          return da - db2;
+        })
+        .map((p) => p.idPlaylist!);
+    }
+    // custom: use customOrder, filtering out IDs no longer in personalPlaylists
+    const validIds = new Set(ids);
+    const filtered = customOrder.filter((id) => validIds.has(id));
+    // append any new playlists not yet in custom order (newest first)
+    const inOrder = new Set(filtered);
+    const newIds = [...personalPlaylists]
+      .filter((p) => !inOrder.has(p.idPlaylist!))
+      .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
+      .map((p) => p.idPlaylist!);
+    return [...filtered, ...newIds];
+  };
+
+  const applySort = () => {
+    if (!personalGrid) return;
+    const orderedIds = getSortedPersonalPlaylists();
+    orderedIds.forEach((id) => {
+      const card = personalGrid.querySelector(`[data-playlist-id="${id}"]`) as HTMLElement | null;
+      if (card) personalGrid.appendChild(card);
+    });
+  };
+
+  const highlightActiveSort = () => {
+    container.querySelectorAll("[data-sort-btn]").forEach((btn) => {
+      const mode = (btn as HTMLElement).getAttribute("data-sort-btn") as SortMode;
+      if (mode === activeSortMode) {
+        (btn as HTMLElement).className =
+          "px-3 py-1.5 rounded-md text-xs font-medium transition-colors bg-primary text-black";
+      } else {
+        (btn as HTMLElement).className =
+          "px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-white/60 hover:text-white hover:bg-white/10";
+      }
+    });
+  };
+
+  // Apply saved sort on load
+  applySort();
+  highlightActiveSort();
+
+  // Sort button click handler
+  const sortControls = container.querySelector("#sortControls");
+  if (sortControls) {
+    sortControls.addEventListener("click", async (e) => {
+      const btn = (e.target as HTMLElement).closest("[data-sort-btn]") as HTMLElement | null;
+      if (!btn) return;
+      const mode = btn.getAttribute("data-sort-btn") as SortMode;
+      activeSortMode = mode;
+      if (mode !== "custom") {
+        customOrder = getSortedPersonalPlaylists();
+      }
+      applySort();
+      highlightActiveSort();
+      await prefsRepo.save({ sort_mode: activeSortMode, custom_order: activeSortMode === "custom" ? customOrder : null });
+    });
+  }
+
+  // Drag-and-drop for custom sort
+  if (personalGrid) {
+    personalGrid.setAttribute("draggable", "false");
+    let draggedId: number | null = null;
+
+    personalGrid.addEventListener("dragstart", (e) => {
+      const card = (e.target as HTMLElement).closest("[data-playlist-id]") as HTMLElement | null;
+      if (!card) return;
+      draggedId = parseInt(card.getAttribute("data-playlist-id")!, 10);
+      card.classList.add("opacity-50");
+    });
+
+    personalGrid.addEventListener("dragend", (e) => {
+      const card = (e.target as HTMLElement).closest("[data-playlist-id]") as HTMLElement | null;
+      if (card) card.classList.remove("opacity-50");
+      draggedId = null;
+    });
+
+    personalGrid.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      const target = (e.target as HTMLElement).closest("[data-playlist-id]") as HTMLElement | null;
+      if (!target || draggedId === null) return;
+      const targetId = parseInt(target.getAttribute("data-playlist-id")!, 10);
+      if (targetId === draggedId) return;
+      // Reorder in DOM
+      const draggedEl = personalGrid.querySelector(`[data-playlist-id="${draggedId}"]`) as HTMLElement | null;
+      if (!draggedEl) return;
+      const rect = target.getBoundingClientRect();
+      const midX = rect.left + rect.width / 2;
+      if (e.clientX < midX) {
+        personalGrid.insertBefore(draggedEl, target);
+      } else {
+        personalGrid.insertBefore(draggedEl, target.nextSibling);
+      }
+    });
+
+    personalGrid.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      if (draggedId === null) return;
+      // Read new order from DOM
+      const newOrder = Array.from(
+        personalGrid.querySelectorAll("[data-playlist-id]")
+      ).map((el) => parseInt((el as HTMLElement).getAttribute("data-playlist-id")!, 10));
+      customOrder = newOrder;
+      activeSortMode = "custom";
+      highlightActiveSort();
+      await prefsRepo.save({ sort_mode: "custom", custom_order: customOrder });
+    });
+  }
 
   // Setup modals d'ajout de track et de playlist.
   setupPlaylistAndTrackModals();
