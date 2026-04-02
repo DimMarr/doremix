@@ -7,6 +7,7 @@ from .track_artist import TrackArtist
 from .track_playlist import TrackPlaylist
 from .user_playlists import UserPlaylist
 from .playlist_vote import PlaylistVote
+from .user_playlist_preferences import UserPlaylistPreferences
 
 __all__ = [
     "Genre",
@@ -17,4 +18,5 @@ __all__ = [
     "User",
     "TrackPlaylist",
     "UserPlaylist",
+    "UserPlaylistPreferences",
 ]
