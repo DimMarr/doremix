@@ -15,7 +15,9 @@ class TestGetPlaylistPreferences:
         assert data["custom_order"] is None
 
     @pytest.mark.asyncio
-    async def test_get_preferences_returns_saved_row(self, client, db: AsyncSession, sample_user):
+    async def test_get_preferences_returns_saved_row(
+        self, client, db: AsyncSession, sample_user
+    ):
         """Returns the stored sort_mode when a row already exists."""
         prefs = UserPlaylistPreferences(
             idUser=sample_user.idUser,
@@ -31,7 +33,9 @@ class TestGetPlaylistPreferences:
         assert data["sort_mode"] == "name_asc"
 
     @pytest.mark.asyncio
-    async def test_get_preferences_returns_custom_order(self, client, db: AsyncSession, sample_user):
+    async def test_get_preferences_returns_custom_order(
+        self, client, db: AsyncSession, sample_user
+    ):
         """Returns the custom_order array when sort_mode is custom."""
         prefs = UserPlaylistPreferences(
             idUser=sample_user.idUser,
@@ -50,7 +54,9 @@ class TestGetPlaylistPreferences:
 
 class TestUpdatePlaylistPreferences:
     @pytest.mark.asyncio
-    async def test_put_creates_row_on_first_save(self, client, db: AsyncSession, sample_user):
+    async def test_put_creates_row_on_first_save(
+        self, client, db: AsyncSession, sample_user
+    ):
         """Creates a new preferences row when none exists."""
         response = await client.put(
             "/playlists/preferences",
@@ -62,7 +68,9 @@ class TestUpdatePlaylistPreferences:
         assert data["custom_order"] is None
 
     @pytest.mark.asyncio
-    async def test_put_updates_existing_row(self, client, db: AsyncSession, sample_user):
+    async def test_put_updates_existing_row(
+        self, client, db: AsyncSession, sample_user
+    ):
         """Overwrites an existing preferences row."""
         prefs = UserPlaylistPreferences(
             idUser=sample_user.idUser, sort_mode="date_desc", custom_order=None
