@@ -15,7 +15,7 @@ def get_youtube_video_info(
             info = ydl.extract_info(url, download=False)
             duration = int(info.get("duration")) if info.get("duration") else None
             author = info.get("uploader")
-            channel_url = info.get("uploader_url") or info.get("channel_url")
+            channel_url = info.get("channel_url") or info.get("uploader_url")
             return duration, author, channel_url
 
     # Signal unavailable videos with a sentinel author value.
