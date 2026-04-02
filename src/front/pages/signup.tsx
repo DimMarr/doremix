@@ -69,7 +69,7 @@ export async function SignupPage(container) {
                     <div class="relative lg:hidden z-20 flex block justify-center items-center text-lg font-medium animate-fade-right animation-delay-100">
                         <img src={logo} alt="Dorémix" class="mr-2 h-8" />
                     </div>
-                    <div id="signupHeader" class="flex flex-col space-y-2 text-center animate-fade-up animation-delay-300">
+                    <div id="registerHeader" class="flex flex-col space-y-2 text-center animate-fade-up animation-delay-300">
                         <h1 class="text-3xl font-bold tracking-tight">Sign up to your account</h1>
                         <p class="text-base text-muted-foreground">
                             Enter your email below to create an account
@@ -108,7 +108,7 @@ export async function SignupPage(container) {
                         </a>
                     </div>
 
-                    <p class="px-8 text-center text-sm text-muted-foreground animate-fade-up animation-delay-600">
+                    <p id="registerFooter" class="px-8 text-center text-sm text-muted-foreground animate-fade-up animation-delay-600">
                         Already have an account?{" "}
                         <a
                             href={AppRoutes.LOGIN}
@@ -219,7 +219,8 @@ export async function SignupPage(container) {
 
     function showSuccessMessage(email: string) {
         document.getElementById("registerForm").classList.add("hidden");
-        document.getElementById("signupHeader").classList.add("hidden");
+        document.getElementById("registerHeader").classList.add("hidden");
+        document.getElementById("registerFooter").classList.add("hidden");
         const successEl = document.getElementById("registerSuccess");
         document.getElementById("registerSuccessEmail").textContent = email;
         successEl.classList.remove("hidden");
