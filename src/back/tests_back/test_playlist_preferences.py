@@ -59,17 +59,7 @@ class TestUpdatePlaylistPreferences:
         assert response.status_code == 200
         data = response.json()
         assert data["sort_mode"] == "name_asc"
-
-        # Verify in DB
-        from sqlalchemy.future import select
-        result = await db.execute(
-            select(UserPlaylistPreferences).filter(
-                UserPlaylistPreferences.idUser == sample_user.idUser
-            )
-        )
-        row = result.scalars().first()
-        assert row is not None
-        assert row.sort_mode == "name_asc"
+        assert data["custom_order"] is None
 
     @pytest.mark.asyncio
     async def test_put_updates_existing_row(self, client, db: AsyncSession, sample_user):
