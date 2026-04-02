@@ -48,8 +48,13 @@ export default async function init() {
   router.register("/artists/:id", async (container, params) => {
     ArtistTracksPage(container, () => router.navigate("/artists"), params);
   });
+
   router.register("/verify-email", async(container) => {
     VerifyEmailPage(container);
+  })
+
+  router.register("/cgu", async(container) => {
+    CguPage(container);
   })
 
   router.onRouteChange();
