@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <<<<<<< HEAD:src/front/pages/admin.tsx
 import { Genre } from "@models/genre";
 import type User from "@models/user";
@@ -7,6 +8,10 @@ import { Genre, User } from "@models/index";
 import { GenreRepository, ModerationRepository, UserRepository } from "@repositories/index";
 import { Input, AdminPanel } from "@components/index";
 >>>>>>> f08c9c7 (feat: add and demote moderators panel on frontend):src/front/pages/adminGenres.tsx
+=======
+import { Genre } from "@models/genre";
+import { GenreRepository, ModerationRepository } from "@repositories/index";
+>>>>>>> 32dcc41 (fix: display users and groups playlists have been shared to in flexbox)
 import type { ModerationUser } from "@repositories/moderationRepository";
 import { AlertManager } from "@utils/alertManager";
 import { authService } from "@utils/authentication";
@@ -14,6 +19,7 @@ import { PlaylistRepository } from "@repositories/playlistRepository";
 import Playlist, { Visibility } from "@models/playlist";
 import { Track } from "@models/track";
 
+<<<<<<< HEAD
 // Main function : Handle behavior based on role
 export async function AdminPage(container: HTMLElement | null) {
   if (!container) return;
@@ -127,6 +133,8 @@ function renderBanRows(users: ModerationUser[]): string {
     .join("");
 }
 
+=======
+>>>>>>> 32dcc41 (fix: display users and groups playlists have been shared to in flexbox)
 function renderGenreRows(genres: Genre[], editingId: number | null): string {
   if (genres.length === 0) {
     return '<p class="text-muted-foreground text-sm">No genres yet.</p>';
@@ -162,6 +170,7 @@ function renderGenreRows(genres: Genre[], editingId: number | null): string {
     .join("");
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD:src/front/pages/admin.tsx
 function renderPlaylistRows(
   playlists: Playlist[],
@@ -384,6 +393,8 @@ function renderModeratorsRows(users: User[]): string {
 <<<<<<< HEAD
 >>>>>>> f08c9c7 (feat: add and demote moderators panel on frontend):src/front/pages/adminGenres.tsx
 =======
+=======
+>>>>>>> 32dcc41 (fix: display users and groups playlists have been shared to in flexbox)
 function renderPlaylistRows(
   playlists: Playlist[],
   expandedId: number | null,
@@ -531,7 +542,7 @@ export async function AdminPage(container: HTMLElement | null) {
           </a>
         </div>
 
-        <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full max-w-2xl shadow-2xl mb-6">
+        <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full shadow-2xl mb-6">
           <h2 class="text-xl font-semibold text-white mb-4">Genres</h2>
           <div id="genre-list" class="space-y-2 mb-6 max-h-96 overflow-y-auto">
             <p class="text-muted-foreground text-sm">Loading...</p>
@@ -592,28 +603,41 @@ export async function AdminPage(container: HTMLElement | null) {
 function renderBanRows(users: ModerationUser[]): string {
 >>>>>>> 0f0c9c1 (feat(front): make playlist name clickable in admin panel)
   if (users.length === 0) {
-    return '<p class="text-muted-foreground text-sm">No user.</p>';
+    return '<p class="text-muted-foreground text-sm">No users available.</p>';
   }
 
   return users
     .map((user) => {
+      const actionButton = user.banned ? (
+        <button data-unban-user={user.idUser} class="px-3 py-2 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-green-500 transition-colors self-start md:self-auto">
+          Unban user
+        </button>
+      ) : (
+        <button data-ban-user={user.idUser} class="px-3 py-2 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-500 transition-colors self-start md:self-auto">
+          Ban user
+        </button>
+      );
+
       return (
-        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors" data-genre-id={user.idUser}>
-          <span safe class="text-foreground text-sm">{user.username}</span>
-          <div class="flex gap-2">
-            <Input
-              type="checkbox"
-              checked={user.role === "MODERATOR" || user.role === "ADMIN"}
-              disabled={user.role === "ADMIN"}
-              data-mod-user={user.idUser}
-            />
+        <div class={`flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 rounded-lg border border-white/10 ${user.banned ? 'bg-red-900/10 opacity-75' : 'bg-white/5'}`} data-user-id={user.idUser}>
+          <div>
+            <p class="text-white text-sm font-medium flex items-center gap-1">
+              <span safe>{user.username}</span>
+              {user.banned ? <span class="text-red-400 text-xs">(Banned)</span> : ""}
+            </p>
+            <p safe class="text-white/60 text-xs">{user.email}</p>
+            <span class="inline-block mt-2 px-2 py-1 rounded-full bg-neutral-700 text-white text-[10px] uppercase tracking-wide">
+              {user.role}
+            </span>
           </div>
+          {actionButton as 'safe'}
         </div>
       );
     })
     .join("");
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD:src/front/pages/admin.tsx
 function renderModeratorsRows(users: User[]): string {
   if (users.length === 0) {
@@ -653,6 +677,8 @@ function renderModeratorsRows(users: User[]): string {
  */
 >>>>>>> f08c9c7 (feat: add and demote moderators panel on frontend):src/front/pages/adminGenres.tsx
 
+=======
+>>>>>>> 32dcc41 (fix: display users and groups playlists have been shared to in flexbox)
 async function initGenreManagement(container: HTMLElement) {
   const genreList = container.querySelector("#genre-list") as HTMLElement | null;
   const addForm = container.querySelector("#add-genre-form") as HTMLFormElement | null;
@@ -977,6 +1003,7 @@ async function initModerationPanel(container: HTMLElement) {
 
   await refresh();
 }
+<<<<<<< HEAD
 
 async function initAddModeratorPanel(container: HTMLElement) {
 <<<<<<< HEAD:src/front/pages/admin.tsx
@@ -1094,3 +1121,5 @@ async function initAddModeratorPanel(container: HTMLElement) {
 
   await refresh();
 }
+=======
+>>>>>>> 32dcc41 (fix: display users and groups playlists have been shared to in flexbox)
