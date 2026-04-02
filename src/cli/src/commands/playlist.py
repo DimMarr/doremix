@@ -769,6 +769,7 @@ def unshare_group(
     except Exception as e:
         console.print(f"[red] Error: {e}[/red]")
 
+
 @app.command(help="Vote on a playlist (upvote, downvote, or remove vote).")
 def vote(
     playlist_id: int = typer.Argument(..., help="Playlist ID"),
@@ -776,61 +777,28 @@ def vote(
     downvote: bool = typer.Option(False, "--down", "-d", help="Downvote the playlist"),
     remove: bool = typer.Option(False, "--remove", "-r", help="Remove your vote"),
 ):
-        if sum([upvote, downvote, remove]) != 1:
-            console.print(
-                "[yellow]Specify exactly one of --up, --down, or --remove.[/yellow]"
-            )
-            raise typer.Abort()
+    if sum([upvote, downvote, remove]) != 1:
+        console.print(
+            "[yellow]Specify exactly one of --up, --down, or --remove.[/yellow]"
+        )
+        raise typer.Abort()
 
-        value = 1 if upvote else (-1 if downvote else 0)
-        result = vote_playlist(str(playlist_id), value)
+    value = 1 if upvote else (-1 if downvote else 0)
+    result = vote_playlist(str(playlist_id), value)
 
-        score = result.get("score", "?")
-        user_vote = result.get("userVote")
+    score = result.get("score", "?")
+    user_vote = result.get("userVote")
 
-        if value == 1:
-            console.print(f"[green]Upvoted![/green] Score: {score}")
-        elif value == -1:
-            console.print(f"[red]Downvoted![/red] Score: {score}")
-        else:
-            console.print(f"[yellow]Vote removed.[/yellow] Score: {score}")
+    if value == 1:
+        console.print(f"[green]Upvoted![/green] Score: {score}")
+    elif value == -1:
+        console.print(f"[red]Downvoted![/red] Score: {score}")
+    else:
+        console.print(f"[yellow]Vote removed.[/yellow] Score: {score}")
 
-        if user_vote is not None:
-            vote_label = "+1" if user_vote == 1 else ("-1" if user_vote == -1 else "none")
-            console.print(f"Your vote: {vote_label}")
-
-@app.command(help="Share a playlist with a group.")
-def share_to_group(
-    playlist_id: int = typer.Argument(..., help="Playlist ID"),
-    group_id: int = typer.Option(..., "--group", "-g", help="Group ID"),
-):
-    try:
-        from src.services.group import get_user_groups
-
-        groups = get_user_groups()
-        target_group = next((g for g in groups if g.get("idGroup") == group_id), None)
-
-        if not target_group:
-            console.print(
-                f"[red] Error: Group with ID {group_id} not found or you are not a member.[/red]"
-            )
-            raise typer.Exit(1)
-
-        group_name = target_group.get("groupName")
-
-        response = share_group(str(playlist_id), group_name)
-        if response.get("message") == "Playlist is already shared with this group":
-            console.print(
-                f"[yellow]ℹ Playlist is already shared with group '{group_name}'[/yellow]"
-            )
-        else:
-            console.print(
-                f"[green] Playlist successfully shared with group '{group_name}'[/green]"
-            )
-    except typer.Exit:
-        raise
-    except Exception as e:
-        console.print(f"[red]✗ Error: {e}[/red]")
+    if user_vote is not None:
+        vote_label = "+1" if user_vote == 1 else ("-1" if user_vote == -1 else "none")
+        console.print(f"Your vote: {vote_label}")
 
 
 @app.command(help="List groups who have access to a shared playlist.")
