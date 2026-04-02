@@ -14,7 +14,7 @@ router = APIRouter(prefix="/artists", tags=["Artists"])
 
 
 @router.get(
-    "/",
+    "",
     response_model=list[ArtistSchema],
     summary="Get all artists",
     description="Returns the complete list of available artists.",
