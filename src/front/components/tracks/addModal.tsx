@@ -1,4 +1,4 @@
-import { PlaylistRepository, TrackRepository } from "@repositories/index";
+import { PlaylistRepository, TrackRepository, GroupRepository } from "@repositories/index";
 import { Button, Input } from "@components/generics";
 import { isValidEmail } from "@utils/authentication";
 import { AlertManager } from "@utils/alertManager";
@@ -163,6 +163,9 @@ export function ShareModal({ playlistId, isOwnerOrAdmin, onClose, onUsersChanged
           <button id="tab-share" class="tab-btn pb-2 px-1 text-sm font-medium border-b-2 border-primary text-primary transition-colors">
             Share
           </button>
+          <button id="tab-group" class="tab-btn pb-2 px-1 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground transition-colors">
+            Group
+          </button>
           <button id="tab-transfer" class="tab-btn pb-2 px-1 text-sm font-medium border-b-2 border-transparent text-muted-foreground hover:text-foreground transition-colors">
             Transfer ownership
           </button>
@@ -177,6 +180,23 @@ export function ShareModal({ playlistId, isOwnerOrAdmin, onClose, onUsersChanged
             <div class="flex justify-end gap-4">
               <Button type="button" id="cancel-share" variant="secondary">Cancel</Button>
               <Button type="submit" id="submit-share" disabled>Share</Button>
+            </div>
+          </form>
+        </div>
+
+        <div id="panel-group" class="hidden flex flex-col gap-5">
+          <form id="group-form" class="flex flex-col gap-5">
+            <div class="flex flex-col gap-5">
+              <div class="flex flex-col gap-2">
+                <label for="group-id" class="text-sm font-medium">Select Group</label>
+                <select id="group-id" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                  <option value="" disabled selected>Loading groups...</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex justify-end gap-4">
+              <Button type="button" id="cancel-group" variant="secondary">Cancel</Button>
+              <Button type="submit" id="submit-group" disabled>Share</Button>
             </div>
           </form>
         </div>
@@ -200,6 +220,12 @@ export function ShareModal({ playlistId, isOwnerOrAdmin, onClose, onUsersChanged
                   <p class="text-sm text-muted-foreground">Loading...</p>
               </div>
           </div>
+          <div class="flex flex-col gap-2">
+            <p class="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Groups with access</p>
+            <div id="shared-groups-list" class="flex flex-col gap-2 max-h-48 overflow-y-auto">
+              <p class="text-sm text-muted-foreground">Loading...</p>
+            </div>
+          </div>
       </div>
     </div>
   );
@@ -208,31 +234,44 @@ export function ShareModal({ playlistId, isOwnerOrAdmin, onClose, onUsersChanged
       container.innerHTML = modalHtml;
 
       const tabShare = container.querySelector('#tab-share');
+      const tabGroup = container.querySelector('#tab-group');
       const tabTransfer = container.querySelector('#tab-transfer');
       const panelShare = container.querySelector('#panel-share');
+      const panelGroup = container.querySelector('#panel-group');
       const panelTransfer = container.querySelector('#panel-transfer');
 
       const usersList = container.querySelector('#shared-users-list');
+      const groupsList = container.querySelector('#shared-groups-list');
 
       const playlistRepo = repo ?? new PlaylistRepository();
 
       function activateTab(tab) {
           const isShare = tab === 'share';
+          const isGroup = tab === 'group';
+          const isTransfer = tab === 'transfer';
+
           tabShare.classList.toggle('border-primary', isShare);
           tabShare.classList.toggle('text-primary', isShare);
           tabShare.classList.toggle('border-transparent', !isShare);
           tabShare.classList.toggle('text-muted-foreground', !isShare);
 
-          tabTransfer.classList.toggle('border-primary', !isShare);
-          tabTransfer.classList.toggle('text-primary', !isShare);
-          tabTransfer.classList.toggle('border-transparent', isShare);
-          tabTransfer.classList.toggle('text-muted-foreground', isShare);
+          tabGroup.classList.toggle('border-primary', isGroup);
+          tabGroup.classList.toggle('text-primary', isGroup);
+          tabGroup.classList.toggle('border-transparent', !isGroup);
+          tabGroup.classList.toggle('text-muted-foreground', !isGroup);
+
+          tabTransfer.classList.toggle('border-primary', isTransfer);
+          tabTransfer.classList.toggle('text-primary', isTransfer);
+          tabTransfer.classList.toggle('border-transparent', !isTransfer);
+          tabTransfer.classList.toggle('text-muted-foreground', !isTransfer);
 
           panelShare.classList.toggle('hidden', !isShare);
-          panelTransfer.classList.toggle('hidden', isShare);
+          panelGroup.classList.toggle('hidden', !isGroup);
+          panelTransfer.classList.toggle('hidden', !isTransfer);
       }
 
       tabShare.onclick = () => activateTab('share');
+      tabGroup.onclick = () => activateTab('group');
       tabTransfer.onclick = () => activateTab('transfer');
 
       const handleKeyDown = (e) => {
@@ -306,7 +345,68 @@ export function ShareModal({ playlistId, isOwnerOrAdmin, onClose, onUsersChanged
           }
       };
 
+      const loadGroups = async () => {
+          try {
+              const groups = await playlistRepo.sharedGroups(playlistId);
+
+              if (groups.length === 0) {
+                  groupsList.innerHTML = `<p class="text-sm text-muted-foreground">No groups have access yet.</p>`;
+                  return;
+              }
+
+              groupsList.innerHTML = groups.map((g) => `
+              <div class="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-white/5 border border-white/8" data-group-id="${g.idGroup}">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="flex items-center justify-center w-9 h-9 rounded-full bg-neutral-700 text-sm font-semibold text-white shrink-0">
+                    ${g.groupName.charAt(0).toUpperCase()}
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-white truncate">${g.groupName}</p>
+                    <p class="text-xs text-muted-foreground truncate">Group #${g.idGroup}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  ${isOwnerOrAdmin
+                  ? `<button class="remove-group flex items-center justify-center w-7 h-7 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors" data-group-id="${g.idGroup}">✕</button>`
+                  : ''
+              }
+                </div>
+              </div>
+            `).join('');
+
+              if (isOwnerOrAdmin) {
+                  groupsList.querySelectorAll('.remove-group').forEach((btn: HTMLButtonElement) => {
+                      btn.onclick = async () => {
+                          const groupId = Number(btn.getAttribute('data-group-id'));
+                          btn.disabled = true;
+
+                          try {
+                              await playlistRepo.removeSharedGroup(playlistId, groupId);
+                              const row = groupsList.querySelector(`[data-group-id="${groupId}"]`);
+                              row?.remove();
+                              if (groupsList.children.length === 0) {
+                                  groupsList.innerHTML = `<p class="text-sm text-muted-foreground">No groups have access yet.</p>`;
+                              }
+                              new AlertManager().success("Group removed successfully");
+                              await onUsersChanged();
+                            } catch (err) {
+                              new AlertManager().error(
+                                err.message === "Group is not associated with this playlist"
+                                  ? "Group is not associated with this playlist"
+                                  : "Failed to remove group"
+                              );
+                              btn.disabled = false;
+                          }
+                      };
+                  });
+              }
+          } catch {
+              groupsList.innerHTML = `<p class="text-sm text-red-400">Failed to load groups.</p>`;
+          }
+      };
+
       loadUsers();
+      loadGroups();
 
       if (isOwnerOrAdmin) {
           const emailInput = container.querySelector('#email');
@@ -352,6 +452,58 @@ export function ShareModal({ playlistId, isOwnerOrAdmin, onClose, onUsersChanged
                   submitShare.disabled = false;
                   submitShare.innerHTML = originalContent;
                   new AlertManager().error('Error sharing playlist');
+              }
+          };
+
+          const groupIdInput = container.querySelector('#group-id');
+          const submitGroup = container.querySelector('#submit-group');
+
+          const groupRepo = new GroupRepository();
+          groupRepo.getAllGroups().then(groups => {
+              groupIdInput.innerHTML = '<option value="" disabled selected>Select a group</option>';
+              groups.forEach(group => {
+                  groupIdInput.innerHTML += `<option value="${group.idGroup}">${group.groupName}</option>`;
+              });
+          }).catch(err => {
+              groupIdInput.innerHTML = '<option value="" disabled selected>Error loading groups</option>';
+          });
+
+          container.querySelector('#cancel-group').onclick = () => cleanupAndClose();
+
+          groupIdInput.addEventListener('change', (e) => {
+              submitGroup.disabled = e.target.value.trim() === '';
+          });
+
+          container.querySelector('#group-form').onsubmit = async (e) => {
+              e.preventDefault();
+              const groupId = parseInt(groupIdInput.value, 10);
+              const originalContent = submitGroup.innerHTML;
+
+              submitGroup.disabled = true;
+              submitGroup.innerHTML = `
+                  <svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Sharing...`;
+
+              try {
+                  await playlistRepo.shareWithGroup(playlistId, groupId);
+                  new AlertManager().success('Playlist shared with group successfully');
+                  groupIdInput.value = '';
+                  submitGroup.disabled = true;
+                  submitGroup.innerHTML = originalContent;
+                  cleanupAndClose();
+              } catch (err) {
+                  submitGroup.disabled = false;
+                  submitGroup.innerHTML = originalContent;
+                  new AlertManager().error(
+                    err.message === "Group not found"
+                      ? "Group not found"
+                      : err.message === "Group already has access"
+                        ? "This group already has access to the playlist"
+                        : "Error sharing with group"
+                  );
               }
           };
 
