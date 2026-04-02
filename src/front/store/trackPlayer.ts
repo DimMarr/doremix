@@ -73,6 +73,11 @@ export const getYoutubePlayerStateFromCode = (code: number) => {
 }
 
 const getVideoId = (link: string) => {
+    // Si c'est un lien raccourci youtu.be
+    const youtuBeMatch = link.match(/youtu\.be\/([^?&]+)/);
+    if (youtuBeMatch) {
+        return youtuBeMatch[1];
+    }
     // Si le lien contient "v=", on coupe, sinon on suppose que c'est déjà l'ID
     const videoIdMatch = link.match(/[?&]v=([^&]+)/);
     return videoIdMatch ? videoIdMatch[1] : link;
