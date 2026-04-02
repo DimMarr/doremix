@@ -25,6 +25,13 @@ class User(Base):
         "Playlist", secondary="user_playlist", back_populates="users", lazy="selectin"
     )
 
+    verification_token = relationship(
+        "VerificationToken", back_populates="user", cascade="all, delete-orphan"
+    )
+    verification_mail_token = relationship(
+        "VerificationMailToken", back_populates="user", cascade="all, delete-orphan"
+    )
+
     @property
     def role(self) -> UserRole:
         if self.idRole == 2:

@@ -57,7 +57,12 @@ def register_command(
 
     try:
         auth_service.register(email=email, password=password)
-        console.print("[green]✓ Registration successful. You can now login.[/green]")
+        console.print(
+            "[green]✓ Account created! A verification email has been sent to[/green] [bold]"
+            + email
+            + "[/bold]"
+        )
+        console.print("[dim]Please verify your email before logging in.[/dim]")
     except UserExistsError:
         console.print(
             "[yellow]An account already exists for this email. Use `doremix login`.[/yellow]"

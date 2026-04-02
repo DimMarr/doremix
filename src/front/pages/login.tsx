@@ -144,7 +144,7 @@ export async function LoginPage(container) {
                 await authService.login(email, password);
                 window.location.href = AppRoutes.HOME;
             } catch (e) {
-                new AlertManager().error("Login failed. Please check your credentials.");
+                new AlertManager().error("Login failed. Please check your credentials or verify your email before logging in.");
             }
             return
 

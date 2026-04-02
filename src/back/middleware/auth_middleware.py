@@ -20,6 +20,8 @@ class AuthMiddleware:
             "/auth/register",
             "/auth/login",
             "/auth/refresh",
+            "/auth/verify-email",
+            "/auth/resend-verification-email",
             "/health",
             "/docs",
             "/redoc",

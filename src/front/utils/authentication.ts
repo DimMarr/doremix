@@ -131,6 +131,47 @@ class AuthService {
         }
         return this.infosPromise;
     }
+
+    async verify_email(token: string) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/verify-email?token=${encodeURIComponent(token)}`, {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.detail || "Email verification failed");
+            }
+
+            return result;
+
+        } catch (e) {
+            console.error("Email validation failed:", e);
+            throw e;
+        }
+    }
+
+    async resend_verification_email(token: string) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/resend-verification-email?token=${encodeURIComponent(token)}`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.detail || "Resend failed");
+            }
+
+            return result;
+        } catch (e) {
+            console.error('Resend verification email failed', e);
+            throw e;
+        }
+    }
 }
 
 export const authService = new AuthService();

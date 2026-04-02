@@ -3,9 +3,10 @@ import { NoInternetPage } from "@pages/noInternet";
 import { authService } from '@utils/authentication';
 
 export enum AppRoutes {
+  VERIFY_EMAIL = '/verify-email',
   LOGIN = '/login',
   SIGNUP = '/signup',
-  HOME = '/'
+  HOME = '/',
 }
 
 export class Router {
@@ -38,7 +39,7 @@ export class Router {
 
     // Gestion de l'authentification
     let path = window.location.pathname;
-    const publicRoutes = [AppRoutes.LOGIN, AppRoutes.SIGNUP];
+    const publicRoutes = [AppRoutes.LOGIN, AppRoutes.SIGNUP, AppRoutes.VERIFY_EMAIL];
     let isAuth = false;
     try {
       isAuth = await authService.isAuthenticated();
