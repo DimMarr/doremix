@@ -4,6 +4,7 @@ from .playlist import (
     PlaylistUpdate,
     SharePlaylistRequest,
     ShareGroupRequest,
+    SharedGroupSchema,
     TransferPlaylistRequest,
 )
 from .vote import VoteRequest, VoteResponse
