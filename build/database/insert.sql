@@ -47,6 +47,9 @@ INSERT INTO USERS (username, email, password, idRole, isverified) VALUES
 
 INSERT INTO GROUP_USER (idUser, idGroup) VALUES
 (1, 2),
+(2, 1),
+(2, 2),
+(2, 3),
 (3, 1),
 (4, 3),
 (3, 3);
