@@ -864,31 +864,6 @@ def share_to_group(
         console.print(f"[red]✗ Error: {e}[/red]")
 
 
-@app.command(help="List groups who have access to a shared playlist.")
-def shared_groups(
-    playlist_id: int = typer.Argument(..., help="Playlist ID"),
-):
-    try:
-        groups = get_shared_groups(str(playlist_id))
-
-        if not groups:
-            console.print("[yellow]No groups have access to this playlist.[/yellow]")
-            return
-
-        table = Table(title=f"Groups with access to playlist #{playlist_id}")
-        table.add_column("id", style="cyan")
-        table.add_column("group_name", style="magenta")
-
-        for group in groups:
-            table.add_row(str(group.idGroup), group.groupName)
-
-        console.print(table)
-        console.print(f"[green]{len(groups)} group(s) with access[/green]")
-
-    except Exception as e:
-        console.print(f"[red] Error: {e}[/red]")
-
-
 @app.command(help="Remove a group's access from a shared playlist.")
 def unshare_group(
     playlist_id: int = typer.Argument(..., help="Playlist ID"),
@@ -1170,6 +1145,7 @@ def reorder_track_cmd(
     except Exception as e:
         console.print(f"[red] Error: {e}[/red]")
 
+
 @app.command(help="Vote on a playlist (upvote, downvote, or remove vote).")
 def vote(
     playlist_id: int = typer.Argument(..., help="Playlist ID"),
@@ -1177,24 +1153,24 @@ def vote(
     downvote: bool = typer.Option(False, "--down", "-d", help="Downvote the playlist"),
     remove: bool = typer.Option(False, "--remove", "-r", help="Remove your vote"),
 ):
-        if sum([upvote, downvote, remove]) != 1:
-            console.print(
-                "[yellow]Specify exactly one of --up, --down, or --remove.[/yellow]"
-            )
-            raise typer.Abort()
+    if sum([upvote, downvote, remove]) != 1:
+        console.print(
+            "[yellow]Specify exactly one of --up, --down, or --remove.[/yellow]"
+        )
+        raise typer.Abort()
 
-        value = 1 if upvote else (-1 if downvote else 0)
-        result = vote_playlist(str(playlist_id), value)
+    value = 1 if upvote else (-1 if downvote else 0)
+    result = vote_playlist(str(playlist_id), value)
 
-        score = result.get("score", "?")
-        user_vote = result.get("userVote")
+    score = result.get("score", "?")
+    user_vote = result.get("userVote")
 
-        if value == 1:
-            console.print(f"[green]Upvoted![/green] Score: {score}")
-        elif value == -1:
-            console.print(f"[red]Downvoted![/red] Score: {score}")
-        else:
-            console.print(f"[yellow]Vote removed.[/yellow] Score: {score}")
+    if value == 1:
+        console.print(f"[green]Upvoted![/green] Score: {score}")
+    elif value == -1:
+        console.print(f"[red]Downvoted![/red] Score: {score}")
+    else:
+        console.print(f"[yellow]Vote removed.[/yellow] Score: {score}")
 
         if user_vote is not None:
             vote_label = "+1" if user_vote == 1 else ("-1" if user_vote == -1 else "none")
@@ -1232,6 +1208,9 @@ def share_to_group(
         raise
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")
+    if user_vote is not None:
+        vote_label = "+1" if user_vote == 1 else ("-1" if user_vote == -1 else "none")
+        console.print(f"Your vote: {vote_label}")
 
 
 @app.command(help="List groups who have access to a shared playlist.")
