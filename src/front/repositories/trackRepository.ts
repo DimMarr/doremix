@@ -89,7 +89,7 @@ export class TrackRepository {
     }
     return response.json();
   }
-  
+
   async move(playlistId: number, trackId: number, prev_track_id: number | null) {
     try {
       const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/tracks/${trackId}/move`, {
@@ -109,7 +109,7 @@ export class TrackRepository {
       throw err;
     }
   }
-  
+
   async shareGroup(playlistId: number, groupName: string) {
     const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/share/group`, {
       method: 'POST',

@@ -116,7 +116,7 @@ class UserController:
             )
 
         return target_user
-    
+
     async def add_moderator(db: AsyncSession, user_id: int):
         # Check that user exists
         user = await UserRepository.get_user_by_id(db, user_id)
