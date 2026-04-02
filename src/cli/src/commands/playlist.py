@@ -553,6 +553,69 @@ def vote(
 def shared_groups(
     playlist_id: int = typer.Argument(..., help="Playlist ID"),
 ):
+        groups = get_shared_groups(str(playlist_id))
+        if sum([upvote, downvote, remove]) != 1:
+            console.print(
+                "[yellow]Specify exactly one of --up, --down, or --remove.[/yellow]"
+            )
+            raise typer.Abort()
+
+        if not groups:
+            console.print("[yellow]No groups have access to this playlist.[/yellow]")
+            return
+
+        table = Table(title=f"Groups with access to playlist #{playlist_id}")
+        table.add_column("id", style="cyan")
+        table.add_column("group_name", style="magenta")
+
+        for group in groups:
+            table.add_row(str(group.idGroup), group.groupName)
+
+        console.print(table)
+        console.print(f"[green]{len(groups)} group(s) with access[/green]")
+        if user_vote is not None:
+            vote_label = (
+                "+1" if user_vote == 1 else ("-1" if user_vote == -1 else "none")
+            )
+            console.print(f"Your vote: {vote_label}")
+@app.command(help="Share a playlist with a group.")
+def share_to_group(
+    playlist_id: int = typer.Argument(..., help="Playlist ID"),
+    group_id: int = typer.Option(..., "--group", "-g", help="Group ID"),
+):
+    try:
+        from src.services.group import get_user_groups
+
+        groups = get_user_groups()
+        target_group = next((g for g in groups if g.get("idGroup") == group_id), None)
+
+        if not target_group:
+            console.print(
+                f"[red] Error: Group with ID {group_id} not found or you are not a member.[/red]"
+            )
+            raise typer.Exit(1)
+
+        group_name = target_group.get("groupName")
+
+        response = share_group(str(playlist_id), group_name)
+        if response.get("message") == "Playlist is already shared with this group":
+            console.print(
+                f"[yellow]ℹ Playlist is already shared with group '{group_name}'[/yellow]"
+            )
+        else:
+            console.print(
+                f"[green] Playlist successfully shared with group '{group_name}'[/green]"
+            )
+    except typer.Exit:
+        raise
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(help="List groups who have access to a shared playlist.")
+def shared_groups(
+    playlist_id: int = typer.Argument(..., help="Playlist ID"),
+):
     try:
         groups = get_shared_groups(str(playlist_id))
 
@@ -569,6 +632,37 @@ def shared_groups(
 
         console.print(table)
         console.print(f"[green]{len(groups)} group(s) with access[/green]")
+
+    except Exception as e:
+        console.print(f"[red] Error: {e}[/red]")
+
+
+@app.command(help="Remove a group's access from a shared playlist.")
+def unshare_group(
+    playlist_id: int = typer.Argument(..., help="Playlist ID"),
+    group_id: int = typer.Argument(..., help="Group ID to remove"),
+    force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
+):
+    try:
+        groups = get_shared_groups(str(playlist_id))
+        target = next((g for g in groups if g.idGroup == group_id), None)
+
+        if not target:
+            console.print(
+                f"[yellow]Group #{group_id} does not have access to this playlist.[/yellow]"
+            )
+            return
+
+        if not force:
+            confirm = typer.confirm(
+                f"Remove access for '{target.groupName}' from playlist #{playlist_id}?"
+            )
+            if not confirm:
+                console.print("[yellow]Cancelled.[/yellow]")
+                raise typer.Abort()
+
+        result = remove_shared_group(str(playlist_id), str(group_id))
+        console.print(f"[green] {result.get('message', 'Success')}[/green]")
 
     except Exception as e:
         console.print(f"[red] Error: {e}[/red]")
