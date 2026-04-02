@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from pydantic import BaseModel
 from controllers import PlaylistController
+from repositories import UserPlaylistPreferencesRepository
 from schemas import (
     PlaylistSchema,
     TrackSchema,
@@ -16,6 +17,8 @@ from schemas import (
     TransferPlaylistRequest,
     VoteRequest,
     VoteResponse,
+    PlaylistPreferencesSchema,
+    PlaylistPreferencesUpdate,
 )
 from database import get_db
 import os
@@ -83,6 +86,41 @@ async def get_shared_playlists(
     user_id: int = Depends(get_current_user_id),
 ):
     return await PlaylistController.get_shared_playlists(db, user_id)
+
+
+@router.get(
+    "/preferences",
+    response_model=PlaylistPreferencesSchema,
+    summary="Get playlist sort preferences for the current user",
+)
+async def get_playlist_preferences(
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    prefs = await UserPlaylistPreferencesRepository.get(db, user_id)
+    if prefs is None:
+        return PlaylistPreferencesSchema(sort_mode="date_desc", custom_order=None)
+    return PlaylistPreferencesSchema(
+        sort_mode=prefs.sort_mode, custom_order=prefs.custom_order
+    )
+
+
+@router.put(
+    "/preferences",
+    response_model=PlaylistPreferencesSchema,
+    summary="Save playlist sort preferences for the current user",
+)
+async def update_playlist_preferences(
+    body: PlaylistPreferencesUpdate,
+    db: AsyncSession = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    prefs = await UserPlaylistPreferencesRepository.upsert(
+        db, user_id, body.sort_mode, body.custom_order
+    )
+    return PlaylistPreferencesSchema(
+        sort_mode=prefs.sort_mode, custom_order=prefs.custom_order
+    )
 
 
 @router.get(
