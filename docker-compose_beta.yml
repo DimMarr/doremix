@@ -59,6 +59,7 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      RATE_LIMIT: ${RATE_LIMIT}
       TOKEN_SECRET_KEY: ${TOKEN_SECRET_KEY}
       TOKEN_MAIL_SECRET_KEY: ${TOKEN_MAIL_SECRET_KEY}
       PEPPER_KEY: ${PEPPER_KEY}
