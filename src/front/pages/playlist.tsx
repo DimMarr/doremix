@@ -520,14 +520,6 @@ export async function PlaylistDetailPage(
           </div>
         </div>
         <div id="playlist-header-info" class="pt-2 flex flex-col items-start gap-2">
-          {await getVisibilityElement(repo, playlist) as 'safe'}
-          {renderGenreSection() as 'safe'}
-          <h1 safe class="font-bold text-4xl mt-2">{playlist.name}</h1>
-          <p safe class="text-muted-foreground text-lg">{playlist.description || ''}</p>
-          <div>
-            <div id="playlist-vote-controls"></div>
-          </div>
-
         <div class="flex gap-2">
          {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
         </div>
