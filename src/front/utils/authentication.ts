@@ -50,7 +50,7 @@ class AuthService {
             const result = await response.json()
 
             if (!response.ok) {
-                throw new Error(result.message || "Login failed");
+                throw new Error(result.detail || "Login failed");
             }
             this.infosPromise = undefined;
         } catch (e) {
@@ -132,26 +132,7 @@ class AuthService {
         return this.infosPromise;
     }
 
-    async verify_email(token: string) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/auth/verify-email?token=${encodeURIComponent(token)}`, {
-                method: 'GET',
-                credentials: 'include'
-            });
 
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.detail || "Email verification failed");
-            }
-
-            return result;
-
-        } catch (e) {
-            console.error("Email validation failed:", e);
-            throw e;
-        }
-    }
 
     async resend_verification_email(token: string) {
         try {
@@ -169,6 +150,55 @@ class AuthService {
             return result;
         } catch (e) {
             console.error('Resend verification email failed', e);
+            throw e;
+        }
+    }
+
+    async verifyCode(email: string, code: string) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/verify-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    email: email,
+                    code: code
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.detail || "Email verification failed");
+            }
+
+            return result;
+        } catch (e) {
+            console.error("Email code verification failed:", e);
+            throw e;
+        }
+    }
+
+    async resendVerificationCode(email: string) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/resend-verification-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    email: email
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.detail || "Resend failed");
+            }
+
+            return result;
+        } catch (e) {
+            console.error('Resend verification code failed', e);
             throw e;
         }
     }

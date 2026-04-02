@@ -143,8 +143,14 @@ export async function LoginPage(container) {
             try {
                 await authService.login(email, password);
                 window.location.href = AppRoutes.HOME;
-            } catch (e) {
-                new AlertManager().error("Login failed. Please check your credentials or verify your email before logging in.");
+            } catch (e: any) {
+                const message = e?.message || "";
+                if (message.includes("verify your email")) {
+                    // Email not verified, redirect to verify email page
+                    window.location.href = `${AppRoutes.VERIFY_EMAIL}?email=${encodeURIComponent(email)}`;
+                } else {
+                    new AlertManager().error("Login failed. Please check your credentials or verify your email before logging in.");
+                }
             }
             return
 
