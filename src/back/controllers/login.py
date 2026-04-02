@@ -135,40 +135,44 @@ class LoginController:
             )
 
     @staticmethod
-    async def confirm_email(db: AsyncSession, token: str):
-        if not token:
-            raise HTTPException(status_code=400, detail="Missing token")
+    async def confirm_email(db: AsyncSession, email: str, code: str):
+        if not email or not code:
+            raise HTTPException(status_code=400, detail="Missing email or code")
 
-        return await VerificationMailTokenRepository.confirm_email(db, token)
+        result = await VerificationMailTokenRepository.confirm_email(db, email, code)
+
+        if result == "invalid":
+            raise HTTPException(status_code=400, detail="Invalid verification code")
+        elif result == "expired":
+            raise HTTPException(status_code=400, detail="Verification code has expired")
+        elif result == "already_verified":
+            return {"message": "Email already verified", "status": "already_verified"}
+        elif result == "verified":
+            return {"message": "Email verified successfully", "status": "verified"}
+        else:
+            raise HTTPException(status_code=500, detail="Email verification failed")
 
     @staticmethod
-    async def resend_verification_email(db: AsyncSession, token: str):
-        if not token:
-            raise HTTPException(status_code=400, detail="Missing token")
+    async def resend_verification_email(db: AsyncSession, email: str):
+        if not email:
+            raise HTTPException(status_code=400, detail="Missing email")
 
-        token_obj = await VerificationMailTokenRepository.get_token_even_expired(
-            db, token
-        )
-        if not token_obj:
-            raise HTTPException(status_code=400, detail="Invalid token")
+        raw_code = await VerificationMailTokenRepository.resend_code(db, email)
 
-        user = await UserRepository.get_user_by_id(db, token_obj.idUser)
-        if not user:
+        if raw_code is None:
+            raise HTTPException(
+                status_code=400, detail="Email already verified or user not found"
+            )
+
+        user = await UserRepository.get_by_email(db, email)
+
+        if user is None:
             raise HTTPException(status_code=404, detail="User not found")
 
-        if user.isVerified:
-            return {"message": "Email already verified"}
-
-        await VerificationMailTokenRepository.revoke_all_user_tokens(db, user.idUser)
-
-        new_token = await VerificationMailTokenRepository.create_mail_verif_token(
-            db=db, user_id=user.idUser
-        )
-
-        activation_link = f"{EmailSender.web_url}/verify-email?token={new_token.token}"
-
         EmailSender.send_email(
-            to_email=user.email, username=user.username, activation_link=activation_link
+            to_email=email,
+            username=user.username,
+            code=raw_code,
         )
 
         return {"message": "Verification email resent"}
