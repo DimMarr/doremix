@@ -31,6 +31,9 @@ class User(Base):
     verification_mail_token = relationship(
         "VerificationMailToken", back_populates="user", cascade="all, delete-orphan"
     )
+    password_reset_token = relationship(
+        "PasswordResetToken", back_populates="user", cascade="all, delete-orphan"
+    )
 
     @property
     def role(self) -> UserRole:
