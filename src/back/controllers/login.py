@@ -2,7 +2,13 @@ import os
 import hashlib
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
-from repositories import UserRepository, AccessTokenRepository, RefreshTokenRepository
+from repositories import (
+    UserRepository,
+    AccessTokenRepository,
+    RefreshTokenRepository,
+    VerificationMailTokenRepository,
+)
+from utils.email_sender import EmailSender
 from passlib.context import CryptContext
 
 
@@ -127,3 +133,42 @@ class LoginController:
             raise HTTPException(
                 status_code=500, detail=f"Error during logout: {str(e)}"
             )
+
+    @staticmethod
+    async def confirm_email(db: AsyncSession, token: str):
+        if not token:
+            raise HTTPException(status_code=400, detail="Missing token")
+
+        return await VerificationMailTokenRepository.confirm_email(db, token)
+
+    @staticmethod
+    async def resend_verification_email(db: AsyncSession, token: str):
+        if not token:
+            raise HTTPException(status_code=400, detail="Missing token")
+
+        token_obj = await VerificationMailTokenRepository.get_token_even_expired(
+            db, token
+        )
+        if not token_obj:
+            raise HTTPException(status_code=400, detail="Invalid token")
+
+        user = await UserRepository.get_user_by_id(db, token_obj.idUser)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if user.isVerified:
+            return {"message": "Email already verified"}
+
+        await VerificationMailTokenRepository.revoke_all_user_tokens(db, user.idUser)
+
+        new_token = await VerificationMailTokenRepository.create_mail_verif_token(
+            db=db, user_id=user.idUser
+        )
+
+        activation_link = f"{EmailSender.web_url}/verify-email?token={new_token.token}"
+
+        EmailSender.send_email(
+            to_email=user.email, username=user.username, activation_link=activation_link
+        )
+
+        return {"message": "Verification email resent"}

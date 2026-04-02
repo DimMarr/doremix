@@ -1,5 +1,5 @@
 import "@styles/alert.css";
-import { HomePage, PlaylistDetailPage, LoginPage, SignupPage, AdminPage, ArtistsPage, ArtistTracksPage } from "@pages/index";
+import { HomePage, PlaylistDetailPage, LoginPage, SignupPage, AdminPage, VerifyEmailPage, ArtistsPage, ArtistTracksPage } from "@pages/index";
 import { createMainLayout, trackPlayerInstance } from "@layouts/mainLayout";
 import { Router } from "./router";
 import { CguPage } from "./pages/cgu";
@@ -36,6 +36,7 @@ export default async function init() {
     AdminPage(container);
   })
 
+<<<<<<< src/front/main.tsx
   router.register("/artists", (container, params) => {
     ArtistsPage(container, (path) => router.navigate(path));
   });
@@ -43,6 +44,11 @@ export default async function init() {
   router.register("/artists/:id", async (container, params) => {
     ArtistTracksPage(container, () => router.navigate("/artists"), params);
   });
+=======
+  router.register("/verify-email", async(container) => {
+    VerifyEmailPage(container);
+  })
+>>>>>>> src/front/main.tsx
 
   router.register("/cgu", async(container) => {
     CguPage(container);

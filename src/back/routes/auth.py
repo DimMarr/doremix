@@ -148,3 +148,13 @@ async def get_current_user_info(user=Depends(get_current_user)):
         "banned": user.banned,
         "isVerified": user.isVerified,
     }
+
+
+@router.get("/verify-email")
+async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
+    return await LoginController.confirm_email(db, token)
+
+
+@router.post("/resend-verification-email")
+async def resend_verification_email(token: str, db: AsyncSession = Depends(get_db)):
+    return await LoginController.resend_verification_email(db, token)

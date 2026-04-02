@@ -6,6 +6,7 @@ from .playlist import Playlist, PlaylistVisibility
 from .track_artist import TrackArtist
 from .track_playlist import TrackPlaylist
 from .user_playlists import UserPlaylist
+from .verification_token import VerificationToken, VerificationMailToken
 from .playlist_vote import PlaylistVote
 
 __all__ = [
