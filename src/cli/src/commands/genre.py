@@ -6,10 +6,8 @@ from rich.table import Table
 
 from src.services.genre import get_all, create, update, delete
 from src.utils.privileges import _require_admin
-from src.utils.token_storage import get_user
 from src.utils.exceptions import (
     ApiRequestError,
-    ForbiddenError,
     GenreExistsError,
     GenreNotFoundError,
     NotAuthenticatedError,

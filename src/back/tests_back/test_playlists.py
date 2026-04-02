@@ -1,6 +1,5 @@
 import pytest
-from datetime import datetime
-from models import Playlist, PlaylistVisibility, User, Genre
+from models import Playlist, PlaylistVisibility
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 

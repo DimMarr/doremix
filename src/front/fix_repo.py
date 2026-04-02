@@ -1,9 +1,6 @@
-import re
-
 with open("repositories/playlistRepository.ts", "r") as f:
     text = f.read()
 # Remove all backticks from the last few lines that got corrupted
-import textwrap
 
 lines = text.split("\n")
 cleaned = []

@@ -6,7 +6,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
-from middleware.auth_middleware import get_current_user, get_current_user_id
 from models import Genre, Playlist, User
 from models.enums import PlaylistVisibility
 from models.playlist_vote import PlaylistVote

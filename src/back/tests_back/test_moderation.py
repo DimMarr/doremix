@@ -3,7 +3,6 @@ import os
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 
 from datetime import datetime, timedelta, timezone
-import pytest_asyncio
 from fastapi import FastAPI, Request
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession

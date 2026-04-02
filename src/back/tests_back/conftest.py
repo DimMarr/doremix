@@ -2,13 +2,12 @@ import os
 
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
 
-import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.pool import StaticPool
 from fastapi import FastAPI
 from httpx import AsyncClient, ASGITransport
-from database import Base, get_db, engine
+from database import Base, get_db
 from routes.playlists import router as playlists_router
 from routes.users import router as users_router
 from routes.search_router import router as search_router

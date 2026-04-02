@@ -10,7 +10,7 @@ import shutil
 import os
 from PIL import Image
 
-from models import User, Playlist, Genre, PlaylistVisibility
+from models import Playlist, PlaylistVisibility
 
 
 def create_test_image(format="JPEG", size=(100, 100), color="red"):

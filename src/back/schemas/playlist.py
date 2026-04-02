@@ -1,5 +1,4 @@
 from pydantic import BaseModel, ConfigDict
-from enum import Enum
 from datetime import datetime
 from typing import Optional
 from models.enums import PlaylistVisibility

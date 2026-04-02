@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException, status
-from models import User, UserRole
+from models import UserRole
 from repositories import UserRepository, AccessTokenRepository, RefreshTokenRepository
 from sqlalchemy.future import select
 

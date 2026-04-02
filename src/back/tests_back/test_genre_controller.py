@@ -4,7 +4,6 @@ from fastapi import HTTPException, status
 
 from controllers.genre import GenreController
 from repositories import GenreRepository
-from models import Genre
 
 
 class TestGenreController:

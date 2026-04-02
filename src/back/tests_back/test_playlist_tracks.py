@@ -4,9 +4,8 @@ Tests pour l'ajout et la suppression de tracks dans une playlist
 
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from models import User, Playlist, Track, Genre
+from models import Track
 
 
 @pytest_asyncio.fixture

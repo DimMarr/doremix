@@ -2,7 +2,6 @@ from PIL import Image
 import io
 import os
 from pathlib import Path
-from typing import Tuple
 from fastapi import UploadFile, HTTPException
 
 

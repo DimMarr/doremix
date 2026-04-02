@@ -5,7 +5,7 @@ Tests pour la création de playlists
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models import User, Playlist, Genre, PlaylistVisibility
+from models import Playlist
 
 
 class TestPlaylistCreation:

@@ -7,8 +7,6 @@ from schemas import UserRegisterSchema
 from repositories import UserRepository, VerificationMailTokenRepository
 from passlib.context import CryptContext
 from utils.email_sender import EmailSender
-import secrets
-from datetime import datetime, timedelta
 
 # TODO: Décommenter ces imports quand la vérification email sera active
 # from repositories.verification_token_repository import VerificationTokenRepository

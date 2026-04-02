@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from repositories import PlaylistRepository, UserRepository
-from models import Playlist, User, Genre
+from models import Playlist
 from models.enums import PlaylistVisibility
 
 

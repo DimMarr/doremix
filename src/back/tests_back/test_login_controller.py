@@ -1,13 +1,12 @@
 import os
 import pytest
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 
 from controllers.login import LoginController
 from repositories import UserRepository, AccessTokenRepository, RefreshTokenRepository
-from models.user import User, UserRole
 from models.access_token import AccessToken
 from models.refresh_token import RefreshToken
 

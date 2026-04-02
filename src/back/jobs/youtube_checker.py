@@ -1,5 +1,4 @@
 import yt_dlp
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from database import AsyncSessionLocal
 from models.track import Track, TrackStatus

@@ -8,7 +8,6 @@ from models.playlist import Playlist, PlaylistVisibility
 from models.playlist_vote import PlaylistVote
 from models.track_playlist import TrackPlaylist
 from models.track import Track
-from models.artist import Artist
 from models.user_playlists import UserPlaylist
 from models.user import User, UserRole
 from models.group import GroupUser, GroupPlaylist, UserGroup

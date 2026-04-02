@@ -76,7 +76,7 @@ export class TrackRepository {
     }
     return response.status;
   }
-  
+
   async shareGroup(playlistId: number, groupName: string) {
     const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/share/group`, {
       method: 'POST',

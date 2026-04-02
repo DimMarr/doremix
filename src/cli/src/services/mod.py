@@ -2,13 +2,10 @@ from __future__ import annotations
 
 import requests
 
-from src.models.genre import GenresSchema
 from src.utils.exceptions import (
     ApiRequestError,
     NotAuthenticatedError,
     ForbiddenError,
-    GenreExistsError,
-    GenreNotFoundError,
 )
 from src.utils.http_client import make_authenticated_request
 
