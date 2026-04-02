@@ -528,8 +528,10 @@ export async function PlaylistDetailPage(
             <div id="playlist-vote-controls"></div>
           </div>
 
+        <div class="flex gap-2">
          {await getSharedUsersElement(repo, playlist, isPlaylistOwner) as 'safe'}
          {await getSharedGroupsElement(repo, playlist, isPlaylistOwner) as 'safe'}
+        </div>
         </div>
       </div>
 
