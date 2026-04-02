@@ -1,6 +1,5 @@
-import { Genre, User } from "@models/index";
-import { GenreRepository, ModerationRepository, UserRepository } from "@repositories/index";
-import { Input, AdminPanel } from "@components/index";
+import { Genre } from "@models/genre";
+import { GenreRepository, ModerationRepository } from "@repositories/index";
 import type { ModerationUser } from "@repositories/moderationRepository";
 import { AlertManager } from "@utils/alertManager";
 import { authService } from "@utils/authentication";
@@ -132,6 +131,7 @@ function renderBanRows(users: ModerationUser[]): string {
 }
 >>>>>>> c2fa0a8 (refactor: renamed admin page)
 
+<<<<<<< HEAD
 // Main function : Handle behavior based on role
 export async function AdminPage(container: HTMLElement | null) {
   if (!container) return;
@@ -249,6 +249,8 @@ function renderBanRows(users: ModerationUser[]): string {
     .join("");
 }
 
+=======
+>>>>>>> 32dcc41 (fix: display users and groups playlists have been shared to in flexbox)
 function renderGenreRows(genres: Genre[], editingId: number | null): string {
   if (genres.length === 0) {
     return '<p class="text-muted-foreground text-sm">No genres yet.</p>';
@@ -492,6 +494,8 @@ export async function AdminPage(container: HTMLElement | null) {
 
 function renderBanRows(users: ModerationUser[]): string {
 function renderModeratorsRows(users: User[]): string {
+=======
+>>>>>>> 32dcc41 (fix: display users and groups playlists have been shared to in flexbox)
 function renderPlaylistRows(
   playlists: Playlist[],
   expandedId: number | null,
@@ -639,7 +643,7 @@ export async function AdminPage(container: HTMLElement | null) {
           </a>
         </div>
 
-        <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full max-w-2xl shadow-2xl mb-6">
+        <div class="bg-neutral-900 border border-border p-6 rounded-xl w-full shadow-2xl mb-6">
           <h2 class="text-xl font-semibold text-white mb-4">Genres</h2>
           <div id="genre-list" class="space-y-2 mb-6 max-h-96 overflow-y-auto">
             <p class="text-muted-foreground text-sm">Loading...</p>
@@ -700,6 +704,7 @@ export async function AdminPage(container: HTMLElement | null) {
 function renderBanRows(users: ModerationUser[]): string {
   if (users.length === 0) {
 <<<<<<< HEAD
+<<<<<<< HEAD
     return '<p class="text-muted-foreground text-sm">No users available.</p>';
 =======
 function renderModeratorsRows(users: User[]): string {
@@ -709,12 +714,18 @@ function renderModeratorsRows(users: User[]): string {
 =======
     return '<p class="text-muted-foreground text-sm">No user.</p>';
 >>>>>>> 7033dfe (feat: add and demote moderators panel on frontend)
+=======
+    return '<p class="text-muted-foreground text-sm">No users available.</p>';
+>>>>>>> ca3c154 (fix: display users and groups playlists have been shared to in flexbox)
   }
 
   return users
     .map((user) => {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ca3c154 (fix: display users and groups playlists have been shared to in flexbox)
       const actionButton = user.banned ? (
         <button data-unban-user={user.idUser} class="px-3 py-2 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-green-500 transition-colors self-start md:self-auto">
           Unban user
@@ -725,19 +736,24 @@ function renderModeratorsRows(users: User[]): string {
         </button>
       );
 
+<<<<<<< HEAD
 =======
 >>>>>>> 7033dfe (feat: add and demote moderators panel on frontend)
+=======
+>>>>>>> ca3c154 (fix: display users and groups playlists have been shared to in flexbox)
       return (
-        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 transition-colors" data-genre-id={user.idUser}>
-          <span safe class="text-foreground text-sm">{user.username}</span>
-          <div class="flex gap-2">
-            <Input
-              type="checkbox"
-              checked={user.role === "MODERATOR" || user.role === "ADMIN"}
-              disabled={user.role === "ADMIN"}
-              data-mod-user={user.idUser}
-            />
+        <div class={`flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-3 rounded-lg border border-white/10 ${user.banned ? 'bg-red-900/10 opacity-75' : 'bg-white/5'}`} data-user-id={user.idUser}>
+          <div>
+            <p class="text-white text-sm font-medium flex items-center gap-1">
+              <span safe>{user.username}</span>
+              {user.banned ? <span class="text-red-400 text-xs">(Banned)</span> : ""}
+            </p>
+            <p safe class="text-white/60 text-xs">{user.email}</p>
+            <span class="inline-block mt-2 px-2 py-1 rounded-full bg-neutral-700 text-white text-[10px] uppercase tracking-wide">
+              {user.role}
+            </span>
           </div>
+<<<<<<< HEAD
 <<<<<<< HEAD
           {actionButton as 'safe'}
 =======
@@ -755,12 +771,16 @@ function renderModeratorsRows(users: User[]): string {
 >>>>>>> c2fa0a8 (refactor: renamed admin page)
 =======
 >>>>>>> 7033dfe (feat: add and demote moderators panel on frontend)
+=======
+          {actionButton as 'safe'}
+>>>>>>> ca3c154 (fix: display users and groups playlists have been shared to in flexbox)
         </div>
       );
     })
     .join("");
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -777,6 +797,8 @@ function renderModeratorsRows(users: User[]): string {
 >>>>>>> c2fa0a8 (refactor: renamed admin page)
 =======
 >>>>>>> 7033dfe (feat: add and demote moderators panel on frontend)
+=======
+>>>>>>> ca3c154 (fix: display users and groups playlists have been shared to in flexbox)
 async function initGenreManagement(container: HTMLElement) {
   const genreList = container.querySelector("#genre-list") as HTMLElement | null;
   const addForm = container.querySelector("#add-genre-form") as HTMLFormElement | null;
@@ -1188,69 +1210,6 @@ async function initAddModeratorPanel(container: HTMLElement) {
       checkbox.removeAttribute("disabled");
       checkbox.classList.remove("opacity-70", "cursor-not-allowed");
 >>>>>>> c2fa0a8 (refactor: renamed admin page)
-    }
-  });
-
-  await refresh();
-}
-
-async function initAddModeratorPanel(container: HTMLElement) {
-  // Get panel element
-  const moderatorListPanel = container.querySelector("#moderators-list") as HTMLElement | null;
-  if (!moderatorListPanel) return;
-
-  // Get users
-  const userRepo = new UserRepository();
-  let users: User[] = [];
-
-  // Fill panel with users
-  const refresh = async () => {
-    try {
-      users = await userRepo.getAllUsers();
-      moderatorListPanel.innerHTML = renderModeratorsRows(users);
-    } catch {
-      moderatorListPanel.innerHTML = '<p class="text-red-400 text-sm">Failed to load users.</p>';
-    }
-  };
-
-  // Handle checkbox
-  moderatorListPanel.addEventListener("click", async (event) => {
-    const target = event.target as HTMLElement;
-    const checkbox = target.closest("[data-mod-user]") as HTMLElement | null;
-    const role = checkbox.checked ? "USER" : "MODERATOR"
-
-    if (!checkbox) return;
-
-    const userId = parseInt(checkbox.getAttribute("data-mod-user") || "", 10);
-    if (!userId) return;
-
-    // If role == "USER" -> addModerator(userId)
-    // If role == "MODERATOR" -> demoteModerator(userId)
-
-    try {
-      checkbox.setAttribute("disabled", "true");
-      checkbox.classList.add("opacity-70", "cursor-not-allowed");
-
-      if (role == "USER") {
-        if (!confirm("Do you really want to promote user as moderator?")) return;
-        await userRepo.addModerator(userId)
-        new AlertManager().success("User is now a moderator.");
-        users = users.map((user) => user.idUser === userId ? {...user, role: "MODERATOR"} : user);
-      }
-
-      if (role == "MODERATOR") {
-        if (!confirm("Do you really want to demote this moderator?")) return;
-        await userRepo.demoteModerator(userId)
-        new AlertManager().success("User is no longer a moderator.");
-        users = users.map((user) => user.idUser === userId ? {...user, role: "USER"} : user);
-      }
-
-      moderatorListPanel.innerHTML = renderModeratorsRows(users);
-
-    } catch {
-      new AlertManager().error("Failed to changed user's role.");
-      checkbox.removeAttribute("disabled");
-      checkbox.classList.remove("opacity-70", "cursor-not-allowed");
     }
   });
 
