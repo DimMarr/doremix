@@ -281,3 +281,47 @@ def resend_verification_code(email: str) -> dict[str, Any]:
             "Resend verification code failed: invalid backend response payload."
         )
     return payload
+
+
+def request_password_reset(email: str) -> dict[str, Any]:
+    """Request password reset code to be sent to email."""
+    try:
+        response = requests.post(
+            _build_url("/auth/request-password-reset"),
+            json={"email": email},
+            timeout=10,
+        )
+    except requests.RequestException as exc:
+        raise ApiRequestError(f"Password reset request failed: {exc}") from exc
+
+    if response.status_code != 200:
+        _map_auth_error(response, "Password reset request failed")
+
+    payload = response.json()
+    if not isinstance(payload, dict):
+        raise ApiRequestError(
+            "Password reset request failed: invalid backend response payload."
+        )
+    return payload
+
+
+def reset_password(email: str, code: str, new_password: str) -> dict[str, Any]:
+    """Reset password with verification code."""
+    try:
+        response = requests.post(
+            _build_url("/auth/reset-password"),
+            json={"email": email, "code": code, "new_password": new_password},
+            timeout=10,
+        )
+    except requests.RequestException as exc:
+        raise ApiRequestError(f"Password reset failed: {exc}") from exc
+
+    if response.status_code != 200:
+        _map_auth_error(response, "Password reset failed")
+
+    payload = response.json()
+    if not isinstance(payload, dict):
+        raise ApiRequestError(
+            "Password reset failed: invalid backend response payload."
+        )
+    return payload
