@@ -546,6 +546,28 @@ export async function PlaylistDetailPage(
   updateTrackListDisplay();
   mountVoteControls();
 
+
+  const searchInput = container.querySelector('#track-search-input') as HTMLInputElement | null;
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.toLowerCase().trim();
+      const trackListContainer = container.querySelector('#track-list-container');
+      if (!trackListContainer) return;
+
+      // Select all track rows (they have a data-track-index attribute)
+      const rows = trackListContainer.querySelectorAll('[data-track-index]');
+      rows.forEach((row) => {
+        const htmlRow = row as HTMLElement;
+        const text = htmlRow.textContent?.toLowerCase() ?? '';
+        if (!query || text.includes(query)) {
+          htmlRow.style.display = '';
+        } else {
+          htmlRow.style.display = 'none';
+        }
+      });
+    });
+  }
+
   // Event delegation
   container.onclick = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
