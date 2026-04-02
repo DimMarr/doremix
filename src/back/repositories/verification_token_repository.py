@@ -1,73 +1,109 @@
 import os
-import secrets
+import random
 import hashlib
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import delete
-from models.verification_token import VerificationToken
-from typing import cast
+from models import VerificationMailToken, User
 
 
-class VerificationTokenRepository:
+class VerificationMailTokenRepository:
     @staticmethod
-    def hash_token(cookie_token: str) -> str:
-        secret_key = os.getenv("TOKEN_SECRET_KEY")
+    def hash_code(code: str) -> str:
+        secret_key = os.getenv("TOKEN_MAIL_SECRET_KEY")
         if not secret_key:
-            raise ValueError("TOKEN_SECRET_KEY is missing in .env file")
-        combined = cookie_token + secret_key
-        return hashlib.sha256(combined.encode("utf-8")).hexdigest()
+            raise ValueError("TOKEN_MAIL_SECRET_KEY is missing in .env file")
+        return hashlib.sha256((code + secret_key).encode("utf-8")).hexdigest()
 
     @staticmethod
-    async def create_token(
-        db: AsyncSession, user_id: int, duration_minutes: int
-    ) -> VerificationToken:
-        cookie_token = secrets.token_urlsafe(64)  # not stored in DB
-        hashed_token = VerificationTokenRepository.hash_token(cookie_token)
-        expires_at = datetime.now(timezone.utc) + timedelta(minutes=duration_minutes)
-        db_token = VerificationToken(
-            token=hashed_token, idUser=user_id, expiresAt=expires_at
+    async def create_mail_verif_token(db: AsyncSession, user_id: int) -> str:
+        # Supprime les anciens codes de cet utilisateur
+        await db.execute(
+            delete(VerificationMailToken).where(VerificationMailToken.idUser == user_id)
+        )
+
+        raw_code = str(random.randint(100000, 999999))
+        hashed_code = VerificationMailTokenRepository.hash_code(raw_code)
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+
+        db_token = VerificationMailToken(
+            token=hashed_code, idUser=user_id, expiresAt=expires_at
         )
         db.add(db_token)
         await db.commit()
-        await db.refresh(db_token)
-        # we return the unhashed token to use it in cookies
-        db_token.token = cookie_token
-        return db_token
+
+        return raw_code  # on retourne le code en clair pour l'envoyer par mail
 
     @staticmethod
-    async def get_valid_token(
-        db: AsyncSession, cookie_token_str: str
-    ) -> VerificationToken | None:
-        hashed_token = VerificationTokenRepository.hash_token(cookie_token_str)
+    async def verify_code(db: AsyncSession, user_id: int, raw_code: str):
+        hashed_code = VerificationMailTokenRepository.hash_code(raw_code)
+
         result = await db.execute(
-            select(VerificationToken).filter(
-                VerificationToken.token == hashed_token,
-                VerificationToken.expiresAt > datetime.now(timezone.utc),
+            select(VerificationMailToken).where(
+                VerificationMailToken.idUser == user_id,
+                VerificationMailToken.token == hashed_code,
             )
         )
-        token = result.scalars().first()
-        return cast(VerificationToken, token) if token else None
+        token_obj = result.scalars().first()
 
-    @staticmethod
-    async def revoke_token(db: AsyncSession, cookie_token_str: str) -> None:
-        hashed_token = VerificationTokenRepository.hash_token(cookie_token_str)
-        await db.execute(
-            delete(VerificationToken).filter(VerificationToken.token == hashed_token)
-        )
-        await db.commit()
+        if not token_obj:
+            return "invalid"
 
-    @staticmethod
-    async def revoke_all_user_tokens(db: AsyncSession, user_id: int) -> None:
-        await db.execute(
-            delete(VerificationToken).filter(VerificationToken.idUser == user_id)
-        )
-        await db.commit()
-
-    @staticmethod
-    async def clean_expired_tokens(db: AsyncSession) -> None:
         now = datetime.now(timezone.utc)
+        expires = token_obj.expiresAt
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+        if now > expires:
+            return "expired"
+
+        return token_obj
+
+    @staticmethod
+    async def confirm_email(db: AsyncSession, email: str, raw_code: str):
+        user = await db.execute(select(User).where(User.email == email))
+        user = user.scalars().first()
+
+        if not user:
+            return "invalid"
+
+        if user.isVerified:
+            return "already_verified"
+
+        result = await VerificationMailTokenRepository.verify_code(
+            db, user.idUser, raw_code
+        )
+
+        if result == "invalid":
+            return "invalid"
+        if result == "expired":
+            return "expired"
+
+        user.isVerified = True
         await db.execute(
-            delete(VerificationToken).filter(VerificationToken.expiresAt < now)
+            delete(VerificationMailToken).where(
+                VerificationMailToken.idUser == user.idUser
+            )
+        )
+        await db.commit()
+        return "verified"
+
+    @staticmethod
+    async def resend_code(db: AsyncSession, email: str) -> str | None:
+        user_result = await db.execute(select(User).where(User.email == email))
+        user = user_result.scalars().first()
+
+        if not user or user.isVerified:
+            return None
+
+        raw_code = await VerificationMailTokenRepository.create_mail_verif_token(
+            db, user.idUser
+        )
+        return raw_code
+
+    @staticmethod
+    async def revoke_all_user_tokens(db: AsyncSession, user_id: int):
+        await db.execute(
+            delete(VerificationMailToken).where(VerificationMailToken.idUser == user_id)
         )
         await db.commit()

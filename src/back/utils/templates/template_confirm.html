@@ -12,7 +12,6 @@
         margin: 0;
         padding: 0;
       }
-
       .container {
         max-width: 600px;
         margin: 40px auto;
@@ -21,42 +20,40 @@
         border-radius: 12px;
         border: 1px solid #27272a;
       }
-
       h1 {
         color: #2b7fff;
         text-align: center;
         font-size: 24px;
       }
-
       p {
         font-size: 16px;
         line-height: 1.5;
         color: #fafafa;
       }
-
       .username {
         color: #2b7fff;
         font-weight: bold;
       }
-
-      .btn {
-        display: inline-block;
-        padding: 12px 25px;
-        margin-top: 20px;
-        border-radius: 20px;
-        background-color: #2b7fff;
-        color: #ffffff;
-        text-decoration: none;
-        font-weight: 600;
+      .code-box {
+        display: block;
+        margin: 30px auto;
         text-align: center;
-        transition: all 0.2s ease-in-out;
+        font-size: 42px;
+        font-weight: 800;
+        letter-spacing: 12px;
+        color: #ffffff;
+        background-color: #27272a;
+        border: 2px solid #2b7fff;
+        border-radius: 12px;
+        padding: 20px 30px;
+        width: fit-content;
       }
-
-      .btn:hover {
-        background-color: #1a5fd1;
-        transform: scale(1.05);
+      .expiry {
+        text-align: center;
+        color: #71717a;
+        font-size: 14px;
+        margin-top: 8px;
       }
-
       .footer {
         margin-top: 30px;
         font-size: 12px;
@@ -69,15 +66,12 @@
     <div class="container">
       <h1>Bienvenue sur Doremix</h1>
       <p>Bonjour <span class="username">{{ username }}</span> !</p>
-      <p>Ton compte sur <strong>Doremix</strong> a bien été créé.</p>
-
-      <p>Clique sur le bouton ci-dessous pour activer ton compte :</p>
-      <p style="text-align: center">
-        <a style="color: #fafafa" href="{{ activation_link }}" class="btn"
-          >Activer mon compte</a
-        >
+      <p>
+        Ton compte sur <strong>Doremix</strong> a bien été créé. Voici ton code
+        de vérification :
       </p>
-
+      <span class="code-box">{{ code }}</span>
+      <p class="expiry">Ce code expire dans 15 minutes.</p>
       <div class="footer">
         Ce mail est envoyé automatiquement, merci de ne pas répondre.
       </div>
