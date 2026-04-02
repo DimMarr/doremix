@@ -31,8 +31,16 @@ INSERT INTO ROLE_RIGHTS (idRole, idRight) VALUES
 INSERT INTO GENRE (label) VALUES
 ('Rock'), ('Pop'), ('Hip-Hop'), ('Classique'), ('Electro'), ('Jazz');
 
-INSERT INTO ARTIST (name) VALUES
-('Queen'), ('Daft Punk'), ('Eminem'), ('Mozart'), ('Adele'), ('Hans Zimmer');
+INSERT INTO ARTIST (name, imageurl) VALUES
+('Queen Official', 'https://yt3.googleusercontent.com/EBVYQCd4NEa7Io8bvLUxvq8HBnIUJ-BRp-cHkEUVl6u9Xj91TAADo5lh9Xzf5riI6wGIF_GAD-8=s0'),
+('Daft Punk', 'https://yt3.googleusercontent.com/XPIjND5mm2nuSIJ6uQyIWLCawnIYSVm6QS0GEN_UNuPLRD5EFa6yCkYrcyLpl3TFuBo6AZynsA=s0'),
+('EminemMusic', 'https://yt3.googleusercontent.com/fYB3KuH8P5jyoReOqbDRyHQJjfKsPj-BYDcJb1XANiEpo6bhCf6LXpsNxE9_fvefub9S1hCkldU=s800-c-k-c0x00ffffff-no-rj'),
+('Adele', 'https://yt3.googleusercontent.com/BkJSG0gIJTKyUziqxJOdtJSjXbPNtOelrBBFjRoOaa_xcFgaptqm8hvHxbh46P4uZc4lV3f4=s0'),
+('Metallica', 'https://yt3.googleusercontent.com/DW22K4fVgbvTl6Cx8uXFW9Nz_d2Bdn86npenO4pxzgH5fqAieB-nEYlX1ICnVG4zRIcvqUmrX4w=s0'),
+('The Weeknd', 'https://yt3.googleusercontent.com/WHvw1ak1FcJaHeEiTmG2iN0dqEjjPxAtT_tA8ruJ3MlNr9I-RHsAur1iAenYeQN_d6LNPH2Z8Ic=s0'),
+('Kendrick Lamar', 'https://yt3.googleusercontent.com/j1szYhuen1uT1D1icpjxHMFyBc0xINWK1eMtSzrB0TL5jliB7t3JB_wJ6UA9twV7VelxpKEc=s0'),
+('Rihanna', 'https://yt3.googleusercontent.com/qMCGjRaKKRar82KzcIWdUoLbJ03aW2K2sEf-m4GaB7JwLshoHOZHvkxLRXsZVgpKvqCXVhKCWg=s0'),
+('Miles Davis', 'https://yt3.googleusercontent.com/H4NIbxVIIA5bubjmg9LeCHefQuR-TMQikw4-CKcyIBJ4LZeyvRPn_LTlnNKHTwasbZOXE2mq=s0');
 
 INSERT INTO USER_GROUP (groupName) VALUES
 ('Les Etudiants'),
@@ -65,23 +73,24 @@ INSERT INTO TRACK (title, youtubeLink, listeningCount, durationSeconds, status) 
 ('Someone Like You', 'https://www.youtube.com/watch?v=hLQl3WQQoQ0', 1800000, 285, 'ok'),
 ('Blinding Lights', 'https://www.youtube.com/watch?v=4NRXx6U8ABQ', 3500000, 200, 'ok'),
 ('Starboy', 'https://www.youtube.com/watch?v=34Na4j8AVgA', 2900000, 230, 'ok'),
-('Lose Yourself', 'https://www.youtube.com/watch?v=_Yhyp-_hX2s', 4000000, 326, 'ok'),
+('Lose Yourself', 'https://www.youtube.com/watch?v=7bDLIV96LD4', 4000000, 326, 'ok'),
 ('Stan', 'https://www.youtube.com/watch?v=gOMhN-hfMtY', 1200000, 384, 'ok'),
 ('HUMBLE.', 'https://www.youtube.com/watch?v=tvTRZJ-4EyI', 3100000, 177, 'ok'),
 ('Umbrella', 'https://www.youtube.com/watch?v=CvBfHwUxHIk', 5500000, 275, 'ok'),
 ('So What', 'https://www.youtube.com/watch?v=ylXk1LBvIqU', 45000, 562, 'ok'),
-('Blue in Green', 'https://www.youtube.com/watch?v=PoPL7BExSQU', 30000, 327, 'ok'),
-('Requiem', 'https://www.youtube.com/watch?v=Zi8vJ_lMxQI', 800000, 300, 'ok'),
-('Inception Time', 'https://www.youtube.com/watch?v=YoHD9XEInc0', 150000, 275, 'ok'),
-('Interstellar Main Theme', 'https://www.youtube.com/watch?v=zSWdZVtXT7E', 200000, 250, 'ok');
+('Blue in Green', 'https://www.youtube.com/watch?v=PoPL7BExSQU', 30000, 327, 'ok');
 
 
 INSERT INTO TRACK_ARTIST (idTrack, idArtist) VALUES
-(1, 1), (6, 1),
-(2, 2),
-(3, 3),
-(4, 4),
-(5, 6);
+(1, 1), (2, 1),    -- Queen
+(5, 2), (6, 2),    -- Daft Punk
+(11, 3), (12, 3),  -- Eminem
+(7, 4), (8, 4),    -- Adele
+(3, 5), (4, 5),    -- Metallica
+(9, 6), (10, 6),   -- The Weeknd
+(13, 7),           -- Kendrick Lamar
+(14, 8),          -- Rihanna
+(15, 9), (16, 9); -- Miles Davis
 
 INSERT INTO PLAYLIST (name, idGenre, idOwner, visibility, vote, coverImage) VALUES
 ('Top 50 Polytech', 2, 1, 'PUBLIC', 0, 'asset:playlist1.jpg'),
@@ -106,8 +115,7 @@ INSERT INTO PLAYLIST (name, idGenre, idOwner, visibility, vote, coverImage) VALU
 ('Indie Pop Mix', 2, 4, 'PRIVATE', 0, NULL);
 
 INSERT INTO TRACK_PLAYLIST (idTrack, idPlaylist, nameInPlaylist, next_track_id) VALUES
-(2, 1, NULL, 18),
-(18, 1, 'Inception (Best OST)', 3),
+(2, 1, NULL, 3),
 (3, 1, NULL, 4),
 (4, 1, NULL, 5),
 (5, 1, NULL, NULL),
