@@ -46,7 +46,9 @@ class PlaylistController:
         playlist = await PlaylistRepository.get_by_id(db, playlist_id, user)
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
-        return await PlaylistRepository.get_playlist_tracks(db, playlist_id)
+        return await PlaylistRepository.get_playlist_tracks(
+            db, playlist_id, user_id=user.idUser
+        )
 
     @staticmethod
     async def upload_cover(
@@ -102,6 +104,11 @@ class PlaylistController:
         if not playlist:
             raise HTTPException(status_code=404, detail="Playlist not found")
 
+        if playlist.isLikedPlaylist:
+            raise HTTPException(
+                status_code=403, detail="You cannot delete your liked tracks playlist."
+            )
+
         if not (playlist.idOwner == user.idUser or user.idRole == 3):
             raise HTTPException(
                 status_code=403, detail="You're not allowed to delete this playlist."
@@ -122,6 +129,11 @@ class PlaylistController:
             db, playlist_id, user.idUser
         )
         editors = [u.idUser for u in users if u.editor]
+
+        if playlist.isLikedPlaylist:
+            raise HTTPException(
+                status_code=403, detail="You cannot update your liked tracks playlist."
+            )
 
         if not (
             playlist.idOwner == user.idUser
@@ -251,6 +263,13 @@ class PlaylistController:
             raise HTTPException(
                 status_code=400,
                 detail="You cannot transfer ownership to yourself",
+            )
+
+        raw_playlist = await PlaylistRepository.get_by_id_raw(db, playlist_id)
+        if raw_playlist and raw_playlist.isLikedPlaylist:
+            raise HTTPException(
+                status_code=403,
+                detail="You cannot transfer your liked tracks playlist.",
             )
 
         playlist = await PlaylistRepository.transfer_ownership(

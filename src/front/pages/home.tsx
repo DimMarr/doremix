@@ -17,7 +17,6 @@ export async function HomePage(container: HTMLElement | null) {
 
   container.innerHTML = "";
 
-  // Fetch all playlists and genres in parallel
   const repo = new PlaylistRepository();
   const genreRepo = new GenreRepository();
 
@@ -29,10 +28,20 @@ export async function HomePage(container: HTMLElement | null) {
   const userInfos = await authService.infos() as CurrentUserInfo;
   const currentUserId = userInfos.id;
   const canManage = userInfos.role === "ADMIN" || userInfos.role === "MODERATOR";
+
+  // Playlist système "Titres likés" — isolée et affichée séparément
+  const likedPlaylist = allPlaylists.find(
+    (p: Playlist) => (p as any).isLikedPlaylist === true && p.idOwner === currentUserId
+  ) ?? null;
+
+  // Playlists personnelles normales (hors "Titres likés" et hors OPEN)
   const personalPlaylists = allPlaylists.filter(
-    (playlist: Playlist) => playlist.idOwner === currentUserId &&
-    playlist.visibility !== Visibility.open
+    (playlist: Playlist) =>
+      playlist.idOwner === currentUserId &&
+      playlist.visibility !== Visibility.open &&
+      !(playlist as any).isLikedPlaylist
   );
+
   const publicPlaylists = await repo.getPublic();
   const sharedPlaylists = await repo.getShared();
   const openPlaylists = allPlaylists.filter(
@@ -46,7 +55,6 @@ export async function HomePage(container: HTMLElement | null) {
   const personalCardsSafe = personalCards as unknown as "safe";
   const publicCardsSafe = publicCards as unknown as "safe";
   const openCardsSafe = openCards as unknown as "safe";
-
 
   const pageHtml = (
     <div class="px-4 py-6 md:px-8 space-y-12">
@@ -73,6 +81,33 @@ export async function HomePage(container: HTMLElement | null) {
           </div>
         </div>
 
+        {/* Entrée spéciale "Titres likés" — visible uniquement si elle existe */}
+        {likedPlaylist && (
+          <div class="mb-6">
+            <a
+              href={`/playlist/${likedPlaylist.idPlaylist}`}
+              data-link
+              class="group flex items-center gap-4 w-fit rounded-xl p-3 hover:bg-white/5 transition-colors"
+            >
+              <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-primary/60 to-primary flex items-center justify-center shadow-md flex-shrink-0">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  class="text-black"
+                >
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              </div>
+              <p class="font-bold text-white group-hover:underline">Titres likés</p>
+            </a>
+          </div>
+        )}
+
         {personalPlaylists.length > 0 ? (
           <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6" data-cards-grid="personal">
             {personalCardsSafe}
@@ -85,20 +120,20 @@ export async function HomePage(container: HTMLElement | null) {
       </section>
 
       {/* Shared Playlists Section */}
-        {sharedPlaylists.length > 0 ? (
-          <section data-playlist-section="shared">
-            <div class="flex items-center justify-between mb-6">
-              <div>
-                <h2 class="text-3xl font-bold tracking-tight text-white/90">Shared Playlists</h2>
-                <p class="text-white/60 mt-1 text-sm">Discover what people want you to hear.</p>
-              </div>
-              <div id="addPlaylistSection"></div>
+      {sharedPlaylists.length > 0 ? (
+        <section data-playlist-section="shared">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-3xl font-bold tracking-tight text-white/90">Shared Playlists</h2>
+              <p class="text-white/60 mt-1 text-sm">Discover what people want you to hear.</p>
             </div>
-              <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6" data-cards-grid="shared">
-                {sharedCards as 'safe'}
-              </div>
-          </section>
-        ) : ""}
+            <div id="addPlaylistSection"></div>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6" data-cards-grid="shared">
+            {sharedCards as 'safe'}
+          </div>
+        </section>
+      ) : ""}
 
       {/* Public Playlists Section */}
       <section data-playlist-section="public">
@@ -135,11 +170,8 @@ export async function HomePage(container: HTMLElement | null) {
 
   container.innerHTML = await pageHtml;
 
-
-  // Setup modals d'ajout de track et de playlist.
   setupPlaylistAndTrackModals();
 
-  // Setup composant de recherche.
   const searchSection = container.querySelector("#searchSection") as HTMLElement | null;
   if (searchSection) {
     searchSection.innerHTML = await SearchBar({
@@ -151,7 +183,6 @@ export async function HomePage(container: HTMLElement | null) {
     initSearchBar();
   }
 
-  // Setup genre filter chips
   const genreFilterSection = container.querySelector("#genreFilterSection") as HTMLElement | null;
   if (genreFilterSection && genres.length > 0) {
     const activeGenreIds = new Set<number>();
@@ -192,7 +223,6 @@ export async function HomePage(container: HTMLElement | null) {
         (card as HTMLElement).style.display = matches ? "" : "none";
       });
 
-      // Hide entire sections if all their cards are hidden
       const sections = container.querySelectorAll("[data-playlist-section]");
       sections.forEach((section) => {
         const visibleCards = section.querySelectorAll("[data-playlist-card]");
@@ -226,18 +256,14 @@ export async function HomePage(container: HTMLElement | null) {
     });
   }
 
-  // Initialize card interactions
   initCardsElements(container, [...personalPlaylists, ...publicPlaylists, ...openPlaylists]);
 
-  // Specific handler for empty state button if present
   const createFirstBtn = container.querySelector('#create-first-playlist-btn') as HTMLElement | null;
   if (createFirstBtn) {
     createFirstBtn.addEventListener('click', () => {
       const addPlaylistBtn = document.querySelector('[data-action="create-playlist"]');
       if (addPlaylistBtn instanceof HTMLElement) {
         addPlaylistBtn.click();
-      } else {
-        console.log("Create playlist clicked");
       }
     });
   }

@@ -12,6 +12,7 @@ export default class Playlist {
     public userVote?: number | null;
     public visibility: Visibility = Visibility.private;
     public image?: string;
+    public isLikedPlaylist?: boolean;
     public description?: string;
     public tracks: Track[] = [];
 

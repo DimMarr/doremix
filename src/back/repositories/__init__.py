@@ -6,6 +6,7 @@ from .user_repository import UserRepository
 from .access_token_repository import AccessTokenRepository
 from .refresh_token_repository import RefreshTokenRepository
 from .vote_repository import VoteRepository
+from .like_repository import LikeRepository
 
 
 __all__ = [

@@ -7,6 +7,7 @@ from .track_artist import TrackArtist
 from .track_playlist import TrackPlaylist
 from .user_playlists import UserPlaylist
 from .playlist_vote import PlaylistVote
+from .track_like import TrackLike
 
 __all__ = [
     "Genre",
