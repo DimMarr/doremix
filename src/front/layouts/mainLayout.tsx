@@ -38,7 +38,7 @@ export async function createMainLayout() {
 
       <main class="flex-1 w-full" id="mainContent"></main>
 
-      <Footer />
+      {window.location.pathname !== AppRoutes.LOGIN && window.location.pathname !== AppRoutes.SIGNUP && <Footer />}
 
       <div id="youtubePlayer"></div>
       <div id="trackPlayerContainer">{TrackPlayer()}</div>
