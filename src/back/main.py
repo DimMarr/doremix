@@ -28,7 +28,9 @@ from routes import (
     adminGenresRouter,
     moderationRouter,
     adminPlaylistsRouter,
+    likesRouter,
     groupsRouter,
+    adminGroupsRouter,
 )
 
 routers = [
@@ -43,7 +45,9 @@ routers = [
     adminGenresRouter,
     moderationRouter,
     adminPlaylistsRouter,
+    likesRouter,
     groupsRouter,
+    adminGroupsRouter,
 ]
 
 pepper = os.getenv("PEPPER_KEY")

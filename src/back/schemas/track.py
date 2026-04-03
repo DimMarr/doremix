@@ -14,5 +14,6 @@ class TrackSchema(BaseModel):
     createdAt: datetime
     artists: List[ArtistSchema]
     status: TrackStatus = TrackStatus.ok
+    isLiked: bool = False
 
     model_config = ConfigDict(from_attributes=True)

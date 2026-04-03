@@ -116,6 +116,7 @@ def get_all_playlists(scope: PlaylistScope = "accessible") -> list[PlaylistSchem
         for playlist in playlists
         if playlist.idOwner == user_id
         or _visibility_value(playlist) in {"PUBLIC", "OPEN"}
+        or (_visibility_value(playlist) == "PRIVATE" and playlist.isShared)
     ]
 
 

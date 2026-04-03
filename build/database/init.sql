@@ -73,6 +73,7 @@ CREATE TABLE PLAYLIST (
     visibility playlist_visibility DEFAULT 'PRIVATE',
 
     coverImage VARCHAR(500),
+    isLikedPlaylist BOOLEAN NOT NULL DEFAULT FALSE,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_playlist_genre FOREIGN KEY (idGenre) REFERENCES GENRE(idGenre),
@@ -147,6 +148,15 @@ CREATE TABLE PLAYLIST_VOTE (
     PRIMARY KEY (idUser, idPlaylist),
     CONSTRAINT fk_playlistvote_user FOREIGN KEY (idUser) REFERENCES USERS(idUser) ON DELETE CASCADE,
     CONSTRAINT fk_playlistvote_playlist FOREIGN KEY (idPlaylist) REFERENCES PLAYLIST(idPlaylist) ON DELETE CASCADE
+);
+
+CREATE TABLE TRACK_LIKE (
+    idUser INTEGER NOT NULL,
+    idTrack INTEGER NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (idUser, idTrack),
+    CONSTRAINT fk_tracklike_user FOREIGN KEY (idUser) REFERENCES USERS(idUser) ON DELETE CASCADE,
+    CONSTRAINT fk_tracklike_track FOREIGN KEY (idTrack) REFERENCES TRACK(idTrack) ON DELETE CASCADE
 );
 
 

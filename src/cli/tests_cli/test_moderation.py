@@ -6,7 +6,7 @@ from typer.testing import CliRunner
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.services.user import can_be_banned_list, can_be_unbanned_list, ban, unban
+from src.services.user import can_be_banned_list, ban, unban
 from src.commands.user import app as user_app
 from src.utils.exceptions import NotAuthenticatedError
 

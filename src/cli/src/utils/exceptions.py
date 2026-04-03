@@ -48,3 +48,23 @@ class PlaylistError(Exception):
 
 class PlaylistNotFoundError(PlaylistError):
     """Raised when a specific playlist is not found."""
+
+
+class GroupError(Exception):
+    """Base exception for group-related errors."""
+
+
+class GroupExistsError(GroupError):
+    """Raised when trying to create a group with an existing name."""
+
+
+class GroupNotFoundError(GroupError):
+    """Raised when a target group does not exist."""
+
+
+class GroupMembershipError(GroupError):
+    """Raised when there is an issue with group membership changes."""
+
+
+class UserNotFoundError(GroupError):
+    """Raised when a target user does not exist."""

@@ -14,6 +14,7 @@ from models.user import User, UserRole
 from models.group import GroupUser, GroupPlaylist, UserGroup
 from repositories.track_repository import TrackRepository
 from repositories.artist_repository import ArtistRepository
+from repositories.like_repository import LikeRepository
 from utils.youtube_utils import get_youtube_video_info
 import asyncio
 
@@ -22,6 +23,11 @@ class PlaylistRepository:
     @staticmethod
     def _attach_user_vote(playlist: Playlist, user_vote: int | None) -> Playlist:
         setattr(playlist, "userVote", user_vote)
+        return playlist
+
+    @staticmethod
+    def _attach_is_shared(playlist: Playlist, is_shared: bool) -> Playlist:
+        setattr(playlist, "isShared", is_shared)
         return playlist
 
     @staticmethod
@@ -58,7 +64,10 @@ class PlaylistRepository:
             .distinct()
         )
         return [
-            PlaylistRepository._attach_user_vote(playlist, user_vote)
+            PlaylistRepository._attach_is_shared(
+                PlaylistRepository._attach_user_vote(playlist, user_vote),
+                playlist.idOwner != user_id,
+            )
             for playlist, user_vote in result.all()
         ]
 
@@ -81,15 +90,26 @@ class PlaylistRepository:
             )
         )
         return [
-            PlaylistRepository._attach_user_vote(playlist, user_vote)
+            PlaylistRepository._attach_is_shared(
+                PlaylistRepository._attach_user_vote(playlist, user_vote),
+                True,
+            )
             for playlist, user_vote in result.all()
         ]
 
     @staticmethod
     async def get_shared_playlist(db: AsyncSession, user_id: int) -> list[Playlist]:
+        direct_shared_subquery = select(UserPlaylist.idPlaylist).filter(
+            UserPlaylist.idUser == user_id
+        )
+        my_group_ids = select(GroupUser.idGroup).filter(GroupUser.idUser == user_id)
+        group_shared_subquery = select(GroupPlaylist.idPlaylist).filter(
+            GroupPlaylist.idGroup.in_(my_group_ids)
+        )
+
         result = await db.execute(
             select(Playlist, PlaylistVote.value)
-            .join(UserPlaylist, UserPlaylist.idPlaylist == Playlist.idPlaylist)
+            .options(joinedload(Playlist.genre))
             .outerjoin(
                 PlaylistVote,
                 and_(
@@ -97,7 +117,14 @@ class PlaylistRepository:
                     PlaylistVote.idUser == user_id,
                 ),
             )
-            .filter(UserPlaylist.idUser == user_id)
+            .filter(
+                Playlist.idOwner != user_id,
+                or_(
+                    Playlist.idPlaylist.in_(direct_shared_subquery),
+                    Playlist.idPlaylist.in_(group_shared_subquery),
+                ),
+            )
+            .distinct()
         )
         return [
             PlaylistRepository._attach_user_vote(playlist, user_vote)
@@ -236,7 +263,9 @@ class PlaylistRepository:
         return False
 
     @staticmethod
-    async def get_playlist_tracks(db: AsyncSession, playlist_id: int) -> list[Track]:
+    async def get_playlist_tracks(
+        db: AsyncSession, playlist_id: int, user_id: int | None = None
+    ) -> list[Track]:
         result = await db.execute(
             select(Track, TrackPlaylist)
             .join(TrackPlaylist, TrackPlaylist.idTrack == Track.idTrack)
@@ -282,6 +311,14 @@ class PlaylistRepository:
         for track_id, (track, _) in node_map.items():
             if track_id not in visited:
                 ordered_tracks.append(track)
+
+        if user_id is not None:
+            liked_ids = await LikeRepository.get_liked_track_ids(db, user_id)
+            for track in ordered_tracks:
+                setattr(track, "isLiked", track.idTrack in liked_ids)
+        else:
+            for track in ordered_tracks:
+                setattr(track, "isLiked", False)
 
         return ordered_tracks
 

@@ -10,6 +10,7 @@ from src.services.track import (
     stop_track,
     search_tracks,
 )
+from src.services.like import like_track, unlike_track, like_current
 
 app = typer.Typer()
 console = Console()
@@ -116,6 +117,33 @@ def stop():
             console.print(f"[yellow]{message}[/yellow]")
             return
         console.print(f"[green]✓ {message}[/green]")
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(help="Like a track by ID.")
+def like(id: int = typer.Argument(..., help="Track ID")):
+    try:
+        title = like_track(id)
+        console.print(f"[green]✓ '{title}' added to your liked tracks.[/green]")
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(help="Unlike a track by ID.")
+def unlike(id: int = typer.Argument(..., help="Track ID")):
+    try:
+        title = unlike_track(id)
+        console.print(f"[green]✓ '{title}' removed from your liked tracks.[/green]")
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(name="like-current", help="Like the currently playing track.")
+def like_current_cmd():
+    try:
+        title = like_current()
+        console.print(f"[green]✓ '{title}' added to your liked tracks.[/green]")
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")
 

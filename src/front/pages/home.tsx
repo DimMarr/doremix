@@ -33,10 +33,18 @@ export async function HomePage(container: HTMLElement | null) {
   const userInfos = await authService.infos() as CurrentUserInfo;
   const currentUserId = userInfos.id;
   const canManage = userInfos.role === "ADMIN" || userInfos.role === "MODERATOR";
+
+  const likedPlaylist = allPlaylists.find(
+    (p: Playlist) => (p as any).isLikedPlaylist === true && p.idOwner === currentUserId
+  ) ?? null;
+
   const personalPlaylists = allPlaylists.filter(
-    (playlist: Playlist) => playlist.idOwner === currentUserId &&
-    playlist.visibility !== Visibility.open
+    (playlist: Playlist) =>
+      playlist.idOwner === currentUserId &&
+      playlist.visibility !== Visibility.open &&
+      !(playlist as any).isLikedPlaylist
   );
+
   const publicPlaylists = await repo.getPublic();
   const sharedPlaylists = await repo.getShared();
   const openPlaylists = allPlaylists.filter(
@@ -50,7 +58,6 @@ export async function HomePage(container: HTMLElement | null) {
   const personalCardsSafe = personalCards as unknown as "safe";
   const publicCardsSafe = publicCards as unknown as "safe";
   const openCardsSafe = openCards as unknown as "safe";
-
 
   const pageHtml = (
     <div class="px-4 py-6 md:px-8 space-y-12">
@@ -91,6 +98,32 @@ export async function HomePage(container: HTMLElement | null) {
           </div>
         </div>
 
+        {likedPlaylist && (
+          <div class="mb-6">
+            <a
+              href={`/playlist/${likedPlaylist.idPlaylist}`}
+              data-link
+              class="group flex items-center gap-4 w-fit rounded-xl p-3 hover:bg-white/5 transition-colors"
+            >
+              <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-primary/60 to-primary flex items-center justify-center shadow-md flex-shrink-0">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  class="text-black"
+                >
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              </div>
+              <p class="font-bold text-white group-hover:underline">Liked Tracks</p>
+            </a>
+          </div>
+        )}
+
         {personalPlaylists.length > 0 ? (
           <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6" data-cards-grid="personal">
             {personalCardsSafe}
@@ -103,20 +136,20 @@ export async function HomePage(container: HTMLElement | null) {
       </section>
 
       {/* Shared Playlists Section */}
-        {sharedPlaylists.length > 0 ? (
-          <section data-playlist-section="shared">
-            <div class="flex items-center justify-between mb-6">
-              <div>
-                <h2 class="text-3xl font-bold tracking-tight text-white/90">Shared Playlists</h2>
-                <p class="text-white/60 mt-1 text-sm">Discover what people want you to hear.</p>
-              </div>
-              <div id="addPlaylistSection"></div>
+      {sharedPlaylists.length > 0 ? (
+        <section data-playlist-section="shared">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-3xl font-bold tracking-tight text-white/90">Shared Playlists</h2>
+              <p class="text-white/60 mt-1 text-sm">Discover what people want you to hear.</p>
             </div>
-              <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6" data-cards-grid="shared">
-                {sharedCards as 'safe'}
-              </div>
-          </section>
-        ) : ""}
+            <div id="addPlaylistSection"></div>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6" data-cards-grid="shared">
+            {sharedCards as 'safe'}
+          </div>
+        </section>
+      ) : ""}
 
       {/* Public Playlists Section */}
       <section data-playlist-section="public">

@@ -10,6 +10,8 @@ from pathlib import Path
 
 # PID of the current song playing is stored in this file
 PID_FILE = Path(f"/run/user/{os.getuid()}/yt-player.pid")
+# ID of the currently playing track
+CURRENT_TRACK_FILE = Path(f"/run/user/{os.getuid()}/yt-current-track")
 
 
 def _build_player_command(audio_url: str) -> list[str]:
@@ -84,6 +86,7 @@ def play_track(id: int):
         raise Exception("VLC executable not found. Install `vlc` and retry.") from e
 
     PID_FILE.write_text(str(process.pid))
+    CURRENT_TRACK_FILE.write_text(str(id))
 
 
 def stop_track():
@@ -93,6 +96,8 @@ def stop_track():
     pid = int(PID_FILE.read_text())
     stop_process(pid)
     PID_FILE.unlink()
+    if CURRENT_TRACK_FILE.exists():
+        CURRENT_TRACK_FILE.unlink()
     return "Track stopped."
 
 

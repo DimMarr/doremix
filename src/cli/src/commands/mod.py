@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import typer
 from rich.console import Console
-from rich.table import Table
 
 from src.services.mod import add_moderator, demote_moderator
 from src.utils.privileges import _require_admin
