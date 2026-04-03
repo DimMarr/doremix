@@ -2,6 +2,7 @@ import { Genre, User } from "@models/index";
 import { GenreRepository, ModerationRepository, UserRepository } from "@repositories/index";
 import { Input, AdminPanel } from "@components/index";
 import type { ModerationUser } from "@repositories/moderationRepository";
+import { GroupRepository, type GroupWithUsers } from "@repositories/groupRepository";
 import { AlertManager } from "@utils/alertManager";
 import { authService } from "@utils/authentication";
 import { PlaylistRepository } from "@repositories/playlistRepository";
@@ -61,6 +62,23 @@ export async function AdminPage(container: HTMLElement | null) {
             </form>
           }/>
 
+          {/* Group Managing Panel */}
+          <AdminPanel title="Groups" name="group" content={
+            <form id="add-group-form" class="flex gap-2 mt-4">
+              <input
+                type="text"
+                name="groupName"
+                id="new-group-input"
+                placeholder="New group name"
+                required
+                class="flex-1 px-4 py-2 rounded-lg bg-input border border-border text-foreground focus:ring-2 focus:ring-ring outline-none text-sm m-px"
+              />
+              <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/80 transition-colors">
+                Add
+              </button>
+            </form>
+          }/>
+
           {/* Moderators Managing Panel */}
           <AdminPanel title="Moderators" name="moderators"/>
 
@@ -70,6 +88,7 @@ export async function AdminPage(container: HTMLElement | null) {
       </div>
     );
     await initGenreManagement(container);
+    await initGroupManagement(container);
     await initAddModeratorPanel(container);
     await initAdminPlaylistManagement(container);
     return;
@@ -191,6 +210,75 @@ function renderModeratorsRows(users: User[]): string {
               data-mod-user={user.idUser}
             />
           </div>
+        </div>
+      );
+    })
+    .join("");
+}
+
+function renderGroupRows(groups: GroupWithUsers[], allUsers: User[]): string {
+  if (groups.length === 0) {
+    return '<p class="text-muted-foreground text-sm">No groups yet.</p>';
+  }
+
+  return groups
+    .map((group) => {
+      const memberIds = new Set(group.users.map((user) => user.idUser));
+      const availableUsers = allUsers.filter((user) => !memberIds.has(user.idUser));
+
+      return (
+        <div class="p-3 rounded-lg border border-white/10 bg-white/5 space-y-3" data-group-id={group.idGroup}>
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <p safe class="text-white text-sm font-medium">{group.groupName}</p>
+              <p class="text-white/50 text-xs">{group.users.length} member(s)</p>
+            </div>
+            <button
+              data-delete-group={group.idGroup}
+              class="px-3 py-1 rounded-lg bg-red-600/80 text-white text-xs font-medium hover:bg-red-500 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+
+          <div class="space-y-1">
+            {group.users.length === 0
+              ? '<p class="text-muted-foreground text-xs">No users in this group.</p>'
+              : group.users.map((member) => (
+                <div class="flex items-center justify-between gap-2" data-group-member={member.idUser}>
+                  <div class="min-w-0">
+                    <p safe class="text-white/85 text-xs truncate">{member.username}</p>
+                    <p safe class="text-white/50 text-[11px] truncate">{member.email}</p>
+                  </div>
+                  <button
+                    data-remove-group-user={member.idUser}
+                    data-remove-group-user-group={group.idGroup}
+                    class="px-2 py-1 rounded bg-neutral-700 text-white text-[10px] hover:bg-neutral-600 transition-colors shrink-0"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )).join("")}
+          </div>
+
+          <form data-add-group-user-form={group.idGroup} class="flex gap-2 pt-2 border-t border-white/10">
+            <select
+              name="userId"
+              class="flex-1 px-3 py-1 rounded-lg bg-input border border-border text-foreground text-xs"
+              required
+            >
+              <option value="">Select user</option>
+              {availableUsers.map((user) => (
+                `<option value="${user.idUser}">${user.username} (${user.email})</option>`
+              )).join("")}
+            </select>
+            <button
+              type="submit"
+              class="px-3 py-1 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/80 transition-colors"
+            >
+              Add user
+            </button>
+          </form>
         </div>
       );
     })
@@ -421,6 +509,135 @@ async function initGenreManagement(container: HTMLElement) {
         new AlertManager().error("This genre already exists");
       } else {
         new AlertManager().error("Failed to create genre");
+      }
+    }
+  });
+
+  await refresh();
+}
+
+async function initGroupManagement(container: HTMLElement) {
+  const groupList = container.querySelector("#group-list") as HTMLElement | null;
+  const addForm = container.querySelector("#add-group-form") as HTMLFormElement | null;
+  const input = container.querySelector("#new-group-input") as HTMLInputElement | null;
+
+  if (!groupList || !addForm || !input) return;
+
+  const groupRepo = new GroupRepository();
+  const userRepo = new UserRepository();
+  const alerts = new AlertManager();
+
+  let groups: GroupWithUsers[] = [];
+  let users: User[] = [];
+
+  const refresh = async () => {
+    try {
+      const [nextGroups, nextUsers] = await Promise.all([
+        groupRepo.adminGetAllGroups(),
+        userRepo.getAllUsers() as Promise<User[]>,
+      ]);
+
+      groups = nextGroups;
+      users = nextUsers.filter((user) => user.role !== "ADMIN");
+      groupList.innerHTML = renderGroupRows(groups, users);
+    } catch {
+      groupList.innerHTML = '<p class="text-red-400 text-sm">Failed to load groups.</p>';
+    }
+  };
+
+  groupList.addEventListener("click", async (event) => {
+    const target = event.target as HTMLElement;
+
+    const deleteBtn = target.closest("[data-delete-group]") as HTMLElement | null;
+    if (deleteBtn) {
+      const groupId = parseInt(deleteBtn.getAttribute("data-delete-group") || "", 10);
+      const group = groups.find((item) => item.idGroup === groupId);
+      if (!group) return;
+
+      if (!confirm(`Delete group "${group.groupName}"?`)) return;
+
+      try {
+        await groupRepo.adminDeleteGroup(groupId);
+        alerts.success("Group deleted");
+        await refresh();
+      } catch {
+        alerts.error("Failed to delete group");
+      }
+      return;
+    }
+
+    const removeUserBtn = target.closest("[data-remove-group-user]") as HTMLElement | null;
+    if (removeUserBtn) {
+      const userId = parseInt(removeUserBtn.getAttribute("data-remove-group-user") || "", 10);
+      const groupId = parseInt(
+        removeUserBtn.getAttribute("data-remove-group-user-group") || "",
+        10
+      );
+      if (!userId || !groupId) return;
+
+      try {
+        await groupRepo.adminRemoveUser(groupId, userId);
+        alerts.success("User removed from group");
+        await refresh();
+      } catch {
+        alerts.error("Failed to remove user from group");
+      }
+    }
+  });
+
+  groupList.addEventListener("submit", async (event) => {
+    const form = (event.target as HTMLElement).closest("[data-add-group-user-form]") as HTMLFormElement | null;
+    if (!form) return;
+    event.preventDefault();
+
+    const groupId = parseInt(form.getAttribute("data-add-group-user-form") || "", 10);
+    const select = form.querySelector("[name='userId']") as HTMLSelectElement | null;
+    const userId = select ? parseInt(select.value || "", 10) : NaN;
+
+    if (!groupId || !userId) {
+      alerts.warning("Select a user first");
+      return;
+    }
+
+    const group = groups.find((item) => item.idGroup === groupId);
+    if (group?.users.some((member) => member.idUser === userId)) {
+      alerts.error("This user is already in the group");
+      return;
+    }
+
+    try {
+      await groupRepo.adminAddUser(groupId, userId);
+      alerts.success("User added to group");
+      await refresh();
+    } catch (error: any) {
+      if (error?.message === "Conflict") {
+        alerts.error("This user is already in the group");
+      } else {
+        alerts.error("Failed to add user to group");
+      }
+    }
+  });
+
+  addForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const groupName = input.value.trim();
+    if (!groupName) return;
+
+    if (groups.some((group) => group.groupName.toLowerCase() === groupName.toLowerCase())) {
+      alerts.error("A group with this name already exists");
+      return;
+    }
+
+    try {
+      await groupRepo.adminCreateGroup(groupName);
+      alerts.success("Group created");
+      input.value = "";
+      await refresh();
+    } catch (error: any) {
+      if (error?.message === "Conflict") {
+        alerts.error("A group with this name already exists");
+      } else {
+        alerts.error("Failed to create group");
       }
     }
   });
