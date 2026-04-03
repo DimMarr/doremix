@@ -99,19 +99,13 @@ const setupControlButtons = (container: HTMLElement, playerStore: YoutubePlayer)
 
   if (previousBtn) {
     previousBtn.addEventListener('click', () => {
-      const tracks = playerStore?.playlist?.tracks;
-      if (!tracks) return playerStore?.previousTrack();
-      const idx = findNextPlayableIndex(tracks, currentTrackIndex, -1);
-      if (idx !== null) playerStore?.playTrack(idx);
+      playerStore?.previousTrack();
     });
   }
 
   if (nextBtn) {
     nextBtn.addEventListener('click', () => {
-      const tracks = playerStore?.playlist?.tracks;
-      if (!tracks) return playerStore?.nextTrack();
-      const idx = findNextPlayableIndex(tracks, currentTrackIndex, 1);
-      if (idx !== null) playerStore?.playTrack(idx);
+      playerStore?.nextTrack();
     });
   }
 
@@ -189,17 +183,6 @@ const initializePlayer = (container: HTMLElement, playerStore: YoutubePlayer) =>
     highlightOverlayTrack(index);
     updateNowPlayingMeta(container, playerStore);
   };
-
-  // Patch nextTrack to auto-skip on continous listening
-  const originalNextTrack = playerStore.nextTrack?.bind(playerStore);
-  if (originalNextTrack) {
-    playerStore.nextTrack = () => {
-      const tracks = playerStore.playlist?.tracks;
-      if (!tracks) return originalNextTrack();
-      const idx = findNextPlayableIndex(tracks, currentTrackIndex, 1);
-      if (idx !== null) playerStore.playTrack(idx);
-    };
-  }
 
   // Patch shuffle/random is available
   const originalRandomTrack = (playerStore as any).randomTrack?.bind(playerStore);
