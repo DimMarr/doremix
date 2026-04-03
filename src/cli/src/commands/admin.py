@@ -14,24 +14,38 @@ from src.services.admin_playlist import (
     add_track,
     remove_track,
 )
+from src.services.admin_group import (
+    add_user_to_group,
+    create_group,
+    delete_group,
+    get_user_display_name,
+    get_all_groups,
+    remove_user_from_group,
+)
 from src.services.genre import get_all as genre_get_all, create as genre_create
 from src.services.genre import update as genre_update, delete as genre_delete
 from src.utils.token_storage import get_user
 from src.utils.exceptions import (
     ApiRequestError,
     ForbiddenError,
+    GroupExistsError,
+    GroupMembershipError,
+    GroupNotFoundError,
     GenreExistsError,
     GenreNotFoundError,
     NotAuthenticatedError,
     PlaylistNotFoundError,
+    UserNotFoundError,
 )
 
 admin_app = typer.Typer(help="Admin commands.")
 playlist_app = typer.Typer(help="Admin playlist management commands.")
 genre_app = typer.Typer(help="Genre management commands (Admin only).")
+group_app = typer.Typer(help="Group management commands (Admin only).")
 
 admin_app.add_typer(playlist_app, name="playlist")
 admin_app.add_typer(genre_app, name="genre")
+admin_app.add_typer(group_app, name="group")
 
 console = Console()
 
@@ -427,3 +441,169 @@ def genre_delete_command(
         console.print(f"[yellow]⚠ {exc}[/yellow]")
     except Exception as e:
         console.print(f"[red]✗ Unexpected Error: {e}[/red]")
+
+
+# ---------------------------------------------------------------------------
+# Group commands
+# ---------------------------------------------------------------------------
+
+
+@group_app.command("list", help="List groups and their members.")
+def group_list_command() -> None:
+    _require_admin()
+
+    try:
+        groups = get_all_groups()
+        if not groups:
+            console.print("[yellow]No groups found.[/yellow]")
+            return
+
+        for group in groups:
+            table = Table(title=f"Group #{group.idGroup} - {group.groupName}")
+            table.add_column("user_id", style="cyan")
+            table.add_column("username", style="magenta")
+            table.add_column("email", style="yellow")
+
+            if not group.users:
+                table.add_row("-", "(no members)", "-")
+            else:
+                for member in group.users:
+                    table.add_row(
+                        str(member.idUser),
+                        member.username,
+                        member.email,
+                    )
+
+            console.print(table)
+
+    except (NotAuthenticatedError, ForbiddenError) as exc:
+        console.print(f"[yellow]⚠ {exc}[/yellow]")
+        raise typer.Exit(code=1)
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@group_app.command("create", help="Create a new group.")
+def group_create_command(
+    name: str = typer.Option(..., "--name", "-n", prompt=True, help="Group name"),
+) -> None:
+    _require_admin()
+
+    clean_name = name.strip()
+    if not clean_name:
+        console.print("[yellow]⚠ Group name cannot be empty.[/yellow]")
+        raise typer.Exit(code=1)
+
+    try:
+        existing_groups = get_all_groups()
+        if any(
+            g.groupName.strip().lower() == clean_name.lower() for g in existing_groups
+        ):
+            console.print("[yellow]⚠ A group with this name already exists.[/yellow]")
+            return
+
+        group = create_group(clean_name)
+        console.print(
+            f"[green]✓ Group '{group.groupName}' created successfully (id={group.idGroup}).[/green]"
+        )
+
+    except GroupExistsError:
+        console.print("[yellow]⚠ A group with this name already exists.[/yellow]")
+    except (NotAuthenticatedError, ForbiddenError) as exc:
+        console.print(f"[yellow]⚠ {exc}[/yellow]")
+        raise typer.Exit(code=1)
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@group_app.command("delete", help="Delete an existing group.")
+def group_delete_command(
+    group_id: int = typer.Argument(..., help="Group ID"),
+    force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
+) -> None:
+    _require_admin()
+
+    try:
+        if not force:
+            if not typer.confirm(f"Do you really want to delete group {group_id}?"):
+                console.print("[yellow]Deletion cancelled.[/yellow]")
+                raise typer.Abort()
+
+        delete_group(group_id)
+        console.print(f"[green]✓ Group {group_id} deleted successfully.[/green]")
+
+    except GroupNotFoundError:
+        console.print(f"[yellow]⚠ Group {group_id} not found.[/yellow]")
+    except (NotAuthenticatedError, ForbiddenError) as exc:
+        console.print(f"[yellow]⚠ {exc}[/yellow]")
+        raise typer.Exit(code=1)
+    except typer.Abort:
+        pass
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@group_app.command("add-user", help="Add a user to a group.")
+def group_add_user_command(
+    group_id: int = typer.Argument(..., help="Group ID"),
+    user_id: int = typer.Argument(..., help="User ID"),
+) -> None:
+    _require_admin()
+
+    user_label = f"User {user_id}"
+    try:
+        user_label = get_user_display_name(user_id)
+    except UserNotFoundError:
+        console.print(f"[yellow]⚠ User {user_id} not found.[/yellow]")
+        return
+    except Exception:
+        # Keep command functional even if user lookup fails for non-critical reasons
+        user_label = f"User {user_id}"
+
+    try:
+        add_user_to_group(group_id, user_id)
+        console.print(
+            f"[green]✓ {user_label} added to group {group_id} successfully.[/green]"
+        )
+    except GroupMembershipError as exc:
+        message = str(exc).lower()
+        if "already" in message:
+            console.print(
+                f"[yellow]⚠ {user_label} is already in group {group_id}.[/yellow]"
+            )
+        else:
+            console.print(f"[yellow]⚠ {exc}[/yellow]")
+    except UserNotFoundError:
+        console.print(f"[yellow]⚠ User {user_id} not found.[/yellow]")
+    except GroupNotFoundError:
+        console.print(f"[yellow]⚠ Group {group_id} not found.[/yellow]")
+    except (NotAuthenticatedError, ForbiddenError) as exc:
+        console.print(f"[yellow]⚠ {exc}[/yellow]")
+        raise typer.Exit(code=1)
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@group_app.command("remove-user", help="Remove a user from a group.")
+def group_remove_user_command(
+    group_id: int = typer.Argument(..., help="Group ID"),
+    user_id: int = typer.Argument(..., help="User ID"),
+) -> None:
+    _require_admin()
+
+    try:
+        remove_user_from_group(group_id, user_id)
+        console.print(
+            f"[green]✓ User {user_id} removed from group {group_id} successfully.[/green]"
+        )
+    except GroupMembershipError as exc:
+        console.print(f"[yellow]⚠ {exc}[/yellow]")
+    except UserNotFoundError:
+        console.print(f"[yellow]⚠ User {user_id} not found.[/yellow]")
+    except GroupNotFoundError:
+        console.print(f"[yellow]⚠ Group {group_id} not found.[/yellow]")
+    except (NotAuthenticatedError, ForbiddenError) as exc:
+        console.print(f"[yellow]⚠ {exc}[/yellow]")
+        raise typer.Exit(code=1)
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")

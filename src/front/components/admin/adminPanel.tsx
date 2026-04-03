@@ -4,7 +4,7 @@ export interface AdminPanelProps {
   className?: string;
   title?: string;
   name?: string;
-  content?: string;
+  content?: any;
 }
 
 export function AdminPanel({

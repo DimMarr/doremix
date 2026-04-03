@@ -15,6 +15,7 @@ class PlaylistSchema(BaseModel):
     idGenre: int
     idOwner: int
     vote: int
+    isShared: bool = False
     visibility: PlaylistVisibility
     coverImage: str | None = None
     createdAt: datetime

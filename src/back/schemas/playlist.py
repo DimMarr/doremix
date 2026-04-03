@@ -13,6 +13,7 @@ class PlaylistSchema(BaseModel):
     idOwner: int
     vote: int
     userVote: Optional[int] = None
+    isShared: bool = False
     visibility: PlaylistVisibility
     coverImage: Optional[str] = None
     isLikedPlaylist: bool = False

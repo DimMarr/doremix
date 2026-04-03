@@ -11,3 +11,4 @@ from .moderation import router as moderationRouter
 from .admin_playlists import router as adminPlaylistsRouter
 from .likes import router as likesRouter
 from .groups import router as groupsRouter
+from .groups import admin_router as adminGroupsRouter
