@@ -20,8 +20,11 @@ from src.services.playlist import (
     reorder_track,
     get_shared_users,
     remove_shared_user,
+    remove_shared_group,
     transfer_ownership,
     vote_playlist,
+    share_with_group,
+    share_with_user,
 )
 
 app = typer.Typer()
@@ -594,5 +597,65 @@ def reorder_track_cmd(
 
         console.print(tracks_table)
 
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(name="share-group", help="Share a playlist with a group.")
+def share_group(
+    playlist_id: int = typer.Argument(..., help="Playlist ID"),
+    group_id: int = typer.Option(..., "--group", "-g", help="Group ID to share with"),
+):
+    try:
+        playlist = get_playlist(str(playlist_id))
+        share_with_group(str(playlist_id), group_id)
+
+        console.print(
+            f"[green]✓ Playlist '{playlist.name}' shared with group #{group_id} successfully![/green]"
+        )
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(name="share", help="Share a playlist with a single user.")
+def share_user_cmd(
+    playlist_id: int = typer.Argument(..., help="Playlist ID"),
+    email: str = typer.Option(..., "--email", "-e", help="User email"),
+    editor: bool = typer.Option(False, "--editor", help="Grant editor rights"),
+):
+    try:
+        playlist = get_playlist(str(playlist_id))
+        share_with_user(str(playlist_id), email, editor)
+
+        role = "editor" if editor else "viewer"
+        console.print(
+            f"[green]✓ Playlist '{playlist.name}' shared with {email} ({role}) successfully![/green]"
+        )
+    except Exception as e:
+        console.print(f"[red]✗ Error: {e}[/red]")
+
+
+@app.command(
+    name="unshare-group", help="Remove a group's access from a shared playlist."
+)
+def unshare_group(
+    playlist_id: int = typer.Argument(..., help="Playlist ID"),
+    group_id: int = typer.Option(..., "--group", "-g", help="Group ID to remove"),
+    force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation"),
+):
+    try:
+        if not force:
+            confirm = typer.confirm(
+                f"Remove access for group #{group_id} from playlist #{playlist_id}?"
+            )
+            if not confirm:
+                console.print("[yellow]Cancelled.[/yellow]")
+                raise typer.Abort()
+
+        result = remove_shared_group(str(playlist_id), str(group_id))
+        console.print(f"[green]✓ {result['message']}[/green]")
+
+    except typer.Abort:
+        pass
     except Exception as e:
         console.print(f"[red]✗ Error: {e}[/red]")

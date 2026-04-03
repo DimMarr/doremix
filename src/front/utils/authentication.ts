@@ -2,7 +2,7 @@
 import { API_BASE_URL } from "@config/index";
 
 export function isValidPassword(password: string): boolean {
-    const regex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/;
+    const regex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*_-]).{8,}$/;
     return regex.test(password)
 }
 
@@ -50,7 +50,7 @@ class AuthService {
             const result = await response.json()
 
             if (!response.ok) {
-                throw new Error(result.message || "Login failed");
+                throw new Error(result.detail || "Login failed");
             }
             this.infosPromise = undefined;
         } catch (e) {
@@ -75,7 +75,7 @@ class AuthService {
             const result = await response.json()
 
             if (!response.ok) {
-                throw new Error(result.message || "Register failed");
+                throw new Error(result.detail || "Register failed");
             }
             this.infosPromise = undefined;
         } catch (e) {
@@ -132,26 +132,7 @@ class AuthService {
         return this.infosPromise;
     }
 
-    async verify_email(token: string) {
-        try {
-            const response = await fetch(`${API_BASE_URL}/auth/verify-email?token=${encodeURIComponent(token)}`, {
-                method: 'GET',
-                credentials: 'include'
-            });
 
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.detail || "Email verification failed");
-            }
-
-            return result;
-
-        } catch (e) {
-            console.error("Email validation failed:", e);
-            throw e;
-        }
-    }
 
     async resend_verification_email(token: string) {
         try {
@@ -169,6 +150,129 @@ class AuthService {
             return result;
         } catch (e) {
             console.error('Resend verification email failed', e);
+            throw e;
+        }
+    }
+
+    async verifyCode(email: string, code: string) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/verify-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    email: email,
+                    code: code
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.detail || "Email verification failed");
+            }
+
+            return result;
+        } catch (e) {
+            console.error("Email code verification failed:", e);
+            throw e;
+        }
+    }
+
+    async resendVerificationCode(email: string) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/resend-verification-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    email: email
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.detail || "Resend failed");
+            }
+
+            return result;
+        } catch (e) {
+            console.error('Resend verification code failed', e);
+            throw e;
+        }
+    }
+
+    async requestPasswordReset(email: string) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/request-password-reset`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    email: email
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.detail || "Password reset request failed");
+            }
+
+            return result;
+        } catch (e) {
+            console.error('Password reset request failed', e);
+            throw e;
+        }
+    }
+
+    async resetPassword(email: string, code: string, new_password: string) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    email: email,
+                    code: code,
+                    new_password: new_password
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.detail || "Password reset failed");
+            }
+
+            return result;
+        } catch (e) {
+            console.error('Password reset failed', e);
+            throw e;
+        }
+    }
+
+    async resendPasswordResetCode(email: string) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/request-password-reset`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    email: email
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.detail || "Resend failed");
+            }
+
+            return result;
+        } catch (e) {
+            console.error('Resend password reset code failed', e);
             throw e;
         }
     }

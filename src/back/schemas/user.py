@@ -46,7 +46,7 @@ class UserRegisterSchema(BaseModel):
     @field_validator("password")
     def validate_password(cls, password):
         if not re.match(
-            r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[#?!@$%^&*-])[A-Za-z\d#?!@$%^&*-]{8,}$",
+            r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[#?!@$%^&*_-])[A-Za-z\d#?!@$%^&*_-]{8,}$",
             password,
         ):
             raise ValueError(

@@ -13,8 +13,10 @@ class PlaylistSchema(BaseModel):
     idOwner: int
     vote: int
     userVote: Optional[int] = None
+    isShared: bool = False
     visibility: PlaylistVisibility
     coverImage: Optional[str] = None
+    isLikedPlaylist: bool = False
     createdAt: datetime
     updatedAt: datetime
     genre: Optional[GenreSchema] = None
@@ -43,7 +45,14 @@ class SharePlaylistRequest(BaseModel):
 
 
 class ShareGroupRequest(BaseModel):
-    group_name: str
+    group_id: int
+
+
+class SharedGroupSchema(BaseModel):
+    idGroup: int
+    groupName: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TransferPlaylistRequest(BaseModel):

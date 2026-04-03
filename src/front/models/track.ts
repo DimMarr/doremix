@@ -11,6 +11,7 @@ export class Track {
     public createdAt?: string;
     public artists?: Artist[];
     public status?: TrackStatus;
+    public isLiked?: boolean;
 
     constructor(data: Partial<Track>) {
         Object.assign(this, data);

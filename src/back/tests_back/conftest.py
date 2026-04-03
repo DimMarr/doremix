@@ -12,7 +12,9 @@ from database import Base, get_db, engine
 from routes.playlists import router as playlists_router
 from routes.users import router as users_router
 from routes.search_router import router as search_router
+from routes.likes import router as likes_router
 from models import User, Genre
+from models.user_playlist_preferences import UserPlaylistPreferences
 from models.enums import PlaylistVisibility
 from models.playlist import Playlist
 from middleware.auth_middleware import get_current_user_id, get_current_user
@@ -38,6 +40,7 @@ app = FastAPI()
 app.include_router(playlists_router)
 app.include_router(users_router)
 app.include_router(search_router)
+app.include_router(likes_router)
 
 
 @pytest_asyncio.fixture(scope="function")

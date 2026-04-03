@@ -14,6 +14,7 @@ from models.user import User, UserRole
 from models.group import GroupUser, GroupPlaylist, UserGroup
 from repositories.track_repository import TrackRepository
 from repositories.artist_repository import ArtistRepository
+from repositories.like_repository import LikeRepository
 from utils.youtube_utils import get_youtube_video_info
 import asyncio
 
@@ -22,6 +23,11 @@ class PlaylistRepository:
     @staticmethod
     def _attach_user_vote(playlist: Playlist, user_vote: int | None) -> Playlist:
         setattr(playlist, "userVote", user_vote)
+        return playlist
+
+    @staticmethod
+    def _attach_is_shared(playlist: Playlist, is_shared: bool) -> Playlist:
+        setattr(playlist, "isShared", is_shared)
         return playlist
 
     @staticmethod
@@ -58,7 +64,10 @@ class PlaylistRepository:
             .distinct()
         )
         return [
-            PlaylistRepository._attach_user_vote(playlist, user_vote)
+            PlaylistRepository._attach_is_shared(
+                PlaylistRepository._attach_user_vote(playlist, user_vote),
+                playlist.idOwner != user_id,
+            )
             for playlist, user_vote in result.all()
         ]
 
@@ -81,15 +90,26 @@ class PlaylistRepository:
             )
         )
         return [
-            PlaylistRepository._attach_user_vote(playlist, user_vote)
+            PlaylistRepository._attach_is_shared(
+                PlaylistRepository._attach_user_vote(playlist, user_vote),
+                True,
+            )
             for playlist, user_vote in result.all()
         ]
 
     @staticmethod
     async def get_shared_playlist(db: AsyncSession, user_id: int) -> list[Playlist]:
+        direct_shared_subquery = select(UserPlaylist.idPlaylist).filter(
+            UserPlaylist.idUser == user_id
+        )
+        my_group_ids = select(GroupUser.idGroup).filter(GroupUser.idUser == user_id)
+        group_shared_subquery = select(GroupPlaylist.idPlaylist).filter(
+            GroupPlaylist.idGroup.in_(my_group_ids)
+        )
+
         result = await db.execute(
             select(Playlist, PlaylistVote.value)
-            .join(UserPlaylist, UserPlaylist.idPlaylist == Playlist.idPlaylist)
+            .options(joinedload(Playlist.genre))
             .outerjoin(
                 PlaylistVote,
                 and_(
@@ -97,7 +117,14 @@ class PlaylistRepository:
                     PlaylistVote.idUser == user_id,
                 ),
             )
-            .filter(UserPlaylist.idUser == user_id)
+            .filter(
+                Playlist.idOwner != user_id,
+                or_(
+                    Playlist.idPlaylist.in_(direct_shared_subquery),
+                    Playlist.idPlaylist.in_(group_shared_subquery),
+                ),
+            )
+            .distinct()
         )
         return [
             PlaylistRepository._attach_user_vote(playlist, user_vote)
@@ -236,7 +263,9 @@ class PlaylistRepository:
         return False
 
     @staticmethod
-    async def get_playlist_tracks(db: AsyncSession, playlist_id: int) -> list[Track]:
+    async def get_playlist_tracks(
+        db: AsyncSession, playlist_id: int, user_id: int | None = None
+    ) -> list[Track]:
         result = await db.execute(
             select(Track, TrackPlaylist)
             .join(TrackPlaylist, TrackPlaylist.idTrack == Track.idTrack)
@@ -282,6 +311,14 @@ class PlaylistRepository:
         for track_id, (track, _) in node_map.items():
             if track_id not in visited:
                 ordered_tracks.append(track)
+
+        if user_id is not None:
+            liked_ids = await LikeRepository.get_liked_track_ids(db, user_id)
+            for track in ordered_tracks:
+                setattr(track, "isLiked", track.idTrack in liked_ids)
+        else:
+            for track in ordered_tracks:
+                setattr(track, "isLiked", False)
 
         return ordered_tracks
 
@@ -517,6 +554,44 @@ class PlaylistRepository:
         return users, None
 
     @staticmethod
+    async def list_shared_group(
+        db: AsyncSession, playlist_id: int, current_user_id: int
+    ):
+        owner_result = await db.execute(
+            select(Playlist.idOwner).filter(Playlist.idPlaylist == playlist_id)
+        )
+        owner_id = owner_result.scalar()
+
+        if owner_id is None:
+            return [], "You're not allowed to see shared groups for this playlist"
+
+        current_user_result = await db.execute(
+            select(User).filter(User.idUser == current_user_id)
+        )
+        current_user = current_user_result.scalars().first()
+        is_admin = current_user is not None and current_user.idRole == 3
+
+        users_result = await db.execute(
+            select(UserPlaylist.idUser).filter(UserPlaylist.idPlaylist == playlist_id)
+        )
+        shared_user_ids = users_result.scalars().all()
+
+        if (
+            not is_admin
+            and current_user_id != owner_id
+            and current_user_id not in shared_user_ids
+        ):
+            return [], "You're not allowed to see shared groups for this playlist"
+
+        groups_result = await db.execute(
+            select(UserGroup)
+            .join(GroupPlaylist, GroupPlaylist.idGroup == UserGroup.idGroup)
+            .filter(GroupPlaylist.idPlaylist == playlist_id)
+        )
+        groups = groups_result.scalars().all()
+        return groups, None
+
+    @staticmethod
     async def share_with_user(
         db: AsyncSession,
         playlist_id: int,
@@ -547,7 +622,7 @@ class PlaylistRepository:
 
     @staticmethod
     async def share_with_group(
-        db: AsyncSession, playlist_id: int, owner_id: int, group_name: str
+        db: AsyncSession, playlist_id: int, owner_id: int, group_id: int
     ):
         playlist_result = await db.execute(
             select(Playlist).filter(Playlist.idPlaylist == playlist_id)
@@ -557,7 +632,7 @@ class PlaylistRepository:
             return False, "forbidden"
 
         group_result = await db.execute(
-            select(UserGroup).filter(UserGroup.groupName == group_name)
+            select(UserGroup).filter(UserGroup.idGroup == group_id)
         )
         group = cast(UserGroup | None, group_result.scalars().first())
         if not group:
@@ -569,10 +644,12 @@ class PlaylistRepository:
                 GroupPlaylist.idPlaylist == playlist_id,
             )
         )
-        if not existing_result.scalars().first():
-            link = GroupPlaylist(idGroup=group.idGroup, idPlaylist=playlist_id)
-            db.add(link)
-            await db.commit()
+        if existing_result.scalars().first():
+            return False, "already_shared"
+
+        link = GroupPlaylist(idGroup=group.idGroup, idPlaylist=playlist_id)
+        db.add(link)
+        await db.commit()
 
         return True, "success"
 
@@ -584,6 +661,23 @@ class PlaylistRepository:
             select(UserPlaylist).filter(
                 UserPlaylist.idPlaylist == playlist_id,
                 UserPlaylist.idUser == target_user_id,
+            )
+        )
+        link = link_result.scalars().first()
+        if not link:
+            return False
+        await db.delete(link)
+        await db.commit()
+        return True
+
+    @staticmethod
+    async def remove_shared_group(
+        db: AsyncSession, playlist_id: int, target_group_id: int
+    ) -> bool:
+        link_result = await db.execute(
+            select(GroupPlaylist).filter(
+                GroupPlaylist.idPlaylist == playlist_id,
+                GroupPlaylist.idGroup == target_group_id,
             )
         )
         link = link_result.scalars().first()

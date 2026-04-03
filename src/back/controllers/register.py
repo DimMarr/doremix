@@ -7,18 +7,11 @@ from schemas import UserRegisterSchema
 from repositories import UserRepository, VerificationMailTokenRepository
 from passlib.context import CryptContext
 from utils.email_sender import EmailSender
-import secrets
-from datetime import datetime, timedelta
-
-# TODO: Décommenter ces imports quand la vérification email sera active
-# from repositories.verification_token_repository import VerificationTokenRepository
-# from utils.email_verification import EmailVerification
 
 
 class RegisterController:
     pwd_context = CryptContext(schemes=["bcrypt"])
     pepper = os.getenv("PEPPER_KEY")
-    web_url = os.getenv("WEB_BASE_URL")
 
     @staticmethod
     async def register(db: AsyncSession, user_data: UserRegisterSchema):
@@ -27,7 +20,6 @@ class RegisterController:
                 status_code=500, detail="PEPPER_KEY is missing in .env file"
             )
 
-        # 1. Vérification des données
         user = await UserRepository.get_by_email(db, user_data.email)
         if user:
             raise HTTPException(status_code=409, detail="This account already exists")
@@ -49,18 +41,14 @@ class RegisterController:
             is_verified=False,
         )
 
-        token = await VerificationMailTokenRepository.create_mail_verif_token(
+        raw_code = await VerificationMailTokenRepository.create_mail_verif_token(
             db=db, user_id=new_user.idUser
-        )
-
-        activation_link = (
-            f"{RegisterController.web_url}/verify-email?token={token.token}"
         )
 
         EmailSender.send_email(
             to_email=new_user.email,
             username=new_user.username,
-            activation_link=activation_link,
+            code=raw_code,
         )
 
         return {"message": "Account successfully created"}

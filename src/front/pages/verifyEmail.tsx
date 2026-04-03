@@ -35,10 +35,24 @@ export async function VerifyEmailPage(container) {
 
                     <div id="verifyStatusCard" class="flex flex-col items-center space-y-6 text-center animate-fade-up animation-delay-300">
 
-                        {/* Loading */}
-                        <div id="statusLoading" class="flex flex-col items-center space-y-4">
-                            <div class="h-16 w-16 rounded-full border-4 border-muted border-t-primary animate-spin" />
-                            <p class="text-base text-muted-foreground">Verifying your email…</p>
+                        {/* Enter Code */}
+                        <div id="statusEnterCode" class="flex flex-col items-center space-y-4 w-full">
+                            <div class="space-y-2">
+                                <h1 class="text-2xl font-bold tracking-tight">Verify your email</h1>
+                                <p id="verifyEmailDisplay" class="text-sm text-muted-foreground"></p>
+                            </div>
+                            <div class="w-full space-y-3">
+                                <input id="verificationCode" type="text" inputmode="numeric" placeholder="000000" maxlength="6" class="w-full px-4 py-2 rounded-md border border-input text-center text-2xl tracking-widest font-mono bg-background focus:outline-none focus:ring-2 focus:ring-primary" />
+                                <button id="verifyCodeBtn" class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 active:scale-95 duration-200">
+                                    Verify Code
+                                </button>
+                            </div>
+                            <div class="space-y-2">
+                                <p class="text-xs text-muted-foreground">Didn't receive the code?</p>
+                                <button id="resendCodeBtn" class="text-xs text-primary hover:underline">
+                                    Resend code
+                                </button>
+                            </div>
                         </div>
 
                         {/* Success */}
@@ -69,13 +83,16 @@ export async function VerifyEmailPage(container) {
                                 </svg>
                             </div>
                             <div class="space-y-1">
-                                <h1 class="text-2xl font-bold tracking-tight">Link expired</h1>
-                                <p class="text-sm text-muted-foreground">This verification link has expired. Request a new one or go back to login.</p>
+                                <h1 class="text-2xl font-bold tracking-tight">Code expired</h1>
+                                <p class="text-sm text-muted-foreground">Your verification code has expired. Request a new one.</p>
                             </div>
                             <div class="flex flex-col w-full gap-2">
-                                <button id="resendEmailBtn" class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 active:scale-95 duration-200">
-                                    Resend verification email
+                                <button id="resendExpiredCodeBtn" class="inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 active:scale-95 duration-200">
+                                    Resend code
                                 </button>
+                                <a href={AppRoutes.LOGIN} class="inline-flex h-10 w-full items-center justify-center rounded-md bg-muted px-4 py-2 text-sm font-medium text-muted-foreground shadow transition-colors hover:bg-muted/80 active:scale-95 duration-200">
+                                    Back to Login
+                                </a>
                             </div>
                         </div>
 
@@ -105,44 +122,150 @@ export async function VerifyEmailPage(container) {
 
     container.innerHTML = pageHtml;
     document.querySelector("header").innerHTML = "";
-    await handleVerification();
-    handleResendEmail();
 
-    function showStatus(status: "success" | "expired" | "invalid") {
-        document.getElementById("statusLoading").classList.add("hidden");
-        const id = "status" + status.charAt(0).toUpperCase() + status.slice(1);
-        document.getElementById(id).classList.remove("hidden");
+    const params = new URLSearchParams(window.location.search);
+    const email = params.get("email");
+
+    if (!email) {
+        showStatus("invalid");
+        startRedirectCountdown("countdownInvalid");
+        return;
+    }
+
+    // Display the email
+    const emailDisplay = document.getElementById("verifyEmailDisplay");
+    if (emailDisplay) {
+        emailDisplay.textContent = email;
+    }
+
+    handleVerifyCode(email);
+    handleResendCode(email);
+    handleResendExpiredCode(email);
+
+    function showStatus(status: "success" | "expired" | "invalid" | "enter-code") {
+        const statuses = ["statusEnterCode", "statusLoading", "statusSuccess", "statusExpired", "statusInvalid"];
+        statuses.forEach(s => {
+            const el = document.getElementById(s);
+            if (el) el.classList.add("hidden");
+        });
+
+        const id = status === "enter-code" ? "statusEnterCode" : "status" + status.charAt(0).toUpperCase() + status.slice(1);
+        const el = document.getElementById(id);
+        if (el) el.classList.remove("hidden");
+    }
+
+    function handleVerifyCode(email: string) {
+        const codeInput = document.getElementById("verificationCode") as HTMLInputElement;
+        const verifyBtn = document.getElementById("verifyCodeBtn");
+
+        if (!codeInput || !verifyBtn) return;
+
+        verifyBtn.addEventListener("click", async () => {
+            const code = codeInput.value.trim();
+
+            if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+                new AlertManager().error("Please enter a valid 6-digit code.");
+                return;
+            }
+
+            verifyBtn.textContent = "Verifying…";
+            (verifyBtn as HTMLButtonElement).disabled = true;
+
+            try {
+                const result = await authService.verifyCode(email, code);
+
+                // Check result from backend
+                if (typeof result === 'object') {
+                    if (result.status === "verified" || result.status === "already_verified") {
+                        // Success
+                        await new Promise(resolve => setTimeout(resolve, 1200));
+                        showStatus("success");
+                        startRedirectCountdown("countdownSuccess");
+                    } else {
+                        new AlertManager().error("Verification failed. Please try again.");
+                        codeInput.value = "";
+                    }
+                } else if (result === "verified" || result === "already_verified") {
+                    // Success (fallback for old format)
+                    await new Promise(resolve => setTimeout(resolve, 1200));
+                    showStatus("success");
+                    startRedirectCountdown("countdownSuccess");
+                } else {
+                    new AlertManager().error("Invalid verification code.");
+                    codeInput.value = "";
+                }
+            } catch (e: any) {
+                const message = e?.message || "";
+                if (message.includes("expired")) {
+                    showStatus("expired");
+                    new AlertManager().warning("Your verification code has expired. Please request a new one.");
+                } else if (message.includes("invalid")) {
+                    new AlertManager().error("Invalid verification code.");
+                    codeInput.value = "";
+                } else {
+                    new AlertManager().error("Verification failed. Please try again.");
+                    codeInput.value = "";
+                }
+            } finally {
+                (verifyBtn as HTMLButtonElement).disabled = false;
+                verifyBtn.textContent = "Verify Code";
+            }
+        });
+
+        // Allow Enter key to submit
+        codeInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                verifyBtn.click();
+            }
+        });
+    }
+
+    function handleResendCode(email: string) {
+        const resendBtn = document.getElementById("resendCodeBtn");
+        if (!resendBtn) return;
+
+        resendBtn.addEventListener("click", async () => {
+            resendBtn.textContent = "Sending…";
+            (resendBtn as HTMLButtonElement).disabled = true;
+
+            try {
+                await authService.resendVerificationCode(email);
+                new AlertManager().success("Verification code resent to your email.");
+                (document.getElementById("verificationCode") as HTMLInputElement).value = "";
+            } catch (e) {
+                new AlertManager().error("Failed to resend code. Please try again.");
+            } finally {
+                (resendBtn as HTMLButtonElement).disabled = false;
+                resendBtn.textContent = "Resend code";
+            }
+        });
+    }
+
+    function handleResendExpiredCode(email: string) {
+        const resendBtn = document.getElementById("resendExpiredCodeBtn");
+        if (!resendBtn) return;
+
+        resendBtn.addEventListener("click", async () => {
+            resendBtn.textContent = "Sending…";
+            (resendBtn as HTMLButtonElement).disabled = true;
+
+            try {
+                await authService.resendVerificationCode(email);
+                new AlertManager().success("Verification code resent to your email.");
+                // Reset to enter code state
+                showStatus("enter-code");
+                (document.getElementById("verificationCode") as HTMLInputElement).value = "";
+            } catch (e) {
+                new AlertManager().error("Failed to resend code. Please try again.");
+            } finally {
+                (resendBtn as HTMLButtonElement).disabled = false;
+                resendBtn.textContent = "Resend code";
+            }
+        });
     }
 
     async function handleVerification() {
-        const params = new URLSearchParams(window.location.search);
-        const token = params.get("token");
-
-        if (!token) {
-            showStatus("invalid");
-            startRedirectCountdown("countdownInvalid");
-            return;
-        }
-
-        try {
-            const result = await authService.verify_email(token);
-
-            await new Promise(resolve => setTimeout(resolve, 1200));
-
-            if (result === "verified" || result === "already_verified") {
-                showStatus("success");
-                startRedirectCountdown("countdownSuccess");
-            } else if (result === "expired") {
-                showStatus("expired");
-            } else {
-                showStatus("invalid");
-                startRedirectCountdown("countdownInvalid");
-            }
-        } catch (e) {
-            console.error(e);
-            showStatus("invalid");
-            startRedirectCountdown("countdownInvalid");
-        }
+        // Moved to handleVerifyCode above
     }
 
     function startRedirectCountdown(countdownId: string) {
@@ -160,28 +283,5 @@ export async function VerifyEmailPage(container) {
                 window.location.href = AppRoutes.LOGIN;
             }
         }, 1000);
-    }
-
-    function handleResendEmail() {
-        const btn = document.getElementById("resendEmailBtn");
-        if (!btn) return;
-
-        btn.addEventListener("click", async () => {
-            const params = new URLSearchParams(window.location.search);
-            const token = params.get("token");
-
-            btn.textContent = "Sending…";
-            (btn as HTMLButtonElement).disabled = true;
-
-            try {
-                await authService.resend_verification_email(token);
-                new AlertManager().success("A new verification email has been sent.");
-            } catch (e) {
-                new AlertManager().error("Failed to resend email. Please try again.");
-            } finally {
-                (btn as HTMLButtonElement).disabled = false;
-                btn.textContent = "Resend verification email";
-            }
-        });
     }
 }

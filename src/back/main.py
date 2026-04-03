@@ -28,6 +28,9 @@ from routes import (
     adminGenresRouter,
     moderationRouter,
     adminPlaylistsRouter,
+    likesRouter,
+    groupsRouter,
+    adminGroupsRouter,
 )
 
 routers = [
@@ -42,6 +45,9 @@ routers = [
     adminGenresRouter,
     moderationRouter,
     adminPlaylistsRouter,
+    likesRouter,
+    groupsRouter,
+    adminGroupsRouter,
 ]
 
 pepper = os.getenv("PEPPER_KEY")
@@ -80,7 +86,7 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, redirect_slashes=False)
 
 print("Setting up rate limiter with limit:", os.getenv("RATE_LIMIT", "100/minute"))
 app.state.limiter = limiter

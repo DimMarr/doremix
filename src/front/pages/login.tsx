@@ -82,7 +82,10 @@ export async function LoginPage(container) {
                         </div>
                         <div class="grid gap-2">
                             <Input id="password" placeholder="*********" label="Password" type="password"></Input>
-                            <span id="togglePasswordVisibility" class="cursor-pointer text-xs text-muted-foreground text-right w-fit ml-auto hover:text-primary transition-colors duration-200">Show password</span>
+                            <div class="flex justify-between items-center">
+                                <span id="togglePasswordVisibility" class="cursor-pointer text-xs text-muted-foreground hover:text-primary transition-colors duration-200">Show password</span>
+                                <a href={AppRoutes.REQUEST_PASSWORD_RESET} data-link class="cursor-pointer text-xs text-primary hover:underline">Forgot password?</a>
+                            </div>
                         </div>
                         <Button className="w-full mt-2 transition-transform duration-200 active:scale-95">Sign In</Button>
                     </form>
@@ -154,8 +157,14 @@ export async function LoginPage(container) {
             try {
                 await authService.login(email, password);
                 window.location.href = AppRoutes.HOME;
-            } catch (e) {
-                new AlertManager().error("Login failed. Please check your credentials or verify your email before logging in.");
+            } catch (e: any) {
+                const message = e?.message || "";
+                if (message.includes("verify your email")) {
+                    // Email not verified, redirect to verify email page
+                    window.location.href = `${AppRoutes.VERIFY_EMAIL}?email=${encodeURIComponent(email)}`;
+                } else {
+                    new AlertManager().error("Login failed. Please check your credentials or verify your email before logging in.");
+                }
             }
             return
 

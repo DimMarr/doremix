@@ -7,9 +7,10 @@ export function AddPlaylistButton() {
   return Button({
     id: "btn-open-add-playlist",
     variant: "primary",
+    className: "px-3 py-1.5 text-xs",
     children: (
-      <div class="flex items-center gap-2">
-        <span class="text-xl">+</span>
+      <div class="flex items-center gap-1">
+        <span>+</span>
         <span>Playlist</span>
       </div>
     )
