@@ -70,6 +70,7 @@ async def login(
         secure=False,
         samesite="lax",
         max_age=30 * 24 * 60 * 60,
+        path="/auth/refresh",
     )
 
     return result
@@ -136,7 +137,7 @@ async def logout(
     result = await LoginController.logout(db, access_token, refresh_token)
 
     response.delete_cookie(key="access_token")
-    response.delete_cookie(key="refresh_token")
+    response.delete_cookie(key="refresh_token", path="/auth/refresh")
 
     return result
 
@@ -156,7 +157,7 @@ async def logout_all_devices(
     result = await LoginController.logout_all_devices(db, user_id)
 
     response.delete_cookie(key="access_token")
-    response.delete_cookie(key="refresh_token")
+    response.delete_cookie(key="refresh_token", path="/auth/refresh")
 
     return result
 
