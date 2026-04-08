@@ -12,26 +12,53 @@ export function isValidEmail(email: string): boolean {
 }
 
 class AuthService {
-    async isAuthenticated() {
+    private isRefreshing = false;
+    private refreshQueue: Array<(success: boolean) => void> = [];
+
+    // Central fetch wrapper that transparently handles 401s with a single silent refresh.
+    // All requests that fail while a refresh is in-flight are queued and retried once done.
+    async fetchWithAuth(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+        const response = await fetch(input, { credentials: 'include', ...init });
+
+        if (response.status !== 401) {
+            return response;
+        }
+
+        // 401 received — attempt a silent refresh (only one at a time)
+        if (this.isRefreshing) {
+            // Another refresh is already in flight: queue this request
+            await new Promise<boolean>((resolve) => {
+                this.refreshQueue.push(resolve);
+            }).then((success) => {
+                if (!success) throw new Error('Session expired');
+            });
+            return fetch(input, { credentials: 'include', ...init });
+        }
+
+        this.isRefreshing = true;
+        const refreshed = await this.refreshAccessToken();
+        this.isRefreshing = false;
+
+        // Notify all queued requests
+        this.refreshQueue.forEach((resolve) => resolve(refreshed));
+        this.refreshQueue = [];
+
+        if (!refreshed) {
+            throw new Error('Session expired');
+        }
+
+        // Retry the original request with the new access token
+        return fetch(input, { credentials: 'include', ...init });
+    }
+
+    // isAuthenticated now uses fetchWithAuth against /auth/me — no dedicated check-token call needed.
+    async isAuthenticated(): Promise<boolean> {
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/check-token`, {
-                method: 'POST',
-                credentials: 'include'
-            })
-
-            if (response.status === 200) {
-                return true
-            }
-        } catch (e) {
-            console.error("Network error during token check:", e);
+            await this.infos();
+            return true;
+        } catch {
+            return false;
         }
-
-        const refresh = await this.refreshAccessToken()
-        console.log(`refresh: ${refresh}`)
-        if (refresh) {
-            return true
-        }
-        return false
     }
 
     // Login provides a new accessToken
@@ -106,7 +133,7 @@ class AuthService {
 
 
     async logout() {
-        const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+        await fetch(`${API_BASE_URL}/auth/logout`, {
             method: 'POST',
             credentials: 'include'
         })
@@ -118,9 +145,8 @@ class AuthService {
     async infos() {
         if (!this.infosPromise) {
             this.infosPromise = (async () => {
-                const response = await fetch(`${API_BASE_URL}/auth/me`, {
+                const response = await this.fetchWithAuth(`${API_BASE_URL}/auth/me`, {
                     method: 'GET',
-                    credentials: 'include'
                 });
                 if (!response.ok) {
                     this.infosPromise = undefined;
