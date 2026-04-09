@@ -128,10 +128,10 @@ async def logout(
     access_token = request.cookies.get("access_token")
     refresh_token = request.cookies.get("refresh_token")
 
-    if not access_token or not refresh_token:
+    if not access_token:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
-            content={"detail": "Tokens missing"},
+            content={"detail": "Access token missing"},
         )
 
     result = await LoginController.logout(db, access_token, refresh_token)
