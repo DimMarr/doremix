@@ -113,7 +113,9 @@ class LoginController:
         }
 
     @staticmethod
-    async def logout(db: AsyncSession, access_token_str: str, refresh_token_str: str | None):
+    async def logout(
+        db: AsyncSession, access_token_str: str, refresh_token_str: str | None
+    ):
         try:
             await AccessTokenRepository.revoke_token(db, access_token_str)
             if refresh_token_str:
