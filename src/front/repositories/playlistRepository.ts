@@ -4,6 +4,7 @@ import { Track } from "@models/track";
 import { Artist } from "@models/artist";
 import { AlertManager } from "@utils/alertManager";
 import { handleHttpError } from "@utils/errorHandling";
+import { authService } from "@utils/authentication";
 
 export interface VoteResponse {
     score: number;
@@ -13,7 +14,7 @@ export interface VoteResponse {
 export class PlaylistRepository {
     private async _fetchAll() {
         try {
-            const response = await fetch(`${API_BASE_URL}/playlists/`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/playlists/`, {
                 credentials: 'include'
             });
 
@@ -28,7 +29,7 @@ export class PlaylistRepository {
     }
 
     private async _fetchPublic() {
-        const response = await fetch(`${API_BASE_URL}/playlists/public`, {
+        const response = await authService.fetchWithAuth(`${API_BASE_URL}/playlists/public`, {
             credentials: 'include'
         });
 
@@ -40,7 +41,7 @@ export class PlaylistRepository {
 
     private async _fetchById(playlistId: number) {
         try {
-            const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/playlists/${playlistId}`, {
                 credentials: 'include'
             });
 
@@ -60,7 +61,7 @@ export class PlaylistRepository {
 
     private async _fetchTracks(playlistId: number) {
         try {
-            const response = await fetch(
+            const response = await authService.fetchWithAuth(
                 `${API_BASE_URL}/playlists/${playlistId}/tracks`,
                 {
                     credentials: 'include'
@@ -86,7 +87,7 @@ export class PlaylistRepository {
         try {
             const body: Record<string, unknown> = { name };
             if (idGenre !== undefined) body.idGenre = idGenre;
-            const response = await fetch(`${API_BASE_URL}/playlists/`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/playlists/`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -115,7 +116,7 @@ export class PlaylistRepository {
             const formData = new FormData();
             formData.append("file", imageFile);
 
-            const response = await fetch(
+            const response = await authService.fetchWithAuth(
                 `${API_BASE_URL}/playlists/${playlistId}/cover`,
                 {
                     method: "POST",
@@ -216,7 +217,7 @@ export class PlaylistRepository {
     async getShared(): Promise<Playlist[]> {
         const img1 = new URL("../assets/images/playlist1.jpg", import.meta.url).href;
         try {
-            const response = await fetch(`${API_BASE_URL}/playlists/shared`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/playlists/shared`, {
                 method: "GET",
                 credentials: "include",
             });
@@ -268,7 +269,7 @@ export class PlaylistRepository {
 
     async castVote(playlistId: number, value: -1 | 0 | 1): Promise<VoteResponse> {
         try {
-            const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/vote`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/playlists/${playlistId}/vote`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -320,7 +321,7 @@ export class PlaylistRepository {
 
     async shareWithGroup(playlistId: number, groupId: number): Promise<void> {
         try {
-            const response = await fetch(
+            const response = await authService.fetchWithAuth(
                 `${API_BASE_URL}/playlists/${playlistId}/share/group`,
                 {
                     method: "POST",
@@ -356,7 +357,7 @@ export class PlaylistRepository {
 
         const promise = (async () => {
             try {
-                const response = await fetch(`${API_BASE_URL}/playlists/${id}/shared-with`, {
+                const response = await authService.fetchWithAuth(`${API_BASE_URL}/playlists/${id}/shared-with`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -394,7 +395,7 @@ export class PlaylistRepository {
 
         const promise = (async () => {
             try {
-                const response = await fetch(`${API_BASE_URL}/playlists/${id}/shared-groups`, {
+                const response = await authService.fetchWithAuth(`${API_BASE_URL}/playlists/${id}/shared-groups`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -426,7 +427,7 @@ export class PlaylistRepository {
 
     async removeSharedUser(playlistId: number, targetUserId: number): Promise<void> {
         try {
-            const response = await fetch(
+            const response = await authService.fetchWithAuth(
                 `${API_BASE_URL}/playlists/${playlistId}/share/user/${targetUserId}`,
                 {
                     method: "DELETE",
@@ -450,7 +451,7 @@ export class PlaylistRepository {
 
     async removeSharedGroup(playlistId: number, targetGroupId: number): Promise<void> {
         try {
-            const response = await fetch(
+            const response = await authService.fetchWithAuth(
                 `${API_BASE_URL}/playlists/${playlistId}/share/group/${targetGroupId}`,
                 {
                     method: "DELETE",
@@ -477,7 +478,7 @@ export class PlaylistRepository {
 
     async update(id: number, data: Partial<Playlist>) {
         try {
-            const response = await fetch(`${API_BASE_URL}/playlists/${id}`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/playlists/${id}`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -502,7 +503,7 @@ export class PlaylistRepository {
 
     async delete(id: number): Promise<void> {
         try {
-            const response = await fetch(`${API_BASE_URL}/playlists/${id}`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/playlists/${id}`, {
                 method: "DELETE",
                 credentials: 'include',
             });
@@ -523,7 +524,7 @@ export class PlaylistRepository {
     async adminGetAll(): Promise<Playlist[]> {
         const img1 = new URL("../assets/images/playlist1.jpg", import.meta.url).href;
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/playlists/`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/admin/playlists/`, {
                 credentials: 'include',
             });
             if (!response.ok) {
@@ -556,7 +557,7 @@ export class PlaylistRepository {
     }
 
     async adminUpdate(id: number, data: Partial<Playlist>): Promise<any> {
-        const response = await fetch(`${API_BASE_URL}/admin/playlists/${id}`, {
+        const response = await authService.fetchWithAuth(`${API_BASE_URL}/admin/playlists/${id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             credentials: 'include',
@@ -570,7 +571,7 @@ export class PlaylistRepository {
     }
 
     async adminDelete(id: number): Promise<void> {
-        const response = await fetch(`${API_BASE_URL}/admin/playlists/${id}`, {
+        const response = await authService.fetchWithAuth(`${API_BASE_URL}/admin/playlists/${id}`, {
             method: "DELETE",
             credentials: 'include',
         });
@@ -581,7 +582,7 @@ export class PlaylistRepository {
     }
 
     async adminGetTracks(playlistId: number): Promise<Track[]> {
-        const response = await fetch(
+        const response = await authService.fetchWithAuth(
             `${API_BASE_URL}/admin/playlists/${playlistId}/tracks`,
             { credentials: 'include' }
         );
@@ -594,7 +595,7 @@ export class PlaylistRepository {
     }
 
     async adminAddTrack(playlistId: number, url: string, title: string): Promise<Track> {
-        const response = await fetch(
+        const response = await authService.fetchWithAuth(
             `${API_BASE_URL}/admin/playlists/${playlistId}/tracks/by-url`,
             {
                 method: "POST",
@@ -611,7 +612,7 @@ export class PlaylistRepository {
     }
 
     async adminRemoveTrack(playlistId: number, trackId: number): Promise<any> {
-        const response = await fetch(
+        const response = await authService.fetchWithAuth(
             `${API_BASE_URL}/admin/playlists/${playlistId}/track/${trackId}`,
             {
                 method: "DELETE",
@@ -627,7 +628,7 @@ export class PlaylistRepository {
 
     async transfer_ownership(id: number, new_owner_email: string) {
         try {
-            const response = await fetch(`${API_BASE_URL}/playlists/${id}/transfer`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/playlists/${id}/transfer`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

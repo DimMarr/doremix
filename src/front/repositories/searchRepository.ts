@@ -4,6 +4,7 @@ import { PlaylistRepository } from "./playlistRepository";
 import { API_BASE_URL } from "@config/index";
 import { handleHttpError } from "@utils/errorHandling";
 import { AlertManager } from "@utils/alertManager";
+import { authService } from "@utils/authentication";
 
 export interface SearchResults {
   tracks: Track[];
@@ -13,7 +14,7 @@ export interface SearchResults {
 export class SearchRepository {
   private async _fetch(query: string) {
     try {
-      const response = await fetch(
+      const response = await authService.fetchWithAuth(
         `${API_BASE_URL}/search/?q=${encodeURIComponent(query)}`,
         {
           credentials: 'include'
