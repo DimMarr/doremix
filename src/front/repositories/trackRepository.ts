@@ -1,9 +1,10 @@
 import { API_BASE_URL } from "@config/index";
 import { AlertManager } from "@utils/alertManager";
+import { authService } from "@utils/authentication";
 
 export class TrackRepository {
   async getByUrl(url: string) {
-    const response = await fetch(`${API_BASE_URL}/tracks/by-url?url=${encodeURIComponent(url)}`, {
+    const response = await authService.fetchWithAuth(`${API_BASE_URL}/tracks/by-url?url=${encodeURIComponent(url)}`, {
       credentials: 'include'
     });
 
@@ -15,7 +16,7 @@ export class TrackRepository {
 
   async create(playlistId: number, url: string, title: string) {
     try {
-      const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/tracks/by-url`, {
+      const response = await authService.fetchWithAuth(`${API_BASE_URL}/playlists/${playlistId}/tracks/by-url`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,7 +37,7 @@ export class TrackRepository {
 
   async delete(playlistId: number, trackId: number) {
     try {
-      const response = await fetch(
+      const response = await authService.fetchWithAuth(
         `${API_BASE_URL}/playlists/${playlistId}/track/${trackId}`,
         {
           method: "DELETE",
@@ -57,7 +58,7 @@ export class TrackRepository {
 
   async share(playlistId: number, email: string, editor: boolean) {
     try {
-      const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/share/user`, {
+      const response = await authService.fetchWithAuth(`${API_BASE_URL}/playlists/${playlistId}/share/user`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -78,7 +79,7 @@ export class TrackRepository {
   }
 
   async like(trackId: number): Promise<{ trackId: number; isLiked: boolean }> {
-    const response = await fetch(`${API_BASE_URL}/tracks/${trackId}/like`, {
+    const response = await authService.fetchWithAuth(`${API_BASE_URL}/tracks/${trackId}/like`, {
       method: 'POST',
       credentials: 'include'
     });
@@ -87,7 +88,7 @@ export class TrackRepository {
   }
 
   async unlike(trackId: number): Promise<{ trackId: number; isLiked: boolean }> {
-    const response = await fetch(`${API_BASE_URL}/tracks/${trackId}/like`, {
+    const response = await authService.fetchWithAuth(`${API_BASE_URL}/tracks/${trackId}/like`, {
       method: 'DELETE',
       credentials: 'include'
     });
@@ -107,7 +108,7 @@ export class TrackRepository {
 
   async move(playlistId: number, trackId: number, prev_track_id: number | null) {
     try {
-      const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/tracks/${trackId}/move`, {
+      const response = await authService.fetchWithAuth(`${API_BASE_URL}/playlists/${playlistId}/tracks/${trackId}/move`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

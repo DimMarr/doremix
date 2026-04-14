@@ -1,9 +1,10 @@
 import { API_BASE_URL } from "@config/index";
 import { AlertManager } from "@utils/alertManager";
+import { authService } from "@utils/authentication";
 
 export class UserRepository {
     async getAllUsers() {
-        const response = await fetch(`${API_BASE_URL}/users/`, {
+        const response = await authService.fetchWithAuth(`${API_BASE_URL}/users/`, {
           credentials: 'include'
         });
 
@@ -15,7 +16,7 @@ export class UserRepository {
 
     async addModerator(idUser: number) {
         try {
-            const response = await fetch(`${API_BASE_URL}/users/${idUser}/add-moderator`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/users/${idUser}/add-moderator`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -38,7 +39,7 @@ export class UserRepository {
 
     async demoteModerator(idUser: number) {
         try {
-            const response = await fetch(`${API_BASE_URL}/users/${idUser}/demote-moderator`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/users/${idUser}/demote-moderator`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",

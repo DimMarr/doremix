@@ -2,11 +2,12 @@ import { API_BASE_URL } from "@config/index";
 import { Genre } from "@models/genre";
 import { AlertManager } from "@utils/alertManager";
 import { handleHttpError } from "@utils/errorHandling";
+import { authService } from "@utils/authentication";
 
 export class GenreRepository {
     async getAll(): Promise<Genre[]> {
         try {
-            const response = await fetch(`${API_BASE_URL}/genres/`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/genres/`, {
                 credentials: "include",
             });
             if (!response.ok) {
@@ -25,7 +26,7 @@ export class GenreRepository {
 
     async create(label: string): Promise<Genre> {
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/genres/`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/admin/genres/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -51,7 +52,7 @@ export class GenreRepository {
 
     async update(id: number, label: string): Promise<Genre> {
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/genres/${id}`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/admin/genres/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -77,7 +78,7 @@ export class GenreRepository {
 
     async delete(id: number): Promise<void> {
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/genres/${id}`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/admin/genres/${id}`, {
                 method: "DELETE",
                 credentials: "include",
             });

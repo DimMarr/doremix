@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "@config/index";
 import { handleHttpError } from "@utils/errorHandling";
+import { authService } from "@utils/authentication";
 
 export interface Group {
     idGroup: number;
@@ -18,7 +19,7 @@ export interface GroupWithUsers extends Group {
 
 export class GroupRepository {
     async getAllGroups(): Promise<Group[]> {
-        const response = await fetch(`${API_BASE_URL}/groups/`, {
+        const response = await authService.fetchWithAuth(`${API_BASE_URL}/groups/`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
@@ -34,7 +35,7 @@ export class GroupRepository {
     }
 
     async adminGetAllGroups(): Promise<GroupWithUsers[]> {
-        const response = await fetch(`${API_BASE_URL}/admin/groups/`, {
+        const response = await authService.fetchWithAuth(`${API_BASE_URL}/admin/groups/`, {
             method: "GET",
             credentials: "include",
         });
@@ -48,7 +49,7 @@ export class GroupRepository {
     }
 
     async adminCreateGroup(groupName: string): Promise<Group> {
-        const response = await fetch(`${API_BASE_URL}/admin/groups/`, {
+        const response = await authService.fetchWithAuth(`${API_BASE_URL}/admin/groups/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
@@ -67,7 +68,7 @@ export class GroupRepository {
     }
 
     async adminDeleteGroup(groupId: number): Promise<void> {
-        const response = await fetch(`${API_BASE_URL}/admin/groups/${groupId}`, {
+        const response = await authService.fetchWithAuth(`${API_BASE_URL}/admin/groups/${groupId}`, {
             method: "DELETE",
             credentials: "include",
         });
@@ -79,7 +80,7 @@ export class GroupRepository {
     }
 
     async adminAddUser(groupId: number, userId: number): Promise<void> {
-        const response = await fetch(
+        const response = await authService.fetchWithAuth(
             `${API_BASE_URL}/admin/groups/${groupId}/users/${userId}`,
             {
                 method: "POST",
@@ -97,7 +98,7 @@ export class GroupRepository {
     }
 
     async adminRemoveUser(groupId: number, userId: number): Promise<void> {
-        const response = await fetch(
+        const response = await authService.fetchWithAuth(
             `${API_BASE_URL}/admin/groups/${groupId}/users/${userId}`,
             {
                 method: "DELETE",

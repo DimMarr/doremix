@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "@config/index";
 import { AlertManager } from "@utils/alertManager";
 import { handleHttpError } from "@utils/errorHandling";
+import { authService } from "@utils/authentication";
 
 export interface ModerationUser {
     idUser: number;
@@ -19,7 +20,7 @@ interface UserBanStatusResponse {
 export class ModerationRepository {
     async getBanCandidates(): Promise<ModerationUser[]> {
         try {
-            const response = await fetch(`${API_BASE_URL}/moderation/ban-candidates`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/moderation/ban-candidates`, {
                 credentials: "include",
             });
             if (!response.ok) {
@@ -38,7 +39,7 @@ export class ModerationRepository {
 
     async getUnbanCandidates(): Promise<ModerationUser[]> {
         try {
-            const response = await fetch(`${API_BASE_URL}/moderation/unban-candidates`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/moderation/unban-candidates`, {
                 credentials: "include",
             });
             if (!response.ok) {
@@ -57,7 +58,7 @@ export class ModerationRepository {
 
     async banUser(idUser: number): Promise<UserBanStatusResponse> {
         try {
-            const response = await fetch(`${API_BASE_URL}/moderation/users/${idUser}/ban`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/moderation/users/${idUser}/ban`, {
                 method: "POST",
                 credentials: "include",
             });
@@ -77,7 +78,7 @@ export class ModerationRepository {
 
     async unbanUser(idUser: number): Promise<UserBanStatusResponse> {
         try {
-            const response = await fetch(`${API_BASE_URL}/moderation/users/${idUser}/unban`, {
+            const response = await authService.fetchWithAuth(`${API_BASE_URL}/moderation/users/${idUser}/unban`, {
                 method: "POST",
                 credentials: "include",
             });

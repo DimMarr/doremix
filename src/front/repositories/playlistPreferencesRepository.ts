@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "@config/index";
 import { handleHttpError } from "@utils/errorHandling";
+import { authService } from "@utils/authentication";
 
 export type SortMode = "date_desc" | "name_asc" | "custom";
 
@@ -10,7 +11,7 @@ export interface PlaylistPreferences {
 
 export class PlaylistPreferencesRepository {
   async get(): Promise<PlaylistPreferences> {
-    const response = await fetch(`${API_BASE_URL}/playlists/preferences`, {
+    const response = await authService.fetchWithAuth(`${API_BASE_URL}/playlists/preferences`, {
       credentials: "include",
     });
     if (!response.ok) {
@@ -21,7 +22,7 @@ export class PlaylistPreferencesRepository {
   }
 
   async save(prefs: PlaylistPreferences): Promise<PlaylistPreferences> {
-    const response = await fetch(`${API_BASE_URL}/playlists/preferences`, {
+    const response = await authService.fetchWithAuth(`${API_BASE_URL}/playlists/preferences`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
